@@ -1,57 +1,139 @@
+<div align="center">
+
 # Smart Document Management & Verification Platform
 
-<p align="center">
-  <b>A secure cloud-ready platform for uploading, storing, sharing, verifying, searching, and tracking important documents.</b>
-</p>
+### A secure, cloud-native document vault built for trust, traceability, and effortless sharing.
 
-<p align="center">
-  <img alt="Project Status" src="https://img.shields.io/badge/status-planning%20%26%20development-2563eb?style=for-the-badge">
-  <img alt="Cloud Ready" src="https://img.shields.io/badge/cloud-ready-0f766e?style=for-the-badge">
-  <img alt="Security First" src="https://img.shields.io/badge/security-first-dc2626?style=for-the-badge">
-  <img alt="DevOps" src="https://img.shields.io/badge/devops-enabled-7c3aed?style=for-the-badge">
-</p>
+Upload once. Find instantly. Verify confidently. Share safely. Track everything.
 
-<p align="center">
-  <a href="#project-vision">Vision</a> |
-  <a href="#core-features">Features</a> |
-  <a href="#3d-platform-flow">3D Flow</a> |
-  <a href="#cloud-architecture">Architecture</a> |
-  <a href="#development-phases">Phases</a> |
-  <a href="#technology-stack">Tech Stack</a>
-</p>
+<br />
+
+[![Status: Blueprint](https://img.shields.io/badge/status-architecture_blueprint-2563EB?style=for-the-badge)](#project-status)
+[![Security First](https://img.shields.io/badge/security-first-DC2626?style=for-the-badge)](#security-by-design)
+[![Cloud Native](https://img.shields.io/badge/cloud-native-0F766E?style=for-the-badge)](#cloud-architecture)
+[![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-7C3AED?style=for-the-badge)](#contributing)
+
+<br />
+
+### Skills & Technologies
+
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=000000)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Render](https://img.shields.io/badge/Render-000000?style=for-the-badge&logo=render&logoColor=46E3B7)
+![Terraform](https://img.shields.io/badge/Terraform-844FBA?style=for-the-badge&logo=terraform&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+![NGINX](https://img.shields.io/badge/NGINX-009639?style=for-the-badge&logo=nginx&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
+
+<br />
+
+[Why it matters](#why-it-matters) |
+[Features](#feature-map) |
+[3D Platform Flow](#3d-platform-flow) |
+[Architecture](#cloud-architecture) |
+[Roadmap](#delivery-roadmap) |
+[API](#api-blueprint) |
+[Contributing](#contributing)
+
+</div>
 
 ---
 
-## Project Vision
+## The Big Idea
 
-The **Smart Document Management & Verification Platform** is designed as a modern digital document vault with verification intelligence.
+Important documents deserve more than a folder and a download button.
 
-Think of it as a powerful combination of:
+The **Smart Document Management & Verification Platform** is a blueprint for a modern document trust system: one place to securely store documents, verify their authenticity, control how they are shared, and preserve a complete history of every meaningful action.
 
-| Inspiration | What This Platform Uses From It |
+It brings together the convenience of cloud storage, the confidence of identity-linked document systems, and the accountability of an auditable verification workflow.
+
+```text
+Traditional storage:  Upload -> Store -> Download
+
+This platform:         Upload -> Protect -> Index -> Verify -> Share -> Audit -> Remind
+```
+
+> [!IMPORTANT]
+> This repository currently documents the product vision, architecture, and delivery plan. Application code will be introduced incrementally through the roadmap below.
+
+## Why It Matters
+
+Document workflows often break down in the moments that matter most:
+
+- A certificate is shared, but nobody can confirm whether it was modified.
+- A contract expires, but the reminder arrives too late.
+- A sensitive link stays active long after it should have been revoked.
+- A reviewer approves a document, but the decision history is unclear.
+- A team stores thousands of files, but cannot quickly find the right one.
+
+This platform is designed to replace those gaps with **verifiable status, controlled access, searchable metadata, and a trustworthy audit trail**.
+
+## Product Principles
+
+| Principle | What it means in practice |
 | --- | --- |
-| Google Drive | Upload, organize, search, and share documents |
-| DigiLocker | Secure identity-linked document storage |
-| Verification System | Validate document authenticity and access history |
-
-The goal is to help users and organizations manage documents with confidence: upload once, verify quickly, share safely, and track every access event.
+| **Trust is visible** | Every document has a clear verification state and traceable history. |
+| **Access is intentional** | Sharing links expire, permissions are explicit, and access can be revoked. |
+| **Security is foundational** | Encryption, authorization, validation, and auditing are part of the design. |
+| **Search should feel instant** | Metadata, tags, ownership, status, and extracted text make documents discoverable. |
+| **Operations should be observable** | Metrics, logs, alerts, and background-job health are first-class concerns. |
+| **Infrastructure should be repeatable** | Containers, CI/CD, and Infrastructure as Code enable predictable deployment. |
 
 ---
 
-## Core Features
+## Feature Map
 
-| Feature | Description |
+### Document Experience
+
+| Capability | User value |
 | --- | --- |
-| Secure document upload | Upload PDFs, images, certificates, IDs, contracts, and other files |
-| Smart document search | Search by title, owner, document type, tags, metadata, or verification status |
-| Shareable secure links | Generate protected links with expiry, access limits, and permission controls |
-| Document verification | Verify documents using metadata, hashes, approval workflow, or external APIs |
-| Access history | Track who viewed, downloaded, shared, or verified a document |
-| Expiry reminders | Notify users before documents expire |
-| Role-based access | Separate user, verifier, admin, and organization-level permissions |
-| Cloud storage | Store files in AWS S3, Cloudinary, Azure Blob, or similar object storage |
-| Background jobs | Process verification, reminders, thumbnails, indexing, and email events |
-| Monitoring | Observe system health with metrics, dashboards, and logs |
+| Secure uploads | Store PDFs, images, IDs, certificates, contracts, and other important files. |
+| Rich organization | Add titles, tags, types, expiry dates, owners, and custom metadata. |
+| Smart search | Find documents by metadata, verification state, date, owner, or extracted text. |
+| Document preview | Review files and important metadata without leaving the platform. |
+| Expiry reminders | Receive alerts before time-sensitive documents expire. |
+
+### Trust & Sharing
+
+| Capability | User value |
+| --- | --- |
+| Verification workflows | Move documents through pending, verified, rejected, and expired states. |
+| Integrity checks | Use cryptographic hashes to detect changed or duplicate files. |
+| Protected share links | Set expiration, permissions, view limits, and revocation rules. |
+| Role-based access | Separate permissions for users, verifiers, admins, and organizations. |
+| Audit history | Track views, downloads, updates, shares, and verification decisions. |
+
+### Platform Operations
+
+| Capability | System value |
+| --- | --- |
+| Background processing | Run OCR, indexing, reminders, notifications, and verification jobs asynchronously. |
+| Object storage | Keep files in durable cloud storage instead of the application database. |
+| Caching and rate limits | Improve performance and protect sensitive endpoints with Redis. |
+| Centralized observability | Monitor metrics, dashboards, logs, failures, and service health. |
+| Automated delivery | Test, build, and deploy through a repeatable CI/CD pipeline. |
+
+---
+
+## Real-World Use Cases
+
+| Use case | How the platform helps | Expected outcome |
+| --- | --- | --- |
+| Academic credentials | Institutions issue and verify certificates while graduates share protected links. | Faster checks with a traceable verification history. |
+| Employee records | HR teams organize contracts, IDs, certifications, and renewal dates. | Fewer missed expirations and clearer access control. |
+| Legal documents | Teams manage sensitive agreements with scoped sharing and audit logs. | Confidential collaboration with accountable access. |
+| Vendor compliance | Organizations collect and review licenses, insurance, and compliance evidence. | Centralized status tracking and timely renewal reminders. |
+| Personal document vault | Individuals securely store and share important identity and financial documents. | One searchable source of truth with controlled sharing. |
 
 ---
 
@@ -125,352 +207,348 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    subgraph Client["Client Layer"]
-        Web["Web App"]
-        Mobile["Mobile Friendly UI"]
+    subgraph Clients["Client Layer"]
+        Web["Web Application"]
+        Mobile["Mobile-Friendly UI"]
     end
 
-    subgraph Delivery["Delivery Layer"]
-        DNS["Domain / DNS"]
+    subgraph Edge["Edge & Delivery"]
+        DNS["DNS"]
         Ingress["NGINX Ingress"]
         TLS["TLS / HTTPS"]
     end
 
-    subgraph App["Application Layer"]
-        Auth["Auth Service"]
-        Doc["Document Service"]
-        Verify["Verification Service"]
-        Notify["Notification Service"]
+    subgraph Services["Application Services"]
+        Auth["Authentication"]
+        Documents["Document Management"]
+        Verification["Verification"]
+        Notifications["Notifications"]
     end
 
-    subgraph Platform["Platform Layer"]
-        Redis["Redis"]
+    subgraph Platform["Platform Services"]
+        Cache["Redis"]
         Queue["RabbitMQ / Kafka"]
         Workers["Background Workers"]
     end
 
     subgraph Data["Data Layer"]
-        DB["MongoDB Atlas / PostgreSQL"]
-        Files["AWS S3 / Cloudinary"]
-        Logs["ELK Stack"]
+        Database["PostgreSQL / MongoDB Atlas"]
+        Storage["AWS S3 / Cloudinary"]
+        Search["Search Index"]
     end
 
-    subgraph DevOps["DevOps Layer"]
-        Docker["Docker"]
-        K8s["Kubernetes"]
+    subgraph Operations["Delivery & Observability"]
         Actions["GitHub Actions"]
+        Vercel["Vercel<br/>Frontend Deployment"]
+        Render["Render<br/>API and Workers"]
+        Registry["Container Registry"]
+        Kubernetes["Kubernetes"]
         Terraform["Terraform"]
         Monitor["Prometheus + Grafana"]
+        Logs["Centralized Logs"]
     end
 
-    Web --> DNS --> Ingress --> TLS --> Auth
+    Web --> DNS
     Mobile --> DNS
-    Auth --> Doc
-    Doc --> Verify
-    Verify --> Notify
-    Doc --> Redis
-    Doc --> Queue
-    Queue --> Workers
-    Workers --> DB
-    Workers --> Files
-    Doc --> DB
-    Doc --> Files
-    Auth --> Logs
-    Verify --> Logs
-    Docker --> K8s
-    Actions --> K8s
-    Terraform --> K8s
-    K8s --> Monitor
+    DNS --> Ingress --> TLS --> Auth
+    Auth --> Documents --> Verification --> Notifications
+    Documents --> Cache
+    Documents --> Queue --> Workers
+    Documents --> Database
+    Documents --> Storage
+    Workers --> Database
+    Workers --> Storage
+    Workers --> Search
+    Actions --> Vercel
+    Actions --> Render
+    Actions --> Registry --> Kubernetes
+    Terraform --> Kubernetes
+    Kubernetes --> Monitor
+    Kubernetes --> Logs
+```
+
+### Architecture Notes
+
+- **Files and metadata are separated:** large binary objects live in object storage; searchable records live in the database.
+- **Slow work stays off the request path:** OCR, indexing, reminders, and notifications run through queued workers.
+- **Services begin as logical boundaries:** they can ship as a modular monolith first and split only when scale demands it.
+- **Every sensitive action emits an audit event:** document access and state changes remain traceable.
+- **Cloud vendors remain replaceable:** the final provider choices should be recorded as Architecture Decision Records.
+
+---
+
+## Security By Design
+
+Security is a system property, not a feature toggle.
+
+| Control area | Planned protections |
+| --- | --- |
+| Identity | Strong password hashing, secure sessions or short-lived JWTs, optional MFA |
+| Authorization | Role-based access plus document-level ownership and permission checks |
+| Upload safety | Allowlisted file types, size limits, malware scanning, isolated processing |
+| Data protection | TLS in transit, encryption at rest, secret management, least-privilege access |
+| Share links | High-entropy tokens, expiration, view limits, revocation, scoped permissions |
+| Integrity | Cryptographic hashing and duplicate/change detection |
+| Abuse prevention | Redis-backed rate limiting, anomaly alerts, suspicious activity review |
+| Auditing | Append-oriented records for access, sharing, updates, and verification decisions |
+| Privacy | Data minimization, retention policies, secure deletion, metadata protection |
+
+> [!CAUTION]
+> The platform should not claim regulatory compliance until its implementation, operating controls, and deployment environment have been independently assessed.
+
+### Verification State Model
+
+```mermaid
+stateDiagram-v2
+    [*] --> Processing
+    Processing --> PendingReview
+    Processing --> Failed: processing error
+    PendingReview --> Verified: approved
+    PendingReview --> Rejected: rejected
+    Verified --> Expired: expiry date reached
+    Verified --> PendingReview: document updated
+    Rejected --> PendingReview: resubmitted
+    Failed --> Processing: retried
 ```
 
 ---
 
-## Technology Stack
+## Suggested Technology Stack
 
-| Technology | Use in Project |
-| --- | --- |
-| Docker | Containerize frontend, backend, database, workers, and supporting services |
-| Kubernetes | Deploy and scale services in production |
-| NGINX Ingress | Route external traffic to internal services |
-| MongoDB Atlas / PostgreSQL | Main document, user, metadata, and audit database |
-| Redis | Cache, session store, temporary tokens, and rate limiting |
-| AWS S3 / Cloudinary | Secure document and image storage |
-| RabbitMQ / Kafka | Background processing, reminders, verification jobs, indexing |
-| GitHub Actions | Automated testing, building, and deployment |
-| Prometheus | Metrics collection |
-| Grafana | Monitoring dashboards |
-| ELK Stack | Centralized logging and debugging |
-| Terraform | Infrastructure as Code |
-| AWS / Azure / GCP | Cloud hosting and deployment |
+The project intentionally leaves several implementation choices open while the architecture is being validated.
 
----
+| Layer | Recommended options | Purpose |
+| --- | --- | --- |
+| Frontend | React / Next.js | Responsive dashboard, previews, and sharing experience |
+| Backend | Node.js / JavaScript | APIs, authorization, workflows, and integrations |
+| Application hosting | Vercel / Render | Deploy the frontend, API, and background workers |
+| Database | PostgreSQL / MongoDB Atlas | Users, metadata, verification records, and audit events |
+| Object storage | AWS S3 / Cloudinary / Azure Blob | Durable file storage |
+| Cache | Redis | Sessions, tokens, rate limits, and hot reads |
+| Queue | RabbitMQ / Kafka | Asynchronous processing and event delivery |
+| Containers | Docker | Reproducible local and production environments |
+| Orchestration | Kubernetes | Deployment, scaling, health checks, and resilience |
+| Infrastructure | Terraform | Version-controlled cloud infrastructure |
+| CI/CD | GitHub Actions | Automated testing, builds, scans, and deployments |
+| Observability | Prometheus, Grafana, centralized logs | Metrics, dashboards, alerts, and debugging |
 
-## Suggested Module Design
+### Decision Strategy
 
-| Module | Responsibility |
-| --- | --- |
-| Authentication | Login, signup, JWT/session handling, password reset, role management |
-| User Dashboard | Recent documents, verification status, reminders, quick actions |
-| Document Manager | Upload, rename, tag, delete, preview, and organize documents |
-| Sharing System | Generate links, set permissions, link expiry, revoke access |
-| Verification Engine | Validate document hash, approval status, issuer details, external checks |
-| Audit Trail | Track views, downloads, updates, shares, and verification attempts |
-| Notification Service | Send expiry reminders, access alerts, verification updates |
-| Admin Panel | Manage users, documents, reports, system settings, and suspicious activity |
+Choose the smallest stack that safely supports the current phase:
+
+1. Start with a modular application, one primary database, object storage, Redis, and a job queue.
+2. Deploy the frontend on Vercel and the API or workers on Render for an accessible first production environment.
+3. Add Kubernetes, advanced event streaming, and specialized search only when usage or operational needs justify them.
+4. Record meaningful technology choices and tradeoffs in `docs/decisions/`.
 
 ---
 
-## Development Phases
+## API Blueprint
+
+The first API can stay compact and resource-oriented.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/auth/register` | Create an account |
+| `POST` | `/api/auth/login` | Authenticate a user |
+| `POST` | `/api/documents` | Upload a document and metadata |
+| `GET` | `/api/documents` | Search and list accessible documents |
+| `GET` | `/api/documents/:id` | View document details |
+| `PATCH` | `/api/documents/:id` | Update document metadata |
+| `POST` | `/api/documents/:id/share-links` | Create a protected share link |
+| `DELETE` | `/api/documents/:id/share-links/:linkId` | Revoke a share link |
+| `GET` | `/api/share/:token` | Access a shared document |
+| `POST` | `/api/documents/:id/verifications` | Submit a verification decision |
+| `GET` | `/api/documents/:id/history` | View the document audit history |
+| `GET` | `/api/notifications` | View reminders and alerts |
+
+<details>
+<summary><strong>Example document response</strong></summary>
+
+```json
+{
+  "id": "doc_01J...",
+  "title": "Cloud Security Certificate",
+  "type": "certificate",
+  "status": "verified",
+  "tags": ["cloud", "security"],
+  "ownerId": "usr_01J...",
+  "expiresAt": "2027-06-30T00:00:00Z",
+  "verification": {
+    "status": "verified",
+    "reviewedAt": "2026-06-09T09:30:00Z"
+  }
+}
+```
+
+</details>
+
+---
+
+## Repository Blueprint
+
+```text
+.
+|-- frontend/               # Web application
+|-- backend/                # API and domain logic
+|-- workers/                # Asynchronous jobs
+|-- infrastructure/         # Terraform and Kubernetes manifests
+|-- monitoring/             # Metrics, dashboards, alerts, and logging
+|-- docs/
+|   |-- architecture/       # Architecture documentation
+|   `-- decisions/          # Architecture Decision Records
+|-- tests/                  # Cross-service and end-to-end tests
+|-- docker-compose.yml      # Local service orchestration
+`-- README.md               # Project overview
+```
+
+---
+
+## Delivery Roadmap
 
 ### Phase 1: Foundation
 
-Build the core product skeleton.
+- [ ] Establish frontend, backend, and local development environments
+- [ ] Implement registration, login, authorization, and protected routes
+- [ ] Add secure document upload and basic document listing
+- [ ] Define users, documents, metadata, and audit-event schemas
+- [ ] Run application dependencies with Docker Compose
 
-| Goal | Deliverables |
-| --- | --- |
-| Project setup | Frontend, backend, environment config, folder structure |
-| Authentication | Signup, login, logout, protected routes |
-| Document upload | Basic upload flow and document listing |
-| Database schema | Users, documents, metadata, access logs |
-| Local development | Docker Compose for app, database, cache |
+### Phase 2: Useful Document Management
 
-### Phase 2: Smart Document Management
-
-Make the platform useful for real users.
-
-| Goal | Deliverables |
-| --- | --- |
-| Search | Search by title, type, tags, owner, date, status |
-| Document preview | PDF/image preview, metadata panel |
-| Secure sharing | Link generation, expiry time, permission controls |
-| Access history | View logs for document actions |
-| Expiry reminders | Background job for upcoming expiry alerts |
+- [ ] Add metadata search, tags, filters, and sorting
+- [ ] Build PDF and image previews
+- [ ] Add protected sharing with expiration and revocation
+- [ ] Display document access history
+- [ ] Schedule expiry reminders
 
 ### Phase 3: Verification & Automation
 
-Add trust, workflow, and intelligence.
+- [ ] Implement pending, verified, rejected, and expired states
+- [ ] Add cryptographic integrity and duplicate detection
+- [ ] Build a dedicated verifier workflow
+- [ ] Process OCR, reminders, and notifications through workers
+- [ ] Export audit and verification reports
 
-| Goal | Deliverables |
-| --- | --- |
-| Verification flow | Pending, verified, rejected, expired states |
-| Hash validation | Detect changed or duplicate files |
-| Verifier role | Special dashboard for document reviewers |
-| Background jobs | Queue-based OCR, reminders, notifications |
-| Audit reports | Exportable access and verification reports |
+### Phase 4: Production Readiness
 
-### Phase 4: Cloud, DevOps & Scale
-
-Prepare the platform for production.
-
-| Goal | Deliverables |
-| --- | --- |
-| Containerization | Docker images for frontend, backend, workers |
-| Kubernetes | Deploy scalable app services |
-| Ingress | NGINX routing with HTTPS |
-| CI/CD | GitHub Actions pipeline |
-| Monitoring | Prometheus metrics and Grafana dashboards |
-| Logging | ELK Stack for centralized logs |
-| Infrastructure | Terraform scripts for cloud resources |
+- [ ] Automate tests, builds, security scans, and deployments
+- [ ] Define infrastructure with Terraform
+- [ ] Deploy services with Kubernetes and HTTPS ingress
+- [ ] Add metrics, dashboards, alerts, and centralized logs
+- [ ] Run backup, restore, load, and failure-recovery exercises
 
 ---
 
-## Example User Flow
+## Local Development
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant UI as Web App
-    participant API as Backend API
-    participant DB as Database
-    participant S3 as Cloud Storage
-    participant Worker as Background Worker
-    participant Verifier
-
-    User->>UI: Upload document
-    UI->>API: Send file and metadata
-    API->>S3: Store encrypted file
-    API->>DB: Save document record
-    API->>Worker: Queue verification/reminder tasks
-    Worker->>DB: Update processing status
-    Verifier->>API: Review document
-    API->>DB: Mark verified/rejected
-    User->>UI: Share secure link
-    UI->>API: Create link with expiry
-    API->>DB: Log sharing event
-```
-
----
-
-## Security Goals
-
-| Area | Planned Protection |
-| --- | --- |
-| Authentication | JWT/session security, password hashing, optional MFA |
-| Authorization | Role-based and document-level permissions |
-| File safety | File type validation, size limits, malware scanning option |
-| Link sharing | Expiring links, tokenized access, revocation |
-| Privacy | Encrypted storage and secure metadata handling |
-| Auditing | Immutable-style access logs for sensitive document events |
-| Rate limiting | Redis-backed API protection |
-
----
-
-## Database Ideas
-
-| Entity | Example Fields |
-| --- | --- |
-| User | id, name, email, passwordHash, role, createdAt |
-| Document | id, ownerId, title, type, tags, fileUrl, hash, expiryDate, status |
-| ShareLink | id, documentId, token, permission, expiresAt, maxViews, isRevoked |
-| AccessLog | id, documentId, userId, action, ipAddress, userAgent, timestamp |
-| Verification | id, documentId, verifierId, status, remarks, verifiedAt |
-| Notification | id, userId, documentId, type, message, isRead, createdAt |
-
----
-
-## Local Setup
-
-> This repository currently contains the README and project blueprint. Add the application code as the project moves through the phases.
-
-Suggested future commands:
+The executable application is not yet included. Once Phase 1 lands, the intended setup flow is:
 
 ```bash
-# Clone the repository
-git clone https://github.com/<your-username>/Smart-Document-Management-Verification-Platform.git
-
-# Enter the project
-cd Smart-Document-Management-Verification-Platform
-
-# Start local services when Docker Compose is added
+git clone https://github.com/<your-username>/<repository-name>.git
+cd <repository-name>
+cp .env.example .env
 docker compose up --build
 ```
 
-Suggested environment variables:
+Expected environment configuration:
 
 ```env
 APP_PORT=3000
 API_PORT=5000
 DATABASE_URL=
 REDIS_URL=
-S3_BUCKET_NAME=
-S3_ACCESS_KEY=
-S3_SECRET_KEY=
+OBJECT_STORAGE_BUCKET=
+OBJECT_STORAGE_REGION=
 JWT_SECRET=
 EMAIL_PROVIDER_API_KEY=
 ```
 
+Never commit real credentials. Use a managed secret store in deployed environments.
+
 ---
 
-## API Blueprint
+## Deployment Plan
 
-| Method | Endpoint | Purpose |
+| Component | Initial platform | Scale-up path |
 | --- | --- | --- |
-| POST | `/api/auth/register` | Create user account |
-| POST | `/api/auth/login` | Login user |
-| POST | `/api/documents` | Upload document |
-| GET | `/api/documents` | List and search documents |
-| GET | `/api/documents/:id` | Get document details |
-| POST | `/api/documents/:id/share` | Create secure share link |
-| GET | `/api/share/:token` | Access shared document |
-| POST | `/api/documents/:id/verify` | Verify or reject document |
-| GET | `/api/documents/:id/history` | View access history |
-| GET | `/api/notifications` | View reminders and alerts |
+| Next.js frontend | Vercel | Vercel or containerized deployment |
+| Node.js API | Render Web Service | Kubernetes deployment |
+| Background workers | Render Background Workers | Kubernetes worker deployments |
+| Database | Managed PostgreSQL / MongoDB Atlas | Multi-zone managed database |
+| Files | AWS S3 / compatible object storage | Replicated object storage with lifecycle policies |
+| Cache and jobs | Managed Redis / queue service | Highly available platform services |
+
+Vercel and Render provide a straightforward first deployment path. Kubernetes and Terraform remain the production scale-up strategy when traffic, resilience, or operational requirements justify the added complexity.
 
 ---
 
-## Repository Roadmap
+## Quality Bar
 
-```text
-Smart-Document-Management-Verification-Platform/
-  frontend/              # Web application
-  backend/               # API services
-  workers/               # Background jobs
-  infrastructure/        # Terraform and Kubernetes manifests
-  monitoring/            # Prometheus, Grafana, logging config
-  docs/                  # Architecture and API documentation
-  docker-compose.yml     # Local development orchestration
-  README.md              # Project overview
-```
+The platform is ready for production only when it can demonstrate:
 
----
-
-## Success Metrics
-
-| Metric | Target |
+| Area | Definition of success |
 | --- | --- |
-| Upload reliability | Documents upload without data loss |
-| Search speed | Fast metadata search for large document collections |
-| Verification trust | Clear status and traceable reviewer history |
-| Access transparency | Every sensitive action is logged |
-| Cloud readiness | Deployable through containers and CI/CD |
-| User experience | Simple upload, share, verify, and reminder workflows |
+| Reliability | Uploads are durable, retryable, and protected against partial failure. |
+| Performance | Common searches and document views stay responsive under expected load. |
+| Trust | Every verification decision is attributable and every integrity check is reproducible. |
+| Security | Sensitive operations are authorized, rate-limited, logged, and tested. |
+| Recoverability | Backups are automated and restores are routinely verified. |
+| Accessibility | Core workflows are keyboard-friendly and meet applicable WCAG guidance. |
+| Operability | Failures are visible through actionable logs, metrics, dashboards, and alerts. |
 
 ---
 
-## Why This Project Stands Out
+## Future Possibilities
 
-This platform is not only a file upload app. It is a complete document trust system:
-
-- It stores documents securely.
-- It makes documents easy to find.
-- It verifies document authenticity.
-- It tracks every important action.
-- It reminds users before expiry.
-- It is designed for cloud deployment from the beginning.
+- OCR-powered full-text search for scanned documents
+- Automatic document classification and metadata suggestions
+- QR-based public verification pages
+- Digital signatures and issuer integrations
+- Organization workspaces and delegated administration
+- Configurable retention and legal-hold policies
+- Native mobile capture and verification
+- Tamper-evident external hash registry
 
 ---
 
-## Future Enhancements
+## Contributing
 
-| Enhancement | Value |
+Contributions are welcome as the platform moves from blueprint to implementation.
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Security issues must be reported privately according to [SECURITY.md](SECURITY.md), not through public issues.
+
+---
+
+## Project Status
+
+**Current stage:** Architecture blueprint and implementation planning.
+
+| Artifact | Status |
 | --- | --- |
-| OCR text extraction | Search inside scanned documents |
-| AI document classification | Automatically detect document type |
-| QR verification | Verify documents through QR codes |
-| Blockchain hash registry | Tamper-resistant proof of authenticity |
-| Organization workspace | Team-based document management |
-| Digital signature support | Sign and validate important files |
-| Mobile app | Upload and verify documents from phone |
-
----
-
-## Contribution Guide
-
-Contributions are welcome as the project grows.
-
-Suggested workflow:
-
-```bash
-git checkout -b feature/your-feature-name
-git add .
-git commit -m "Add your feature"
-git push origin feature/your-feature-name
-```
-
-Then open a pull request with:
-
-- Clear feature description
-- Screenshots or API examples if applicable
-- Test notes
-- Any environment changes
+| Product vision | Defined |
+| Feature map | Defined |
+| Cloud architecture | Proposed |
+| Security model | Proposed |
+| Domain model | Proposed |
+| API surface | Proposed |
+| Application implementation | Not started |
+| Production deployment | Not started |
 
 ---
 
 ## License
 
-Add your preferred license before public production use.
-
-Common choices:
-
-| License | Best For |
-| --- | --- |
-| MIT | Open and simple reuse |
-| Apache 2.0 | Open source with patent protection |
-| Private | Academic, internal, or startup prototype |
+Distributed under the [MIT License](LICENSE).
 
 ---
 
-<p align="center">
-  <b>Smart Document Management & Verification Platform</b><br>
-  Secure documents. Verified trust. Cloud-ready scale.
-</p>
+<div align="center">
+
+### Build more than document storage. Build document trust.
+
+**Secure documents | Verifiable history | Controlled sharing | Cloud-ready architecture**
+
+</div>
