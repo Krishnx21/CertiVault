@@ -1,6 +1,6 @@
 <div align="center">
 
-# Smart Document Management & Verification Platform
+# Smart Document Management & Verification Platform (CertiVault)
 
 ### A secure, cloud-native document vault built for trust, traceability, and effortless sharing.
 
