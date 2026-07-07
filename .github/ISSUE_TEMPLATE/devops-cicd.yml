@@ -1,7 +1,7 @@
-name: "🚀 Backend Task"
-description: "Plan API, service, database, or worker work"
-title: "[Backend]: "
-labels: ["backend", "help wanted"]
+name: "🌍 DevOps / CI/CD"
+description: "Improve containers, deployments, automation, or observability"
+title: "[DevOps]: "
+labels: ["devops", "ci-cd"]
 body:
   - type: markdown
     attributes:

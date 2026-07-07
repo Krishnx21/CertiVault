@@ -1,7 +1,7 @@
-name: "🚀 Backend Task"
-description: "Plan API, service, database, or worker work"
-title: "[Backend]: "
-labels: ["backend", "help wanted"]
+name: "🔒 Security Enhancement"
+description: "Improve preventive security controls without disclosing a vulnerability"
+title: "[Security]: "
+labels: ["security", "enhancement"]
 body:
   - type: markdown
     attributes:

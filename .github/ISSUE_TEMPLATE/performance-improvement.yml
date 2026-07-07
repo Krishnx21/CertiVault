@@ -1,7 +1,7 @@
-name: "🚀 Backend Task"
-description: "Plan API, service, database, or worker work"
-title: "[Backend]: "
-labels: ["backend", "help wanted"]
+name: "⚡ Performance Improvement"
+description: "Propose a measurable performance optimization"
+title: "[Performance]: "
+labels: ["performance", "enhancement"]
 body:
   - type: markdown
     attributes:

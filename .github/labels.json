@@ -1,0 +1,112 @@
+[
+  {
+    "name": "ai",
+    "color": "8B5CF6",
+    "description": "AI, OCR, classification, or intelligent search"
+  },
+  {
+    "name": "backend",
+    "color": "0E8A16",
+    "description": "Backend API, services, workers, or database work"
+  },
+  {
+    "name": "bug",
+    "color": "D73A4A",
+    "description": "Something is not working as expected"
+  },
+  {
+    "name": "chore",
+    "color": "EDEDED",
+    "description": "Repository or project maintenance"
+  },
+  {
+    "name": "ci-cd",
+    "color": "1D76DB",
+    "description": "Continuous integration and delivery"
+  },
+  {
+    "name": "cleanup",
+    "color": "C5DEF5",
+    "description": "Dead code, warnings, or small maintenance debt"
+  },
+  {
+    "name": "configuration",
+    "color": "5319E7",
+    "description": "Application or tooling configuration"
+  },
+  {
+    "name": "dependencies",
+    "color": "0366D6",
+    "description": "Dependency updates and package maintenance"
+  },
+  {
+    "name": "devops",
+    "color": "0052CC",
+    "description": "Infrastructure, containers, deployment, and operations"
+  },
+  {
+    "name": "documentation",
+    "color": "0075CA",
+    "description": "Documentation improvements"
+  },
+  {
+    "name": "enhancement",
+    "color": "A2EEEF",
+    "description": "New or improved functionality"
+  },
+  {
+    "name": "epic",
+    "color": "3E4B9E",
+    "description": "Large initiative split into multiple issues"
+  },
+  {
+    "name": "frontend",
+    "color": "D876E3",
+    "description": "React UI, accessibility, and client experience"
+  },
+  {
+    "name": "good first issue",
+    "color": "7057FF",
+    "description": "Approachable task for a first-time contributor"
+  },
+  {
+    "name": "help wanted",
+    "color": "008672",
+    "description": "Maintainers welcome community assistance"
+  },
+  {
+    "name": "maintenance",
+    "color": "FBCA04",
+    "description": "Routine maintenance work"
+  },
+  {
+    "name": "performance",
+    "color": "F9D0C4",
+    "description": "Measurable performance improvement"
+  },
+  {
+    "name": "question",
+    "color": "D876E3",
+    "description": "A focused question that needs clarification"
+  },
+  {
+    "name": "refactor",
+    "color": "C2E0C6",
+    "description": "Internal restructuring without behavior changes"
+  },
+  {
+    "name": "security",
+    "color": "B60205",
+    "description": "Security hardening or private security coordination"
+  },
+  {
+    "name": "testing",
+    "color": "BFDADC",
+    "description": "Test coverage, reliability, or tooling"
+  },
+  {
+    "name": "triage",
+    "color": "FBCA04",
+    "description": "Requires maintainer review and prioritization"
+  }
+]

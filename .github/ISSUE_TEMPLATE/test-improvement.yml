@@ -1,7 +1,7 @@
-name: "🚀 Backend Task"
-description: "Plan API, service, database, or worker work"
-title: "[Backend]: "
-labels: ["backend", "help wanted"]
+name: "🧪 Test Improvement"
+description: "Strengthen automated test coverage or reliability"
+title: "[Testing]: "
+labels: ["testing", "help wanted"]
 body:
   - type: markdown
     attributes:

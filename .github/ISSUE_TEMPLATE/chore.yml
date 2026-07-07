@@ -1,7 +1,7 @@
-name: "🚀 Backend Task"
-description: "Plan API, service, database, or worker work"
-title: "[Backend]: "
-labels: ["backend", "help wanted"]
+name: "📝 Chore"
+description: "Track repository maintenance that does not change product behavior"
+title: "[Chore]: "
+labels: ["chore", "maintenance"]
 body:
   - type: markdown
     attributes:
