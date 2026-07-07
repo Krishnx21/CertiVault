@@ -1,0 +1,23 @@
+name: Validate pull request base
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-base:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require ECSoC integration branch
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if [ "$BASE_BRANCH" = "main" ] && [ "$HEAD_BRANCH" != "ecsoc-2026" ]; then
+            echo "ECSoC contributor pull requests must target ecsoc-2026, not main."
+            exit 1
+          fi
+          echo "Pull request base branch is valid."

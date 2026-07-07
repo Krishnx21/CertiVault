@@ -3,6 +3,8 @@
 These tasks are intentionally small and avoid authentication, authorization,
 document storage, and other security-critical behavior. Contributors should
 comment on an issue and wait for assignment before opening a pull request.
+All ECSoC pull requests must use `ecsoc-2026` as their base branch; do not target
+`main` directly.
 
 Use the labels `good first issue`, `backend`, and `ECSoC 2026` when publishing
 these drafts as GitHub issues.
