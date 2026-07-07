@@ -3,9 +3,26 @@
 These tasks are intentionally small and avoid authentication, authorization,
 document storage, and other security-critical behavior. Contributors should
 comment on an issue and wait for assignment before opening a pull request.
+All ECSoC pull requests must use `ecsoc-2026` as their base branch; do not target
+`main` directly.
 
 Use the labels `good first issue`, `backend`, and `ECSoC 2026` when publishing
 these drafts as GitHub issues.
+
+## Copy-ready issue files
+
+Create these GitHub issues in order:
+
+1. [API version in health responses](01-api-version-health.md)
+2. [Uptime in the liveness endpoint](02-liveness-uptime.md)
+3. [Strict API port validation](03-api-port-validation.md)
+4. [Response-time header](04-response-time-header.md)
+5. [Root API information endpoint](05-api-info-endpoint.md)
+6. [Request-ID validation tests](06-request-id-tests.md)
+7. [Malformed JSON error coverage](07-json-error-coverage.md)
+8. [Graceful-shutdown tests](08-graceful-shutdown-tests.md)
+9. [Backend format check](09-backend-format-check.md)
+10. [Backend troubleshooting guide](10-backend-troubleshooting.md)
 
 ## 1. Add API version information to the health response
 

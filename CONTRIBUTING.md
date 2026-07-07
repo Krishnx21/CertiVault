@@ -16,18 +16,23 @@ is participating in **Elite Coders Summer of Code (ECSoC) 2026**, and
 
 1. Fork the repository and clone your fork.
 2. Add the main repository as the `upstream` remote.
-3. Create a focused branch from the latest `main` branch.
+3. Create a focused branch from the latest `ecsoc-2026` branch.
 4. Make a small, reviewable change with relevant tests and documentation.
 5. Run the available checks locally.
-6. Push the branch to your fork and open a pull request against `main`.
+6. Push the branch to your fork and open a pull request against `ecsoc-2026`.
 
 ```bash
 git clone https://github.com/YOUR-USERNAME/CertiVault.git
 cd CertiVault
 git remote add upstream https://github.com/Krishnx21/CertiVault.git
 git fetch upstream
-git switch -c feature/short-description upstream/main
+git switch -c feature/short-description upstream/ecsoc-2026
 ```
+
+> [!IMPORTANT]
+> ECSoC contributor pull requests must target `ecsoc-2026`, not `main`.
+> Maintainers periodically promote reviewed and stable work from `ecsoc-2026`
+> into `main` through a release pull request.
 
 Use descriptive branch names such as `feature/document-search`,
 `fix/upload-validation`, or `docs/security-guide`.
