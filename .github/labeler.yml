@@ -1,0 +1,59 @@
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - backend/**
+          - workers/**
+api:
+  - changed-files:
+      - any-glob-to-any-file:
+          - backend/src/**/*.js
+          - backend/tests/**
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - frontend/**
+ui:
+  - changed-files:
+      - any-glob-to-any-file:
+          - frontend/src/**/*.jsx
+          - frontend/src/**/*.css
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+          - "*.md"
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - SECURITY.md
+          - backend/src/middleware/**
+          - .github/ISSUE_TEMPLATE/vulnerability-report.yml
+testing:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/tests/**"
+          - "**/*.test.js"
+devops:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+          - infrastructure/**
+          - monitoring/**
+          - docker/**
+docker:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/Dockerfile"
+          - "**/Dockerfile.*"
+          - docker-compose*.yml
+database:
+  - changed-files:
+      - any-glob-to-any-file:
+          - backend/src/**/*store*.js
+          - backend/src/**/*db*.js
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/package.json"
+          - "**/package-lock.json"
+          - .github/dependabot.yml

@@ -1,0 +1,74 @@
+name: Quality gates
+
+on:
+  pull_request:
+    branches: [main, ecsoc-2026]
+  push:
+    branches: [main, ecsoc-2026]
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  markdown:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v17
+        with:
+          globs: "**/*.md"
+
+  yaml:
+    name: YAML validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: .github
+          config_data: |
+            extends: default
+            rules:
+              line-length: disable
+              truthy: disable
+
+  links:
+    name: Link checker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: --verbose --no-progress "**/*.md"
+          fail: true
+
+  issue-templates:
+    name: Validate issue templates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const cp = require("child_process");
+            const files = fs.readdirSync(".github/ISSUE_TEMPLATE")
+              .filter((file) => file.endsWith(".yml") || file.endsWith(".yaml"));
+            for (const file of files) {
+              cp.execFileSync("ruby", ["-e", `require 'yaml'; YAML.load_file('.github/ISSUE_TEMPLATE/${file}')`], {stdio: "inherit"});
+              core.info(`Valid issue template: ${file}`);
+            }
+
+  license:
+    name: License checker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure required license files exist
+        run: |
+          test -f LICENSE
+          test -f SECURITY.md
+          test -f CODE_OF_CONDUCT.md
+          test -f CONTRIBUTING.md
