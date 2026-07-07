@@ -445,26 +445,31 @@ The first API can stay compact and resource-oriented.
 
 ## Local Development
 
-The executable application is not yet included. Once Phase 1 lands, the intended setup flow is:
+The repository now includes a runnable React dashboard and Express API MVP.
+Use two terminals from the repository root:
 
 ```bash
-git clone https://github.com/<your-username>/<repository-name>.git
-cd <repository-name>
-cp .env.example .env
-docker compose up --build
+# Terminal 1: API at http://localhost:5000
+cd backend
+npm install
+npm run dev
+
+# Terminal 2: dashboard at http://localhost:5173
+cd frontend
+npm install
+npm run dev
 ```
 
-Expected environment configuration:
+The starter environment configuration is documented in `backend/.env.example`
+and `frontend/.env.example`. The current in-memory MVP demonstrates document
+upload, checksum generation, listing, filtering, verification, deletion, and
+dashboard metrics. Persistent MongoDB and S3 storage remain roadmap work.
 
-```env
-APP_PORT=3000
-API_PORT=5000
-DATABASE_URL=
-REDIS_URL=
-OBJECT_STORAGE_BUCKET=
-OBJECT_STORAGE_REGION=
-JWT_SECRET=
-EMAIL_PROVIDER_API_KEY=
+Run the available checks with:
+
+```bash
+cd backend && npm test
+cd frontend && npm run build
 ```
 
 Never commit real credentials. Use a managed secret store in deployed environments.
