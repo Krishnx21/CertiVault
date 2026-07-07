@@ -1,0 +1,39 @@
+name: Issue labeler
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const text = `${issue.title}\n${issue.body || ""}`.toLowerCase();
+            const rules = [
+              ["security", ["security", "vulnerability", "auth", "token", "secret"]],
+              ["backend", ["backend", "api", "express", "server"]],
+              ["frontend", ["frontend", "react", "ui", "browser"]],
+              ["documentation", ["docs", "readme", "documentation"]],
+              ["testing", ["test", "coverage", "fixture"]],
+              ["performance", ["performance", "latency", "slow", "memory"]],
+              ["dependencies", ["dependency", "dependencies", "package", "npm"]],
+              ["devops", ["ci", "cd", "workflow", "deployment", "docker"]]
+            ];
+            const labels = new Set(["triage"]);
+            for (const [label, keywords] of rules) {
+              if (keywords.some((word) => text.includes(word))) labels.add(label);
+            }
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: [...labels]
+            });
