@@ -12,6 +12,7 @@ Upload once. Find instantly. Verify confidently. Share safely. Track everything.
 [![Security First](https://img.shields.io/badge/security-first-DC2626?style=for-the-badge)](#security-by-design)
 [![Cloud Native](https://img.shields.io/badge/cloud-native-0F766E?style=for-the-badge)](#cloud-architecture)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-7C3AED?style=for-the-badge)](#contributing)
+[![ECSoC 2026](https://img.shields.io/badge/ECSoC-2026-FF7A00?style=for-the-badge)](https://summerofcode.xyz)
 [![MIT License](https://img.shields.io/badge/license-MIT-F59E0B?style=for-the-badge)](LICENSE)
 
 <br />
@@ -518,9 +519,17 @@ The platform is ready for production only when it can demonstrate:
 
 Contributions are welcome as the platform moves from blueprint to implementation.
 
+CertiVault is participating in **Elite Coders Summer of Code (ECSoC) 2026**, with
+[Krishna Kumar](https://github.com/Krishnx21) serving as the **Project Admin**.
+ECSoC contributors and first-time open-source contributors are warmly encouraged
+to explore the roadmap, discuss an issue, and submit focused pull requests.
+
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 Security issues must be reported privately according to [SECURITY.md](SECURITY.md), not through public issues.
+
+If this project is useful to you, please **[star CertiVault](https://github.com/Krishnx21/CertiVault)**
+and **[follow the Project Admin](https://github.com/Krishnx21)** for updates.
 
 ---
 
