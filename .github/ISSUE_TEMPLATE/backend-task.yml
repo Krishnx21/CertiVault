@@ -1,0 +1,44 @@
+name: Backend task
+description: Propose or claim a focused CertiVault backend contribution
+title: "[Backend]: "
+labels: ["backend", "good first issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for contributing to CertiVault under ECSoC 2026. Search existing issues and wait for assignment before starting work.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Task summary
+      description: Describe the focused backend change.
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Proposed approach
+      description: Which files or modules should change?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Behavior is implemented
+        - [ ] Tests are added or updated
+        - [ ] Documentation is updated if needed
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Contributor checklist
+      options:
+        - label: I searched for duplicate issues.
+          required: true
+        - label: I will not include secrets or credentials.
+          required: true
+        - label: I will wait for assignment before opening a pull request.
+          required: true
