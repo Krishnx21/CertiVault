@@ -1,7 +1,7 @@
-name: "🚀 Backend Task"
-description: "Plan API, service, database, or worker work"
-title: "[Backend]: "
-labels: ["backend", "help wanted"]
+name: "💡 Enhancement"
+description: "Improve an existing CertiVault capability"
+title: "[Enhancement]: "
+labels: ["enhancement", "help wanted"]
 body:
   - type: markdown
     attributes:

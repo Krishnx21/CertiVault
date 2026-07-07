@@ -1,0 +1,32 @@
+name: Stale bot
+
+on:
+  schedule:
+    - cron: "35 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: |
+            This issue has been inactive for a while. It will close automatically if there is no new activity. Comment with updated context if it is still relevant.
+          stale-pr-message: |
+            This pull request has been inactive for a while. Please rebase, respond to review, or explain what is still needed.
+          close-issue-message: |
+            Closing as stale. Please open a fresh issue with current reproduction details if this is still needed.
+          close-pr-message: |
+            Closing as stale. You are welcome to reopen or submit a fresh pull request when ready.
+          days-before-stale: 30
+          days-before-close: 14
+          stale-issue-label: stale
+          stale-pr-label: stale
+          exempt-issue-labels: high priority,security,epic,blocked
+          exempt-pr-labels: high priority,security,blocked

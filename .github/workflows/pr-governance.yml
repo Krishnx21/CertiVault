@@ -1,0 +1,81 @@
+name: Pull request governance
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+    branches: [main, ecsoc-2026]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  conventional-title:
+    name: Conventional PR title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+
+  branch-name:
+    name: Branch name validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.payload.pull_request.head.ref;
+            const allowed = /^(feature|feat|fix|docs|test|chore|refactor|backend|frontend|devops|security|dependabot)\/[a-z0-9][a-z0-9-]*$/;
+            if (branch.startsWith("dependabot/")) return;
+            if (!allowed.test(branch)) {
+              core.setFailed(`Branch "${branch}" must look like feature/short-name, fix/short-name, docs/short-name, backend/short-name, etc.`);
+            }
+
+  base-branch:
+    name: Validate PR base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (pr.base.ref === "main" && pr.user.login !== context.repo.owner) {
+              core.warning("Routine contributor PRs should target ecsoc-2026. Maintainers may override for releases.");
+            }
+
+  size-label:
+    name: PR size label
+    runs-on: ubuntu-latest
+    steps:
+      - uses: codelytv/pr-size-labeler@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: size/xs
+          s_label: size/s
+          m_label: size/m
+          l_label: size/l
+          xl_label: size/xl
+
+  auto-assign:
+    name: Auto assign and request review
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: kentaro-m/auto-assign-action@v2.0.0
+        with:
+          configuration-path: .github/auto_assign.yml

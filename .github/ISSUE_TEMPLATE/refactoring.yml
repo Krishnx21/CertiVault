@@ -1,7 +1,7 @@
-name: "🚀 Backend Task"
-description: "Plan API, service, database, or worker work"
-title: "[Backend]: "
-labels: ["backend", "help wanted"]
+name: "🛠 Refactoring"
+description: "Improve internal structure without changing behavior"
+title: "[Refactor]: "
+labels: ["refactor", "help wanted"]
 body:
   - type: markdown
     attributes:

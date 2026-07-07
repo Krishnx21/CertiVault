@@ -1,0 +1,17 @@
+title: "[Idea]: "
+labels: ["discussion", "enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: Describe the improvement or product direction.
+    validations:
+      required: true
+  - type: textarea
+    id: value
+    attributes:
+      label: User value
+      description: Who benefits, and how?
+    validations:
+      required: true

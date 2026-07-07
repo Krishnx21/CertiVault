@@ -1,7 +1,7 @@
-name: "🚀 Backend Task"
-description: "Plan API, service, database, or worker work"
-title: "[Backend]: "
-labels: ["backend", "help wanted"]
+name: "🤖 AI Feature"
+description: "Propose responsible AI, OCR, search, or classification functionality"
+title: "[AI]: "
+labels: ["ai", "enhancement"]
 body:
   - type: markdown
     attributes:

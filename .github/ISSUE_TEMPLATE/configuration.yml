@@ -1,7 +1,7 @@
-name: "🚀 Backend Task"
-description: "Plan API, service, database, or worker work"
-title: "[Backend]: "
-labels: ["backend", "help wanted"]
+name: "⚙️ Configuration"
+description: "Improve application, environment, or tooling configuration"
+title: "[Config]: "
+labels: ["configuration", "maintenance"]
 body:
   - type: markdown
     attributes:

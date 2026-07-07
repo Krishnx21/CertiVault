@@ -1,0 +1,10 @@
+title: "[Announcement]: "
+labels: ["discussion"]
+body:
+  - type: textarea
+    id: announcement
+    attributes:
+      label: Announcement
+      description: Share the update clearly and include any action needed.
+    validations:
+      required: true

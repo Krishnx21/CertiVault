@@ -1,0 +1,22 @@
+# CertiVault code ownership
+#
+# Replace @Krishnx21 with GitHub teams as the project grows, for example:
+# @certivault/backend-maintainers or @certivault/security.
+
+* @Krishnx21
+
+/backend/ @Krishnx21
+/backend/src/modules/documents/ @Krishnx21
+/backend/src/middleware/ @Krishnx21
+
+/frontend/ @Krishnx21
+
+/docs/ @Krishnx21
+*.md @Krishnx21
+
+/.github/ @Krishnx21
+/.github/workflows/ @Krishnx21
+/.github/dependabot.yml @Krishnx21
+
+/SECURITY.md @Krishnx21
+/.github/ISSUE_TEMPLATE/vulnerability-report.yml @Krishnx21

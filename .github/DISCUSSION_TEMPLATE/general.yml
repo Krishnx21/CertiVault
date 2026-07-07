@@ -1,0 +1,17 @@
+title: "[General]: "
+labels: ["discussion"]
+body:
+  - type: textarea
+    id: topic
+    attributes:
+      label: Discussion topic
+      description: What would you like the community to discuss?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Add background, links, screenshots, or constraints.
+    validations:
+      required: true

@@ -1,0 +1,396 @@
+# CertiVault — Step-by-Step Build Roadmap
+
+331 small steps, in order, from empty repo to a deployed, monitored, production-style platform — based on your CertiVault README.
+
+**How to use this:**
+- Work straight down the list. Don't skip ahead — each phase depends on the one before it.
+- Check items off (`- [ ]` → `- [x]`) as you finish them so you always know exactly where you left off.
+- Phases 24 and 25 (Terraform/Kubernetes and Kafka) are optional deep-dives. Skip them for your MVP/internship-ready version and come back once the core product works.
+- Assumed stack: Node.js + Express, MongoDB + Mongoose, AWS S3, Redis + BullMQ, React (Vite), Docker, NGINX, GitHub Actions, Prometheus + Grafana.
+
+---
+
+## Phase 1: Project & Repo Setup (1–20)
+1. [ ] Create a new GitHub repository named `certivault`.
+2. [ ] Clone it to your local machine and open it in your editor.
+3. [ ] Add a `.gitignore` covering `node_modules`, `.env`, build folders, and OS files.
+4. [ ] Create the top-level folders: `frontend/`, `backend/`, `workers/`, `infrastructure/`, `monitoring/`, `docs/`, `tests/`.
+5. [ ] Inside `docs/`, create `architecture/` and `decisions/` subfolders.
+6. [ ] Add a `LICENSE` file with the MIT license text.
+7. [ ] Add a `CONTRIBUTING.md` with basic contribution guidelines.
+8. [ ] Add a `CODE_OF_CONDUCT.md`.
+9. [ ] Add a `SECURITY.md` describing how to report vulnerabilities privately.
+10. [ ] Create a `.env.example` listing every environment variable you'll eventually need.
+11. [ ] Inside `backend/`, run `npm init -y` to create `package.json`.
+12. [ ] Install `express`, `dotenv`, `cors`, `morgan`, and `helmet`.
+13. [ ] Create the folder `backend/src`.
+14. [ ] Create `backend/src/app.js` to hold the Express app instance and middleware.
+15. [ ] Create `backend/src/server.js` as the entry point that starts the HTTP server.
+16. [ ] Add a `GET /health` route that returns `{ status: "ok" }`.
+17. [ ] Add `nodemon` as a dev dependency and a `dev` script in `package.json`.
+18. [ ] Run the server locally and confirm `/health` responds in the browser.
+19. [ ] Test the `/health` route in Postman or Thunder Client.
+20. [ ] Commit and push this initial setup.
+
+## Phase 2: Backend Structure & Database Connection (21–38)
+21. [ ] Create `backend/src/routes/`.
+22. [ ] Create `backend/src/controllers/`.
+23. [ ] Create `backend/src/models/`.
+24. [ ] Create `backend/src/middleware/`.
+25. [ ] Create `backend/src/utils/`.
+26. [ ] Create `backend/src/config/`.
+27. [ ] Create `backend/src/config/constants.js` for role names and status enums.
+28. [ ] Create a free MongoDB Atlas cluster for CertiVault.
+29. [ ] Whitelist your IP (or `0.0.0.0/0` for development) in Atlas network access.
+30. [ ] Copy the connection string into `.env` as `MONGODB_URI`.
+31. [ ] Install `mongoose`.
+32. [ ] Create `backend/src/config/db.js` with a `connectDB()` function.
+33. [ ] Call `connectDB()` from `server.js` before the server starts listening.
+34. [ ] Log a clear success message once the database connects.
+35. [ ] Add error handling that logs and exits the process if the connection fails.
+36. [ ] Restart the server and confirm the "MongoDB connected" message appears.
+37. [ ] Add `express.json()`, `cors()`, `helmet()`, and `morgan("dev")` to `app.js`.
+38. [ ] Create and wire in a centralized error-handling middleware as the last middleware in the stack.
+
+## Phase 3: User Model & Registration (39–56)
+39. [ ] Create `backend/src/models/User.js`.
+40. [ ] Add fields: `username`, `email`, `password`, `role`, with timestamps enabled.
+41. [ ] Set `role` as an enum (`user`, `verifier`, `admin`) defaulting to `user`.
+42. [ ] Make `email` unique and required, with basic format validation.
+43. [ ] Install `bcryptjs`.
+44. [ ] Add a pre-save hook that hashes the password whenever it's created or changed.
+45. [ ] Add a `comparePassword` instance method to the User model.
+46. [ ] Create `backend/src/routes/authRoutes.js`.
+47. [ ] Create `backend/src/controllers/authController.js`.
+48. [ ] Add a `POST /api/auth/register` route.
+49. [ ] In the controller, destructure `username`, `email`, and `password` from `req.body`.
+50. [ ] Validate that none of the required fields are missing or empty.
+51. [ ] Check whether a user with that email already exists.
+52. [ ] Return a `409` error with a clear message if a duplicate is found.
+53. [ ] Create the new user using the User model.
+54. [ ] Return the created user's public fields (never the password) with a `201` status.
+55. [ ] Register `authRoutes` in `app.js` under `/api/auth`.
+56. [ ] Test registration in Postman with a valid payload, a duplicate email, and missing fields.
+
+## Phase 4: Login & JWT Authentication (57–74)
+57. [ ] Add a `POST /api/auth/login` route.
+58. [ ] In the login controller, find the user by email.
+59. [ ] Return a `401` if no matching user is found.
+60. [ ] Compare the provided password against the stored hash.
+61. [ ] Return a `401` if the password doesn't match.
+62. [ ] Install `jsonwebtoken`.
+63. [ ] Add `JWT_SECRET` and `JWT_EXPIRES_IN` to `.env`.
+64. [ ] Create `backend/src/utils/generateToken.js`.
+65. [ ] Generate a token containing the user's `id` and `role`.
+66. [ ] Return the token and basic user info on a successful login.
+67. [ ] Test login with correct and incorrect credentials.
+68. [ ] Create `backend/src/middleware/authMiddleware.js`.
+69. [ ] Read the token from the `Authorization: Bearer` header.
+70. [ ] Verify the token with `JWT_SECRET` and attach the payload to `req.user`.
+71. [ ] Return a `401` for missing, malformed, or expired tokens.
+72. [ ] Create a temporary test route protected by `authMiddleware`.
+73. [ ] Test that route with a valid token.
+74. [ ] Test that route with an invalid token and with no token at all.
+
+## Phase 5: Roles & Access Control (75–84)
+75. [ ] Create `backend/src/middleware/roleMiddleware.js`.
+76. [ ] Build a `requireRole(...roles)` function that checks `req.user.role`.
+77. [ ] Return a `403` error if the user's role isn't in the allowed list.
+78. [ ] Apply `requireRole("admin")` to a sample admin-only test route.
+79. [ ] Apply `requireRole("admin", "verifier")` to a sample verification test route.
+80. [ ] Test that a `user` role is correctly blocked from both routes.
+81. [ ] Promote a test account to `admin` (a one-off script or manual database edit) for testing.
+82. [ ] Document the three roles and their permissions inside `docs/`.
+83. [ ] Add `express-validator` (or `zod`) and apply validation rules to register/login.
+84. [ ] Commit the authentication and role system.
+
+## Phase 6: Document Model (85–95)
+85. [ ] Create `backend/src/models/Document.js`.
+86. [ ] Add `title`, `description`, `tags` (array), and `documentType`.
+87. [ ] Add an `owner` field referencing the User model.
+88. [ ] Add `fileUrl` and `fileKey` (the S3 object key).
+89. [ ] Add `fileHash` for integrity checking.
+90. [ ] Add `status` with enum `pending`, `verified`, `rejected`, `expired`, defaulting to `pending`.
+91. [ ] Add an optional, nullable `expiryDate`.
+92. [ ] Add `verifiedBy` and `verificationNote`.
+93. [ ] Enable Mongoose timestamps for `createdAt`/`updatedAt`.
+94. [ ] Create `backend/src/routes/documentRoutes.js` and `backend/src/controllers/documentController.js`.
+95. [ ] Register `documentRoutes` in `app.js` under `/api/documents`.
+
+## Phase 7: File Upload to AWS S3 (96–116)
+96. [ ] Install `multer`.
+97. [ ] Create `backend/src/middleware/uploadMiddleware.js` using `multer.memoryStorage()`.
+98. [ ] Add a file-type allowlist (PDF, JPG, PNG, DOCX).
+99. [ ] Add a maximum file size limit, e.g. 10MB.
+100. [ ] Test rejecting a disallowed file type and an oversized file.
+101. [ ] Create an AWS account if you don't already have one.
+102. [ ] Create an IAM user scoped to S3 access only.
+103. [ ] Generate and securely store the IAM user's access key and secret.
+104. [ ] Create an S3 bucket, e.g. `certivault-documents`.
+105. [ ] Block public access on the bucket by default.
+106. [ ] Install `@aws-sdk/client-s3`.
+107. [ ] Add `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_BUCKET_NAME` to `.env`.
+108. [ ] Create `backend/src/utils/s3Service.js` with `uploadFile()` and `deleteFile()` functions.
+109. [ ] Add a `getSignedUrl()` helper for previewing private files.
+110. [ ] Create the `POST /api/documents` upload route using the upload middleware.
+111. [ ] In the controller, upload the file buffer to S3 and capture the resulting key/URL.
+112. [ ] Compute a SHA-256 hash of the file buffer using Node's built-in `crypto` module.
+113. [ ] Save the hash, S3 key/URL, and metadata into a new Document record.
+114. [ ] Check for an existing document with the same hash and owner to flag duplicates.
+115. [ ] Return the created document in the response.
+116. [ ] Test the full upload flow end-to-end and confirm the file lands in the S3 bucket.
+
+## Phase 8: Document Retrieval, Update, Delete & Search (117–131)
+117. [ ] Create `GET /api/documents` to list the logged-in user's documents.
+118. [ ] Add pagination via `page` and `limit` query parameters.
+119. [ ] Add sorting by `createdAt` or `title`.
+120. [ ] Create `GET /api/documents/:id` for a single document, checking owner/role access.
+121. [ ] Create `PATCH /api/documents/:id` for title, description, tags, and expiry date.
+122. [ ] Block status changes through this route (status only changes via verification).
+123. [ ] Create `DELETE /api/documents/:id` that removes the file from S3 then the record from MongoDB.
+124. [ ] Add an ownership/role check before allowing update or delete.
+125. [ ] Test update and delete with both the correct owner and a different user.
+126. [ ] Add search by title using a case-insensitive regex or text index.
+127. [ ] Add filtering by `documentType` and `status`.
+128. [ ] Add filtering by tag.
+129. [ ] Test search, filter, and pagination together.
+130. [ ] Add an index on commonly filtered fields for performance.
+131. [ ] Commit the document CRUD and search system.
+
+## Phase 9: Verification Workflow (132–145)
+132. [ ] Create `POST /api/documents/:id/verifications`.
+133. [ ] Restrict the route to `verifier` and `admin` roles.
+134. [ ] Accept a `decision` (`verified` or `rejected`) and an optional `note`.
+135. [ ] Update the document's `status`, `verifiedBy`, and a `verifiedAt` timestamp.
+136. [ ] Decide and document how re-review of an already-decided document is handled.
+137. [ ] Add a scheduled check (or check-on-read) that marks documents `expired` once `expiryDate` passes.
+138. [ ] Test approving a pending document as a verifier.
+139. [ ] Test rejecting a document with a note attached.
+140. [ ] Test that a normal `user` cannot call the verification endpoint.
+141. [ ] Create `GET /api/documents/pending` for the verifier review queue.
+142. [ ] Add pagination to the pending queue.
+143. [ ] Add a simple pending-count stat for a dashboard widget.
+144. [ ] Write the full verification state diagram into `docs/architecture/`.
+145. [ ] Commit the verification workflow.
+
+## Phase 10: Audit Logging (146–158)
+146. [ ] Create `backend/src/models/AuditLog.js` with `user`, `action`, `documentId`, `metadata`, `createdAt`.
+147. [ ] Create `backend/src/utils/auditService.js` with a `logEvent()` helper.
+148. [ ] Call `logEvent()` after a successful upload.
+149. [ ] Call `logEvent()` after a document view/download.
+150. [ ] Call `logEvent()` after a delete.
+151. [ ] Call `logEvent()` after a verification decision.
+152. [ ] Call `logEvent()` after login.
+153. [ ] Create `GET /api/documents/:id/history`, restricted to owner/verifier/admin.
+154. [ ] Add pagination to the history endpoint.
+155. [ ] Test that uploading, viewing, and deleting all produce audit entries.
+156. [ ] Test that history returns entries in chronological order.
+157. [ ] Add an index on `documentId` and `createdAt` for faster history queries.
+158. [ ] Commit the audit logging system.
+
+## Phase 11: Share Links (159–174)
+159. [ ] Create `backend/src/models/ShareLink.js`.
+160. [ ] Add `token`, `documentId`, `createdBy`, `expiresAt`, `permission`, `viewLimit`, `viewCount`, `revoked`.
+161. [ ] Install `nanoid` (or use `crypto.randomBytes`) for high-entropy tokens.
+162. [ ] Create `POST /api/documents/:id/share-links`.
+163. [ ] Accept `expiresAt`, `permission`, and `viewLimit` in the request.
+164. [ ] Generate the token and save the ShareLink record.
+165. [ ] Return the shareable URL (e.g. `/share/:token`) to the owner.
+166. [ ] Create a public `GET /api/share/:token` route, no auth required.
+167. [ ] Reject access if the link is revoked, expired, or has hit its view limit.
+168. [ ] Increment `viewCount` on each successful access.
+169. [ ] Log a `share-view` audit event.
+170. [ ] Return the document or a download URL depending on `permission`.
+171. [ ] Create `DELETE /api/documents/:id/share-links/:linkId` to revoke a link.
+172. [ ] Test creating and exhausting a link's view limit.
+173. [ ] Test that an expired link is correctly rejected.
+174. [ ] Test revoking a link and confirm it stops working immediately.
+
+## Phase 12: Redis Caching & Rate Limiting (175–186)
+175. [ ] Set up Redis locally with Docker, or create a free Redis Cloud instance.
+176. [ ] Install `ioredis` and create `backend/src/config/redisClient.js`.
+177. [ ] Add `REDIS_URL` to `.env`.
+178. [ ] Cache `GET /api/documents` results per user for a short TTL.
+179. [ ] Cache `GET /api/documents/:id` results.
+180. [ ] Invalidate the relevant cache keys on update or delete.
+181. [ ] Install `express-rate-limit` with a Redis store.
+182. [ ] Apply rate limiting to `/api/auth/login` and `/api/auth/register`.
+183. [ ] Apply a lighter rate limit to the public `/api/share/:token` route.
+184. [ ] Test that exceeding the limit returns a `429`.
+185. [ ] Test that cached responses are noticeably faster on repeat requests.
+186. [ ] Commit the Redis integration.
+
+## Phase 13: Background Jobs with BullMQ (187–200)
+187. [ ] Install `bullmq` and create a `workers/` project with its own `package.json`.
+188. [ ] Create a shared Redis connection config used by both the API and the workers.
+189. [ ] Create a `reminderQueue` for expiry reminders.
+190. [ ] Create a `notificationQueue` for verification and share notifications.
+191. [ ] Create `workers/reminderWorker.js` to process reminder jobs.
+192. [ ] Create `workers/notificationWorker.js` to process notification jobs.
+193. [ ] Add a delayed reminder job a few days before a document's `expiryDate`.
+194. [ ] Add a notification job whenever a verification decision is made.
+195. [ ] Configure a retry policy (e.g. 3 attempts with backoff) for failed jobs.
+196. [ ] Add logging for job start, success, and failure.
+197. [ ] Run the worker process separately from the API server.
+198. [ ] Test that a reminder job fires at the right time using a short test delay.
+199. [ ] Test that a failing job retries and eventually logs a clear failure.
+200. [ ] Commit the background job system.
+
+## Phase 14: Notifications & Email (201–209)
+201. [ ] Install `nodemailer`.
+202. [ ] Create a free Mailtrap or Ethereal account for development email testing.
+203. [ ] Add `EMAIL_HOST`, `EMAIL_USER`, `EMAIL_PASS` to `.env`.
+204. [ ] Create `backend/src/utils/emailService.js` with a `sendEmail()` function.
+205. [ ] Create email templates for "document verified," "document rejected," and "expiring soon."
+206. [ ] Wire `sendEmail()` into the notification worker.
+207. [ ] Create a lightweight Notification model (or filter AuditLog) for `GET /api/notifications`.
+208. [ ] Trigger notifications on verification decisions and upcoming expiries.
+209. [ ] Test that emails actually arrive in Mailtrap for each scenario.
+
+## Phase 15: Frontend Setup (210–218)
+210. [ ] Create the frontend app inside `frontend/` (Vite + React is a fast, simple choice).
+211. [ ] Install and configure Tailwind CSS (or your preferred styling approach).
+212. [ ] Install `axios` and `react-router-dom`.
+213. [ ] Create `frontend/src/api/axiosClient.js` with the backend's base URL from an env variable.
+214. [ ] Create `frontend/.env` with `VITE_API_URL`.
+215. [ ] Create an `AuthContext` holding the current user and token in memory.
+216. [ ] Build a basic layout: header, sidebar, content area.
+217. [ ] Set up routes for `/login`, `/register`, `/dashboard`, `/documents/:id`, `/share/:token`.
+218. [ ] Create a `ProtectedRoute` wrapper redirecting unauthenticated users to `/login`.
+
+## Phase 16: Frontend Auth Pages (219–227)
+219. [ ] Build the Login page form (email, password).
+220. [ ] Connect it to `POST /api/auth/login` and store the result in `AuthContext`.
+221. [ ] Redirect to `/dashboard` after a successful login.
+222. [ ] Build the Register page form (username, email, password).
+223. [ ] Connect it to `POST /api/auth/register` with clear error messages on failure.
+224. [ ] Add a Logout button that clears `AuthContext` and redirects to `/login`.
+225. [ ] Add an axios interceptor that attaches the token to every outgoing request.
+226. [ ] Add an axios interceptor that logs the user out automatically on a `401`.
+227. [ ] Manually test the full register → login → logout flow in the browser.
+
+## Phase 17: Frontend Dashboard & Document Management (228–241)
+228. [ ] Build the Dashboard page with summary stats (total, pending, verified documents).
+229. [ ] Build "My Documents," connected to `GET /api/documents`.
+230. [ ] Add a search input wired to the backend search query.
+231. [ ] Add filter dropdowns for status and document type.
+232. [ ] Add pagination controls.
+233. [ ] Build the Upload page with a drag-and-drop file input.
+234. [ ] Add title, description, tags, and expiry-date fields to the upload form.
+235. [ ] Connect uploads to `POST /api/documents` with `multipart/form-data`.
+236. [ ] Show an upload progress indicator.
+237. [ ] Build the Document Detail page with metadata and a PDF/image preview.
+238. [ ] Add an Edit form wired to `PATCH /api/documents/:id`.
+239. [ ] Add a Delete button with a confirmation modal, wired to `DELETE /api/documents/:id`.
+240. [ ] Refresh the document list after edits or deletes.
+241. [ ] Add a History tab on the Detail page wired to `GET /api/documents/:id/history`.
+
+## Phase 18: Frontend Sharing & Verification UI (242–253)
+242. [ ] Add a "Share" button on the Document Detail page.
+243. [ ] Build a Share modal with expiry, permission, and view-limit inputs.
+244. [ ] Connect it to `POST /api/documents/:id/share-links`.
+245. [ ] Show the generated link with a copy-to-clipboard button.
+246. [ ] List existing share links with a Revoke action.
+247. [ ] Build the public `/share/:token` page calling `GET /api/share/:token`.
+248. [ ] Handle expired, revoked, and limit-reached states gracefully on that page.
+249. [ ] Build a Verifier Dashboard listing documents with `status: pending`.
+250. [ ] Add Approve/Reject buttons with a note input, wired to the verification endpoint.
+251. [ ] Refresh the queue automatically after a decision is made.
+252. [ ] Build a simple Notifications page listing recent alerts.
+253. [ ] Add role-based navigation so verifier/admin links only show for those roles.
+
+## Phase 19: Testing (254–264)
+254. [ ] Install Jest (or Vitest) and Supertest for the backend.
+255. [ ] Write unit tests for password hashing and token generation/verification.
+256. [ ] Write integration tests for register and login.
+257. [ ] Write an integration test covering upload through verification.
+258. [ ] Write an integration test covering the full share-link lifecycle.
+259. [ ] Install React Testing Library for the frontend.
+260. [ ] Write component tests for the Login form and the Document list.
+261. [ ] Set up a basic Cypress or Playwright project.
+262. [ ] Write one end-to-end test covering register → upload → verify → share.
+263. [ ] Add a `test` script to `package.json`.
+264. [ ] Confirm every test passes locally before moving on.
+
+## Phase 20: Dockerizing the Stack (265–275)
+265. [ ] Write a `Dockerfile` for the backend.
+266. [ ] Write a multi-stage `Dockerfile` for the frontend (build, then serve via Nginx).
+267. [ ] Write a `Dockerfile` for the worker process.
+268. [ ] Write a root `docker-compose.yml` including backend, frontend, workers, MongoDB, and Redis.
+269. [ ] Add a named volume for MongoDB data persistence.
+270. [ ] Pass environment variables to each service via the compose file or `.env`.
+271. [ ] Add healthchecks for the backend and Redis services.
+272. [ ] Run `docker compose up --build` and confirm every service starts cleanly.
+273. [ ] Test the full app (register, upload, verify, share) running entirely in containers.
+274. [ ] Push the backend and frontend images to Docker Hub or GitHub Container Registry.
+275. [ ] Commit the Docker setup.
+
+## Phase 21: NGINX, Domain & HTTPS (276–283)
+276. [ ] Provision a small Linux VPS (or pick a managed platform if you'd rather skip server admin).
+277. [ ] Install NGINX on the VPS.
+278. [ ] Configure NGINX as a reverse proxy: `/` to the frontend, `/api` to the backend.
+279. [ ] Point your domain's DNS A record to the VPS IP.
+280. [ ] Install Certbot and request a free SSL certificate.
+281. [ ] Configure NGINX to redirect HTTP to HTTPS.
+282. [ ] Test the live domain over HTTPS end-to-end.
+283. [ ] Set up auto-renewal for the SSL certificate.
+
+## Phase 22: CI/CD with GitHub Actions (284–292)
+284. [ ] Create a `.github/workflows/` folder.
+285. [ ] Write a `ci.yml` workflow that lints and tests on every pull request.
+286. [ ] Write a `build.yml` workflow that builds Docker images on push to `main`.
+287. [ ] Push built images to your registry from the workflow.
+288. [ ] Write a `deploy.yml` workflow that deploys to your VPS or Render after a merge to `main`.
+289. [ ] Store SSH keys, registry tokens, and env vars in GitHub Actions secrets, never in code.
+290. [ ] Add a CI status badge to `README.md`.
+291. [ ] Open a test PR and confirm CI runs and reports correctly.
+292. [ ] Merge to `main` and confirm deployment runs automatically.
+
+## Phase 23: Monitoring & Observability (293–303)
+293. [ ] Install a structured logger (Winston or Pino) and replace ad-hoc `console.log` calls.
+294. [ ] Install `prom-client` and expose a `/metrics` endpoint.
+295. [ ] Track request count, request duration, and error count as metrics.
+296. [ ] Run Prometheus locally via Docker, pointed at your `/metrics` endpoint.
+297. [ ] Run Grafana locally and connect it to Prometheus as a data source.
+298. [ ] Build a dashboard panel for request rate and error rate.
+299. [ ] Build a panel for BullMQ queue length and job failure count.
+300. [ ] Set up an alert rule (e.g. error rate above a threshold for 5 minutes).
+301. [ ] Trigger errors intentionally and confirm the alert fires.
+302. [ ] Centralize logs with Loki or a hosted logging service, if you want one unified view.
+303. [ ] Document the monitoring setup in `docs/architecture/`.
+
+## Phase 24: Stretch Goals — Terraform & Kubernetes (304–317)
+*(Optional — tackle these once the MVP above is solid; they add DevOps depth, not core functionality.)*
+304. [ ] Install Terraform.
+305. [ ] Write an AWS provider configuration.
+306. [ ] Write a Terraform resource for the S3 bucket.
+307. [ ] Write Terraform resources for the IAM user/policy.
+308. [ ] Write Terraform resources for any compute you're using.
+309. [ ] Run `terraform plan` and review the proposed changes.
+310. [ ] Run `terraform apply` against a sandbox account first.
+311. [ ] Install `kubectl` and a local cluster tool (`minikube` or `kind`).
+312. [ ] Write Kubernetes Deployment manifests for the backend and frontend.
+313. [ ] Write Service manifests to expose each Deployment internally.
+314. [ ] Write a ConfigMap for non-secret environment variables.
+315. [ ] Write a Secret manifest for sensitive values.
+316. [ ] Write an Ingress resource to route external traffic.
+317. [ ] Deploy CertiVault to your local cluster and verify it end-to-end.
+
+## Phase 25: Stretch Goals — Event-Driven Architecture (318–323)
+*(Optional and exploratory — useful to understand, not required for CertiVault to work.)*
+318. [ ] Read up on event-driven systems and where Kafka fits versus a simple queue like BullMQ.
+319. [ ] Run Kafka locally via Docker Compose (or use a managed Kafka service).
+320. [ ] Create a `document-events` topic.
+321. [ ] Publish an event whenever a document is uploaded, verified, or shared.
+322. [ ] Build a simple consumer that logs incoming events.
+323. [ ] Document in `docs/decisions/` why/when you'd reach for Kafka over BullMQ.
+
+## Phase 26: Final Polish & Launch (324–331)
+324. [ ] Finish `README.md` with setup instructions, screenshots, and a live demo link.
+325. [ ] Record a short demo GIF or video of the core flow (upload → verify → share).
+326. [ ] Deploy the frontend to Vercel.
+327. [ ] Deploy the backend and workers to Render or your VPS.
+328. [ ] Set all production environment variables securely.
+329. [ ] Do a full manual QA pass as a normal user, a verifier, and an admin.
+330. [ ] Fix any bugs found during QA.
+331. [ ] Share the finished project on GitHub, LinkedIn, and your portfolio.

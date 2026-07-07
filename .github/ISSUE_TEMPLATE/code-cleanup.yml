@@ -1,7 +1,7 @@
-name: "🚀 Backend Task"
-description: "Plan API, service, database, or worker work"
-title: "[Backend]: "
-labels: ["backend", "help wanted"]
+name: "♻️ Code Cleanup"
+description: "Remove dead code, warnings, or small maintenance debt"
+title: "[Cleanup]: "
+labels: ["cleanup", "help wanted"]
 body:
   - type: markdown
     attributes:

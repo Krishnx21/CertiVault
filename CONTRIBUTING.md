@@ -1,70 +1,132 @@
 # Contributing to CertiVault
 
-Thank you for helping build a secure, trustworthy document platform. CertiVault
-is participating in **Elite Coders Summer of Code (ECSoC) 2026**, and
-[Krishna Kumar](https://github.com/Krishnx21) is the **Project Admin**.
+Thank you for helping build CertiVault. The project participates in **Elite Coders Summer of Code (ECSoC) 2026**, with [Krishna Kumar](https://github.com/Krishnx21) serving as Project Admin.
 
-## Before You Start
+## Code of Conduct and Security
 
-- Read the [Code of Conduct](CODE_OF_CONDUCT.md) and [Security Policy](SECURITY.md).
-- Search existing issues and pull requests before proposing duplicate work.
-- Comment on the issue you want to address and wait for assignment before coding.
-- For a new feature, open an issue and agree on the approach with a maintainer.
-- Never post vulnerabilities in public issues; follow the private reporting policy.
+By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md). Never disclose vulnerabilities publicly; follow [SECURITY.md](SECURITY.md) and use GitHub Private Vulnerability Reporting.
 
-## Development Workflow
+## Claim an Issue First
 
-1. Fork the repository and clone your fork.
-2. Add the main repository as the `upstream` remote.
-3. Create a focused branch from the latest `ecsoc-2026` branch.
-4. Make a small, reviewable change with relevant tests and documentation.
-5. Run the available checks locally.
-6. Push the branch to your fork and open a pull request against `ecsoc-2026`.
+1. Search open issues and pull requests for existing work.
+2. Choose an unassigned issue with a clear scope.
+3. Comment that you would like to work on it and briefly describe your approach.
+4. Wait for a maintainer to assign the issue before coding.
+5. Ask for clarification on the issue rather than making product or security assumptions.
+6. Submit one focused pull request per assigned issue.
+
+Unassigned, duplicate, copied, spam, empty, or artificial pull requests may be closed.
+
+## Fork and Clone
+
+1. Click **Fork** on the CertiVault GitHub repository.
+2. Clone your fork and add the project repository as `upstream`.
 
 ```bash
 git clone https://github.com/YOUR-USERNAME/CertiVault.git
 cd CertiVault
 git remote add upstream https://github.com/Krishnx21/CertiVault.git
 git fetch upstream
-git switch -c feature/short-description upstream/ecsoc-2026
 ```
 
-> [!IMPORTANT]
-> ECSoC contributor pull requests must target `ecsoc-2026`, not `main`.
-> Maintainers periodically promote reviewed and stable work from `ecsoc-2026`
-> into `main` through a release pull request.
+## Create a Branch
 
-Use descriptive branch names such as `feature/document-search`,
-`fix/upload-validation`, or `docs/security-guide`.
+ECSoC work starts from and returns to `ecsoc-2026`. Do not target `main` directly.
 
-## Commits and Pull Requests
+```bash
+git switch ecsoc-2026
+git pull upstream ecsoc-2026
+git switch -c type/short-description
+```
 
-- Write clear, imperative commit messages, such as `add document upload validation`.
-- Keep unrelated changes in separate pull requests.
-- Explain what changed, why it changed, and how it was tested.
-- Link the related issue with `Closes #123` when appropriate.
-- Include screenshots for visible interface changes.
-- Respond respectfully to review feedback and resolve conversations only after the
-  concern has been addressed.
-- Do not add generated files, secrets, credentials, or unrelated formatting.
+Use lowercase, hyphenated branch names:
 
-Maintainers may request changes, close inactive pull requests, or ask that an
-oversized change be split. A pull request is merged only after required reviews
-and checks pass.
+- `feature/document-preview`
+- `fix/upload-validation`
+- `backend/health-version`
+- `frontend/dashboard-accessibility`
+- `docs/backend-setup`
+- `test/request-id-middleware`
+- `chore/update-dependencies`
 
-## Testing Expectations
+## Install and Run
 
-Add or update tests for changed behavior. Until application code is introduced,
-documentation contributions should verify headings, links, spelling, diagrams,
-and consistency with the architecture. State any checks that could not be run.
+Backend:
 
-## ECSoC 2026 Contributors
+```bash
+cd backend
+npm install
+npm run dev
+```
 
-- Register through the official [ECSoC 2026 website](https://summerofcode.xyz).
-- Follow ECSoC rules as well as this repository's contribution process.
-- Do not submit copied, spam, empty, or artificial pull requests for activity.
-- Quality, collaboration, and learning matter more than pull-request count.
-- Ask questions on the relevant issue so decisions remain visible to everyone.
+Frontend, in a second terminal:
 
-After contributing, consider **[starring CertiVault](https://github.com/Krishnx21/CertiVault)**
-and **[following the Project Admin](https://github.com/Krishnx21)**.
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The API runs at `http://localhost:5000` and the dashboard runs at `http://localhost:5173` by default. Copy values from the relevant `.env.example`; never commit a real `.env` file.
+
+## Test Before Submitting
+
+```bash
+cd backend
+npm test
+
+cd ../frontend
+npm run build
+```
+
+Add or update tests for changed behavior. Manually verify affected user flows and report any check you could not run.
+
+## Code Style
+
+- Follow the existing JavaScript and React patterns.
+- Use ES modules and descriptive names.
+- Keep controllers focused on HTTP translation and services focused on business rules.
+- Keep React components accessible, responsive, and keyboard usable.
+- Normalize API errors; do not expose stack traces or sensitive values.
+- Do not change authorization or ownership behavior without explicit maintainer approval.
+- Avoid unrelated formatting and generated files.
+- Update documentation and environment examples when interfaces change.
+
+## Commit Messages
+
+Use short, imperative messages:
+
+```text
+add document status filter
+fix upload size validation
+test request ID middleware
+docs explain backend setup
+```
+
+Prefer one logical change per commit. Do not use vague messages such as `changes`, `fix`, or `update`.
+
+## Submit a Pull Request
+
+1. Sync your branch with the current ECSoC base.
+2. Push the branch to your fork.
+3. Open a pull request with `ecsoc-2026` selected as the base.
+4. Complete every relevant section of the pull request template.
+5. Link the assigned issue with `Closes #123`.
+6. Include screenshots for visible changes and exact test commands.
+7. Respond respectfully to review feedback and keep the branch updated.
+
+```bash
+git fetch upstream
+git rebase upstream/ecsoc-2026
+git push -u origin type/short-description
+```
+
+Maintainers merge reviewed ECSoC work into `ecsoc-2026` and periodically promote stable changes to `main`.
+
+## Review Expectations
+
+A pull request is ready when it is focused, tested, documented, secure, and passes required checks. Maintainers may request changes, split oversized work, or close inactive contributions. Resolve review conversations only after the underlying concern is addressed.
+
+## Community
+
+Quality and collaboration matter more than pull-request count. Ask focused questions, help other contributors, and consider [starring CertiVault](https://github.com/Krishnx21/CertiVault) and [following the Project Admin](https://github.com/Krishnx21).

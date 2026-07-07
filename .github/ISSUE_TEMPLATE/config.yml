@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "📖 Documentation"
+    url: "https://github.com/Krishnx21/CertiVault/tree/ecsoc-2026/docs"
+    about: "Read CertiVault architecture, roadmap, and contributor documentation."
+  - name: "💬 GitHub Discussions"
+    url: "https://github.com/Krishnx21/CertiVault/discussions"
+    about: "Discuss ideas and ask open-ended community questions."
+  - name: "🌐 ECSoC Discord"
+    url: "https://discord.gg/Hg2H3TJJsd"
+    about: "Join the Elite Coders Summer of Code community."
+  - name: "🚨 Private Security Report"
+    url: "https://github.com/Krishnx21/CertiVault/security/advisories/new"
+    about: "Privately report vulnerabilities. Never disclose them in a public issue."
+  - name: "🤝 Contributing Guide"
+    url: "https://github.com/Krishnx21/CertiVault/blob/ecsoc-2026/CONTRIBUTING.md"
+    about: "Review setup, issue claiming, testing, and pull-request requirements."
