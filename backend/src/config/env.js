@@ -1,5 +1,13 @@
 const parsePort = (value) => {
-  const port = Number(value ?? 5000);
+  if (value === undefined || value === null) {
+    return 5000;
+  }
+
+  if (typeof value === "string" && value.trim() === "") {
+    throw new Error("API_PORT must be an integer between 1 and 65535");
+  }
+
+  const port = Number(value);
 
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error("API_PORT must be an integer between 1 and 65535");

@@ -529,7 +529,7 @@ CertiVault is participating in **Elite Coders Summer of Code (ECSoC) 2026**, wit
 ECSoC contributors and first-time open-source contributors are warmly encouraged
 to explore the roadmap, discuss an issue, and submit focused pull requests.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Backend Development Guide](docs/operations/backend-development.md) before opening a pull request. By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 Security issues must be reported privately according to [SECURITY.md](SECURITY.md), not through public issues.
 
