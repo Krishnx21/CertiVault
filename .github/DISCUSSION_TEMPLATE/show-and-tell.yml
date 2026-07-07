@@ -1,0 +1,10 @@
+title: "[Show and Tell]: "
+labels: ["discussion"]
+body:
+  - type: textarea
+    id: showcase
+    attributes:
+      label: What did you build or learn?
+      description: Share screenshots, links, demos, or notes.
+    validations:
+      required: true

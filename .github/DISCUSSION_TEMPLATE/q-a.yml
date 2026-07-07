@@ -1,0 +1,17 @@
+title: "[Q&A]: "
+labels: ["question"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What do you need help understanding?
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
+      description: Share commands, docs, or examples you already checked.
+    validations:
+      required: false
