@@ -1,0 +1,61 @@
+name: Feature Request
+description: Propose a new feature or enhancement for CertiVault
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest an improvement! Please provide as much context as possible.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What problem does this solve, or what user need does it address?
+      placeholder: "I find it difficult to... / Users currently cannot..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the feature or change you'd like to see.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you considered any alternative solutions or workarounds?
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the platform does this affect?
+      options:
+        - Authentication / Authorization
+        - Document Upload / Storage
+        - Document Metadata / Search
+        - Sharing / Access Control
+        - Verification Workflow
+        - Audit / History
+        - Notifications / Reminders
+        - Admin Panel
+        - Infrastructure / DevOps
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this has not been proposed before.
+          required: true
+        - label: This is within the project scope described in the README or MVP.Architecture.md.
+          required: false
