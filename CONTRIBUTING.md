@@ -69,18 +69,17 @@ npm run dev
 
 The API runs at `http://localhost:5000` and the dashboard runs at `http://localhost:5173` by default. Copy values from the relevant `.env.example`; never commit a real `.env` file.
 
-
 ## Test and Format Before Submitting
 
 ```bash
 cd backend
 npm run format:check
+```
 
 ## Test Before Submitting
 
 ```bash
 cd backend
-
 npm test
 
 cd ../frontend
@@ -88,9 +87,6 @@ npm run build
 ```
 
 Add or update tests for changed behavior. Run `npm run format` in the backend if there are any style check failures. Manually verify affected user flows and report any check you could not run.
-
-Add or update tests for changed behavior. Manually verify affected user flows and report any check you could not run.
-
 
 ## Code Style
 
