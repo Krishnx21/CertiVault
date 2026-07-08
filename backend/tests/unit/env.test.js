@@ -48,3 +48,60 @@ test("env: reject invalid ports", () => {
     }
   }
 });
+
+test("env: NODE_ENV defaults to 'development' when unset", () => {
+  const originalEnv = process.env.NODE_ENV;
+  delete process.env.NODE_ENV;
+  try {
+    const env = getEnv();
+    assert.equal(env.nodeEnv, "development");
+  } finally {
+    if (originalEnv !== undefined) {
+      process.env.NODE_ENV = originalEnv;
+    }
+  }
+});
+
+test("env: NODE_ENV reflects the value set in the environment", () => {
+  const originalEnv = process.env.NODE_ENV;
+  try {
+    process.env.NODE_ENV = "production";
+    assert.equal(getEnv().nodeEnv, "production");
+
+    process.env.NODE_ENV = "test";
+    assert.equal(getEnv().nodeEnv, "test");
+  } finally {
+    if (originalEnv !== undefined) {
+      process.env.NODE_ENV = originalEnv;
+    } else {
+      delete process.env.NODE_ENV;
+    }
+  }
+});
+
+test("env: FRONTEND_ORIGIN defaults to localhost when unset", () => {
+  const originalEnv = process.env.FRONTEND_ORIGIN;
+  delete process.env.FRONTEND_ORIGIN;
+  try {
+    const env = getEnv();
+    assert.equal(env.frontendOrigin, "http://localhost:5173");
+  } finally {
+    if (originalEnv !== undefined) {
+      process.env.FRONTEND_ORIGIN = originalEnv;
+    }
+  }
+});
+
+test("env: FRONTEND_ORIGIN reflects the value set in the environment", () => {
+  const originalEnv = process.env.FRONTEND_ORIGIN;
+  try {
+    process.env.FRONTEND_ORIGIN = "https://app.certivault.io";
+    assert.equal(getEnv().frontendOrigin, "https://app.certivault.io");
+  } finally {
+    if (originalEnv !== undefined) {
+      process.env.FRONTEND_ORIGIN = originalEnv;
+    } else {
+      delete process.env.FRONTEND_ORIGIN;
+    }
+  }
+});
