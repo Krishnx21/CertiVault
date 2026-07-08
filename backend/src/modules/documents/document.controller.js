@@ -6,7 +6,8 @@ export const listDocuments = (req, res) => {
   const query = String(req.query.search ?? "").toLowerCase();
   const status = String(req.query.status ?? "all");
   const items = documentStore.all().filter((document) => {
-    const matchesQuery = !query || `${document.name} ${document.type}`.toLowerCase().includes(query);
+    const matchesQuery =
+      !query || `${document.name} ${document.type}`.toLowerCase().includes(query);
     const matchesStatus = status === "all" || document.status === status;
     return matchesQuery && matchesStatus;
   });
