@@ -10,7 +10,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/integration/app.test.ts"
+    "test": "tsx --test tests/integration/app.test.ts",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.json\"",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.json\""
   },
   "engines": {
     "node": ">=20"
@@ -27,6 +29,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^26.1.0",
     "mongodb-memory-server": "^11.2.0",
+    "prettier": "^3.9.4",
     "tsx": "^4.23.0",
     "typescript": "^6.0.3"
   }
