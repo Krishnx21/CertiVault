@@ -4,13 +4,15 @@
   "private": true,
   "description": "CertiVault REST API",
   "type": "module",
-  "main": "src/server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "dev": "node --watch src/server.js",
-    "start": "node src/server.js",
-    "test": "node --test",
-    "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\" \"*.json\"",
-    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"*.json\""
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/integration/app.test.ts",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.json\"",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.json\""
   },
   "engines": {
     "node": ">=20"
@@ -18,9 +20,17 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "mongoose": "^9.7.4",
     "multer": "^2.0.2"
   },
   "devDependencies": {
-    "prettier": "^3.9.4"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^26.1.0",
+    "mongodb-memory-server": "^11.2.0",
+    "prettier": "^3.9.4",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3"
   }
 }
