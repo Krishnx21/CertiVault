@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { CloudUpload, FileCheck2, Upload, X } from "lucide-react";
 import { api } from "../api.js";
 

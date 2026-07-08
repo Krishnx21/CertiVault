@@ -1,4 +1,3 @@
-import React from "react";
 import { Check, FileCheck2, Files, FolderOpen, LayoutDashboard, MoreHorizontal, Settings, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import { Summary } from "../types.js";
 
