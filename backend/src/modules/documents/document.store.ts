@@ -50,17 +50,19 @@ export const seedDatabase = async (): Promise<void> => {
 
 export const documentStore = {
   all: async (): Promise<IDocument[]> => {
-    return await DocumentModel.find().lean() as unknown as IDocument[];
+    return (await DocumentModel.find().lean()) as unknown as IDocument[];
   },
   add: async (document: IDocument): Promise<IDocument> => {
     const created = await DocumentModel.create(document);
     return created.toObject() as unknown as IDocument;
   },
   find: async (id: string): Promise<IDocument | null> => {
-    return await DocumentModel.findOne({ id }).lean() as unknown as IDocument | null;
+    return (await DocumentModel.findOne({ id }).lean()) as unknown as IDocument | null;
   },
   update: async (id: string, updates: Partial<IDocument>): Promise<IDocument | null> => {
-    return await DocumentModel.findOneAndUpdate({ id }, updates, { new: true }).lean() as unknown as IDocument | null;
+    return (await DocumentModel.findOneAndUpdate({ id }, updates, {
+      new: true,
+    }).lean()) as unknown as IDocument | null;
   },
   remove: async (id: string): Promise<boolean> => {
     const result = await DocumentModel.deleteOne({ id });

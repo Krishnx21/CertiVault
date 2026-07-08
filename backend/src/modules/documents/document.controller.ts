@@ -4,13 +4,18 @@ import { ApiError } from "../../utils/ApiError.js";
 import { documentStore } from "./document.store.js";
 import { IDocument } from "./document.model.js";
 
-export const listDocuments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const listDocuments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const query = String(req.query.search ?? "").toLowerCase();
     const status = String(req.query.status ?? "all");
     const allItems = await documentStore.all();
     const items = allItems.filter((document) => {
-      const matchesQuery = !query || `${document.name} ${document.type}`.toLowerCase().includes(query);
+      const matchesQuery =
+        !query || `${document.name} ${document.type}`.toLowerCase().includes(query);
       const matchesStatus = status === "all" || document.status === status;
       return matchesQuery && matchesStatus;
     });
@@ -21,7 +26,11 @@ export const listDocuments = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const uploadDocument = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const uploadDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     if (!req.file) {
       return next(new ApiError(400, "FILE_REQUIRED", "Select a file to upload"));
@@ -45,7 +54,11 @@ export const uploadDocument = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const verifyDocument = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const verifyDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const id = req.params.id as string;
     const document = await documentStore.find(id);
@@ -64,7 +77,11 @@ export const verifyDocument = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const deleteDocument = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const deleteDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const id = req.params.id as string;
     const deleted = await documentStore.remove(id);

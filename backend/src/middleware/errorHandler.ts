@@ -1,7 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../utils/ApiError.js";
 
-export const errorHandler = (error: Error, req: Request, res: Response, _next: NextFunction): void => {
+export const errorHandler = (
+  error: Error,
+  req: Request,
+  res: Response,
+  _next: NextFunction
+): void => {
   let statusCode = 500;
   let code = "INTERNAL_SERVER_ERROR";
   let message = "An unexpected error occurred";
@@ -10,7 +15,12 @@ export const errorHandler = (error: Error, req: Request, res: Response, _next: N
     statusCode = error.statusCode;
     code = error.code;
     message = error.message;
-  } else if (error instanceof SyntaxError && "status" in error && (error as any).status === 400 && "body" in error) {
+  } else if (
+    error instanceof SyntaxError &&
+    "status" in error &&
+    (error as any).status === 400 &&
+    "body" in error
+  ) {
     statusCode = 400;
     code = "BAD_REQUEST";
     message = "Malformed JSON payload";

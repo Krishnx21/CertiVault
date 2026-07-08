@@ -13,7 +13,7 @@ before(async () => {
   // Start in-memory MongoDB
   mongoServer = await MongoMemoryServer.create();
   const mongoUri = mongoServer.getUri();
-  
+
   // Connect Mongoose to it
   await connectDB(mongoUri);
 
