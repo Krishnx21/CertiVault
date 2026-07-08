@@ -1,21 +1,44 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { createApp } from "../../src/app.js";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import { connectDB, disconnectDB } from "../../src/config/db.js";
+import http from "http";
 
-let baseUrl;
-let server;
+let baseUrl: string;
+let server: http.Server;
+let mongoServer: MongoMemoryServer;
 
 before(async () => {
+  // Start in-memory MongoDB
+  mongoServer = await MongoMemoryServer.create();
+  const mongoUri = mongoServer.getUri();
+  
+  // Connect Mongoose to it
+  await connectDB(mongoUri);
+
+  // Start Express App
   server = createApp().listen(0);
-  await new Promise((resolve) => server.once("listening", resolve));
-  const { port } = server.address();
-  baseUrl = `http://127.0.0.1:${port}`;
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const address = server.address();
+  if (address && typeof address === "object") {
+    baseUrl = `http://127.0.0.1:${address.port}`;
+  } else {
+    throw new Error("Failed to get server port");
+  }
 });
 
 after(async () => {
-  await new Promise((resolve, reject) => {
+  // Close Express Server
+  await new Promise<void>((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
   });
+
+  // Disconnect Database
+  await disconnectDB();
+
+  // Stop in-memory MongoDB
+  await mongoServer.stop();
 });
 
 test("GET /health/live reports process liveness", async () => {
@@ -23,7 +46,7 @@ test("GET /health/live reports process liveness", async () => {
 
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { status: "ok" });
-  assert.match(response.headers.get("x-request-id"), /^[0-9a-f-]{36}$/);
+  assert.match(response.headers.get("x-request-id") || "", /^[0-9a-f-]{36}$/);
 });
 
 test("GET /health/ready reports readiness", async () => {

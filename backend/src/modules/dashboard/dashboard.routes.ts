@@ -1,10 +1,10 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { documentStore } from "../documents/document.store.js";
 
 export const dashboardRouter = Router();
 
-dashboardRouter.get("/summary", (_req, res) => {
-  const documents = documentStore.all();
+dashboardRouter.get("/summary", async (_req: Request, res: Response) => {
+  const documents = await documentStore.all();
   res.json({
     data: {
       total: documents.length,

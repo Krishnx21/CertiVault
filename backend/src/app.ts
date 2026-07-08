@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Express } from "express";
 import cors from "cors";
 import { getEnv } from "./config/env.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -8,7 +8,7 @@ import { healthRouter } from "./modules/health/health.routes.js";
 import { documentRouter } from "./modules/documents/document.routes.js";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
 
-export const createApp = () => {
+export const createApp = (): Express => {
   const app = express();
   const env = getEnv();
 
