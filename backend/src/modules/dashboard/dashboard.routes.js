@@ -1,16 +1,26 @@
 import { Router } from "express";
-import { documentStore } from "../documents/document.store.js";
+import { Document } from "../documents/document.model.js";
 
 export const dashboardRouter = Router();
 
-dashboardRouter.get("/summary", (_req, res) => {
-  const documents = documentStore.all();
-  res.json({
-    data: {
-      total: documents.length,
-      verified: documents.filter(({ status }) => status === "verified").length,
-      pending: documents.filter(({ status }) => status === "pending").length,
-      storageBytes: documents.reduce((total, document) => total + document.size, 0),
-    },
-  });
+dashboardRouter.get("/summary", async (_req, res, next) => {
+  try {
+    const [total, verified, pending, storageResult] = await Promise.all([
+      Document.countDocuments(),
+      Document.countDocuments({ status: "verified" }),
+      Document.countDocuments({ status: "pending" }),
+      Document.aggregate([{ $group: { _id: null, total: { $sum: "$size" } } }]),
+    ]);
+
+    res.json({
+      data: {
+        total,
+        verified,
+        pending,
+        storageBytes: storageResult[0]?.total ?? 0,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
 });
