@@ -12,7 +12,10 @@ export const authenticate = (req, _res, next) => {
   try {
     req.user = jwt.verify(token, getEnv().jwtSecret);
     next();
-  } catch {
-    next(new ApiError(401, "UNAUTHORIZED", "Invalid or expired token"));
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return next(new ApiError(401, "TOKEN_EXPIRED", "Token has expired"));
+    }
+    return next(new ApiError(401, "UNAUTHORIZED", "Invalid token"));
   }
 };

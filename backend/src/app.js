@@ -10,6 +10,7 @@ import { documentRouter } from "./modules/documents/document.routes.js";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
 import { infoRouter } from "./modules/info/info.routes.js";
 import { shareLinkRouter, publicShareRouter } from "./modules/share/share.routes.js";
+import { authRouter } from "./modules/auth/auth.routes.js";
 
 export const createApp = () => {
   const app = express();
@@ -21,6 +22,7 @@ export const createApp = () => {
   app.use(cors({ origin: env.frontendOrigin }));
   app.use(express.json({ limit: "50mb" }));
   app.use("/health", healthRouter);
+  app.use("/api/auth", authRouter);
   app.use("/api", infoRouter);
   app.use("/api/documents", documentRouter);
   app.use("/api/documents/:id/share-links", shareLinkRouter);
