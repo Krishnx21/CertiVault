@@ -1,16 +1,12 @@
 import { Router, Request, Response } from "express";
-import { documentStore } from "../documents/document.store.js";
+import { dashboardService } from "./dashboard.service.js";
 
 export const dashboardRouter = Router();
 
-dashboardRouter.get("/summary", async (_req: Request, res: Response) => {
-  const documents = await documentStore.all();
+dashboardRouter.get("/summary", (_req: Request, res: Response) => {
+  const stats = dashboardService.getSummary();
   res.json({
-    data: {
-      total: documents.length,
-      verified: documents.filter(({ status }) => status === "verified").length,
-      pending: documents.filter(({ status }) => status === "pending").length,
-      storageBytes: documents.reduce((total, document) => total + document.size, 0),
-    },
+    data: stats,
   });
 });
+

@@ -70,3 +70,15 @@ export const documentStore = {
     return (result.deletedCount ?? 0) > 0;
   },
 };
+
+import { eventBus } from "../../core/events.js";
+
+eventBus.on("document.requestSync", async () => {
+  try {
+    const documents = await documentStore.all();
+    eventBus.emit("document.sync", { documents });
+  } catch (err) {
+    console.error("Failed to sync documents for EventBus", err);
+  }
+});
+

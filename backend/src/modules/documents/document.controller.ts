@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { ApiError } from "../../utils/ApiError.js";
 import { documentStore } from "./document.store.js";
 import { IDocument } from "./document.model.js";
+import { eventBus } from "../../core/events.js";
 
 export const listDocuments = async (
   req: Request,
@@ -48,6 +49,7 @@ export const uploadDocument = async (
     };
 
     const added = await documentStore.add(document);
+    eventBus.emit("document.created", { document: added });
     res.status(201).json({ data: added });
   } catch (error) {
     next(error);
@@ -71,6 +73,10 @@ export const verifyDocument = async (
       verifiedAt: new Date(),
     } as any);
 
+    if (updated) {
+      eventBus.emit("document.verified", { document: updated });
+    }
+
     res.json({ data: updated });
   } catch (error) {
     next(error);
@@ -84,10 +90,13 @@ export const deleteDocument = async (
 ): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const document = await documentStore.find(id);
+    const size = document?.size || 0;
     const deleted = await documentStore.remove(id);
     if (!deleted) {
       return next(new ApiError(404, "DOCUMENT_NOT_FOUND", "Document was not found"));
     }
+    eventBus.emit("document.deleted", { documentId: id, size });
     res.status(204).send();
   } catch (error) {
     next(error);
