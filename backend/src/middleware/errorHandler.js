@@ -1,3 +1,4 @@
+import multer from "multer";
 import { ApiError } from "../utils/ApiError.js";
 
 export const errorHandler = (error, req, res, _next) => {
@@ -5,7 +6,13 @@ export const errorHandler = (error, req, res, _next) => {
   let code = "INTERNAL_SERVER_ERROR";
   let message = "An unexpected error occurred";
 
-  if (error instanceof ApiError) {
+  if (process.env.NODE_ENV !== "production") console.error("[error]", error);
+
+  if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+    statusCode = 413;
+    code = "FILE_TOO_LARGE";
+    message = "File exceeds the 50MB size limit";
+  } else if (error instanceof ApiError) {
     statusCode = error.statusCode;
     code = error.code;
     message = error.message;
