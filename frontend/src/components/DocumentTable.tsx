@@ -1,5 +1,7 @@
-import { Files, Search, ShieldCheck, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Files, Search, ShieldCheck, Trash2, Star, Archive, RefreshCw, Eye } from "lucide-react";
 import { Document } from "../types.js";
+import { DocumentPreviewModal } from "./DocumentPreviewModal.js";
 
 interface DocumentTableProps {
   documents: Document[];
@@ -10,6 +12,15 @@ interface DocumentTableProps {
   loading: boolean;
   onVerify: (id: string) => void;
   onDelete: (id: string) => void;
+  onToggleFavorite: (id: string, isFavorite: boolean) => void;
+  onArchive: (id: string) => void;
+  onRestore: (id: string) => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  sortBy: string;
+  setSortBy: (sortBy: string) => void;
+  onViewVerification: (id: string) => void;
 }
 
 const formatBytes = (bytes?: number) => {
@@ -24,6 +35,11 @@ const relativeDate = (date: string) => {
   return days === 0 ? "Today" : days === 1 ? "Yesterday" : `${days} days ago`;
 };
 
+const getCategoryIcon = (category: string) => {
+  const ext = category.slice(0, 3).toUpperCase();
+  return ext;
+};
+
 export function DocumentTable({
   documents,
   search,
@@ -33,7 +49,17 @@ export function DocumentTable({
   loading,
   onVerify,
   onDelete,
+  onToggleFavorite,
+  onArchive,
+  onRestore,
+  page,
+  totalPages,
+  onPageChange,
+  sortBy,
+  setSortBy,
+  onViewVerification,
 }: DocumentTableProps) {
+  const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
   return (
     <section className="documents-panel">
       <div className="panel-head">
@@ -59,6 +85,20 @@ export function DocumentTable({
             <option value="all">All statuses</option>
             <option value="verified">Verified</option>
             <option value="pending">Pending</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <select
+            aria-label="Sort by"
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value)}
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="title_asc">Title A-Z</option>
+            <option value="title_desc">Title Z-A</option>
+            <option value="size_asc">Size (smallest)</option>
+            <option value="size_desc">Size (largest)</option>
+            <option value="status">Status</option>
           </select>
         </div>
       </div>
@@ -67,7 +107,7 @@ export function DocumentTable({
           <thead>
             <tr>
               <th>Document</th>
-              <th>Type</th>
+              <th>Category</th>
               <th>Status</th>
               <th>Owner</th>
               <th>Added</th>
@@ -76,22 +116,22 @@ export function DocumentTable({
           </thead>
           <tbody>
             {documents.map((doc) => (
-              <tr key={doc.id}>
+              <tr key={doc._id}>
                 <td>
                   <div className="document-cell">
                     <div className="file-icon">
-                      {(doc.name.split(".").pop() || "").toUpperCase().slice(0, 3)}
+                      {getCategoryIcon(doc.category)}
                     </div>
                     <div>
-                      <strong>{doc.name}</strong>
+                      <strong>{doc.title}</strong>
                       <span>
-                        {formatBytes(doc.size)} · ID {doc.checksum.slice(0, 8)}
+                        {formatBytes(doc.fileSize)} · {doc.metadata.extension.toUpperCase()} · {doc.checksum.slice(0, 8)}
                       </span>
                     </div>
                   </div>
                 </td>
                 <td>
-                  <span className="type-chip">{doc.type}</span>
+                  <span className="type-chip">{doc.category}</span>
                 </td>
                 <td>
                   <span className={`status ${doc.status}`}>
@@ -101,19 +141,50 @@ export function DocumentTable({
                 </td>
                 <td>
                   <div className="owner">
-                    <div className="avatar tiny">KK</div>
-                    {doc.owner}
+                    <div className="avatar tiny">
+                      {doc.ownerName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                    </div>
+                    {doc.ownerName}
                   </div>
                 </td>
                 <td>{relativeDate(doc.createdAt)}</td>
                 <td>
                   <div className="row-actions">
+                    <button
+                      onClick={() => setPreviewDocument(doc)}
+                      title="View details"
+                    >
+                      <Eye size={17} />
+                    </button>
+                    <button
+                      onClick={() => onViewVerification(doc._id)}
+                      title="View verification"
+                    >
+                      <ShieldCheck size={17} />
+                    </button>
+                    <button
+                      onClick={() => onToggleFavorite(doc._id, doc.isFavorite)}
+                      title={doc.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                      className={doc.isFavorite ? "active" : ""}
+                    >
+                      <Star size={17} fill={doc.isFavorite ? "currentColor" : "none"} />
+                    </button>
                     {doc.status === "pending" && (
-                      <button onClick={() => onVerify(doc.id)} title="Verify">
+                      <button onClick={() => onVerify(doc._id)} title="Verify">
                         <ShieldCheck size={17} />
                       </button>
                     )}
-                    <button onClick={() => onDelete(doc.id)} title="Delete">
+                    {!doc.isArchived && (
+                      <button onClick={() => onArchive(doc._id)} title="Archive">
+                        <Archive size={17} />
+                      </button>
+                    )}
+                    {doc.isArchived && (
+                      <button onClick={() => onRestore(doc._id)} title="Restore">
+                        <RefreshCw size={17} />
+                      </button>
+                    )}
+                    <button onClick={() => onDelete(doc._id)} title="Delete">
                       <Trash2 size={17} />
                     </button>
                   </div>
@@ -130,7 +201,34 @@ export function DocumentTable({
             <span>Try another search or upload a new document.</span>
           </div>
         )}
+        {!loading && totalPages > 1 && (
+          <div className="pagination">
+            <button
+              onClick={() => onPageChange(page - 1)}
+              disabled={page === 1}
+              className="button ghost"
+            >
+              Previous
+            </button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => onPageChange(page + 1)}
+              disabled={page === totalPages}
+              className="button ghost"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
+      {previewDocument && (
+        <DocumentPreviewModal
+          document={previewDocument}
+          onClose={() => setPreviewDocument(null)}
+        />
+      )}
     </section>
   );
 }

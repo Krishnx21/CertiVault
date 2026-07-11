@@ -15,6 +15,9 @@ export interface IUser extends Document {
   role: UserRole;
   avatar?: string;
   bio?: string;
+  googleId?: string;
+  provider?: "local" | "google";
+  providerId?: string;
   isActive: boolean;
   isEmailVerified: boolean;
   emailVerificationToken?: string;
@@ -76,6 +79,20 @@ const userSchema = new Schema<IUser>(
     bio: {
       type: String,
       maxlength: [500, "Bio cannot exceed 500 characters"],
+    },
+    googleId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+    provider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    providerId: {
+      type: String,
+      sparse: true,
     },
     isActive: {
       type: Boolean,

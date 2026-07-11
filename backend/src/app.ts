@@ -22,6 +22,8 @@ import { healthRouter } from "./modules/health/health.routes.js";
 import { infoRouter } from "./modules/info/info.routes.js";
 import { documentRouter } from "./modules/documents/document.routes.js";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
+import { authRouter } from "./modules/auth/auth.routes.js";
+import { verificationRouter } from "./modules/verifications/verification.routes.js";
 
 const env = getEnv();
 
@@ -175,8 +177,10 @@ export const createApp = (): Express => {
   // ============================================
   app.use("/health", healthRouter);
   app.use("/api", infoRouter);
+  app.use("/api/auth", authRouter);
   app.use("/api/documents", documentRouter);
   app.use("/api/dashboard", dashboardRouter);
+  app.use("/api/verifications", verificationRouter);
 
   // ============================================
   // ERROR HANDLING
