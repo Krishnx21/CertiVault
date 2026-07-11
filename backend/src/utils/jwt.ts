@@ -29,7 +29,7 @@ export const generateAccessToken = (payload: Omit<TokenPayload, "iat" | "exp">):
     issuer: env.JWT_ISSUER,
     audience: env.JWT_AUDIENCE,
     expiresIn: env.JWT_ACCESS_EXPIRES_IN,
-  });
+  } as jwt.SignOptions);
 };
 
 /**

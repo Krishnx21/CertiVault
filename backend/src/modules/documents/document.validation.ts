@@ -102,7 +102,7 @@ export const getDocumentsSchema = z.object({
 
 // Verify document schema
 export const verifyDocumentSchema = z.object({
-  status: z.enum(STATUS_VALUES, {
+  status: z.enum(["verified", "rejected"], {
     errorMap: () => ({ message: "Invalid status" }),
   }),
   notes: z.string().max(500, "Notes cannot exceed 500 characters").optional(),

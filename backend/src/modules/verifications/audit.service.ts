@@ -112,10 +112,12 @@ export const getAuditLogs = async (
   entityType: string,
   limit: number = 50
 ): Promise<IAuditLog[]> => {
-  return await AuditLogModel.find({ entityId, entityType })
+  const logs = await AuditLogModel.find({ entityId, entityType })
     .sort({ timestamp: -1 })
     .limit(limit)
-    .lean();
+    .lean()
+    .exec();
+  return logs as unknown as IAuditLog[];
 };
 
 /**
@@ -125,10 +127,12 @@ export const getUserAuditLogs = async (
   userId: mongoose.Types.ObjectId,
   limit: number = 50
 ): Promise<IAuditLog[]> => {
-  return await AuditLogModel.find({ userId })
+  const logs = await AuditLogModel.find({ userId })
     .sort({ timestamp: -1 })
     .limit(limit)
-    .lean();
+    .lean()
+    .exec();
+  return logs as unknown as IAuditLog[];
 };
 
 /**

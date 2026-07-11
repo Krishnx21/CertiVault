@@ -119,7 +119,7 @@ export const getDocument = async (
     }
 
     const { id } = req.params;
-    const document = await getDocumentById(id, userId);
+    const document = await getDocumentById(Array.isArray(id) ? id[0] : id, userId);
 
     res.json({ data: document });
   } catch (error) {
@@ -144,7 +144,7 @@ export const patchDocument = async (
     const { id } = req.params;
     const updates = updateDocumentSchema.parse(req.body);
 
-    const document = await updateDocument(id, updates, userId);
+    const document = await updateDocument(Array.isArray(id) ? id[0] : id, updates, userId);
 
     res.json({ data: document });
   } catch (error) {
@@ -167,7 +167,7 @@ export const deleteDocument = async (
     }
 
     const { id } = req.params;
-    await deleteDocumentService(id, userId);
+    await deleteDocumentService(Array.isArray(id) ? id[0] : id, userId);
 
     res.status(204).send();
   } catch (error) {
@@ -192,7 +192,7 @@ export const archiveDocumentController = async (
     const { id } = req.params;
     const { reason  } = archiveDocumentSchema.parse(req.body);
 
-    const document = await archiveDocument(id, userId, userId, reason);
+    const document = await archiveDocument(Array.isArray(id) ? id[0] : id, userId, userId, reason);
 
     res.json({ data: document });
   } catch (error) {
@@ -215,7 +215,7 @@ export const restoreDocumentController = async (
     }
 
     const { id } = req.params;
-    const document = await restoreDocument(id, userId);
+    const document = await restoreDocument(Array.isArray(id) ? id[0] : id, userId);
 
     res.json({ data: document });
   } catch (error) {
@@ -238,7 +238,7 @@ export const favoriteDocumentController = async (
     }
 
     const { id } = req.params;
-    const document = await favoriteDocument(id, userId);
+    const document = await favoriteDocument(Array.isArray(id) ? id[0] : id, userId);
 
     res.json({ data: document });
   } catch (error) {
@@ -261,7 +261,7 @@ export const unfavoriteDocumentController = async (
     }
 
     const { id } = req.params;
-    const document = await unfavoriteDocument(id, userId);
+    const document = await unfavoriteDocument(Array.isArray(id) ? id[0] : id, userId);
 
     res.json({ data: document });
   } catch (error) {
@@ -286,7 +286,7 @@ export const verifyDocument = async (
     const { id } = req.params;
     const { status, notes } = verifyDocumentSchema.parse(req.body);
 
-    const document = await verifyDocumentService(id, userId, userId, status, notes);
+    const document = await verifyDocumentService(Array.isArray(id) ? id[0] : id, userId, userId, status, notes);
 
     res.json({ data: document });
   } catch (error) {
@@ -413,7 +413,7 @@ export const getDownloadUrl = async (
     }
 
     const { id } = req.params;
-    const url = await getDocumentDownloadUrl(id, userId);
+    const url = await getDocumentDownloadUrl(Array.isArray(id) ? id[0] : id, userId);
 
     res.json({ data: { url } });
   } catch (error) {

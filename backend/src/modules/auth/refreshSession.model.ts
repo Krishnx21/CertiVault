@@ -3,7 +3,7 @@
  * Stores hashed refresh tokens to enable secure logout and token rotation
  */
 
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema, Model } from "mongoose";
 
 export interface IRefreshSession extends Document {
   _id: mongoose.Types.ObjectId;
@@ -15,6 +15,16 @@ export interface IRefreshSession extends Document {
   revokedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  isExpired(): boolean;
+  isRevoked(): boolean;
+  revoke(): Promise<IRefreshSession>;
+}
+
+export interface IRefreshSessionModel extends Model<IRefreshSession> {
+  findValidForUser(userId: mongoose.Types.ObjectId): Promise<IRefreshSession[]>;
+  findByTokenHash(tokenHash: string): Promise<IRefreshSession | null>;
+  deleteAllForUser(userId: mongoose.Types.ObjectId): Promise<any>;
+  cleanupExpired(): Promise<any>;
 }
 
 const refreshSessionSchema = new Schema<IRefreshSession>(
@@ -106,4 +116,4 @@ refreshSessionSchema.statics.cleanupExpired = function () {
   return this.deleteMany({ expiresAt: { $lt: new Date() } });
 };
 
-export const RefreshSession = mongoose.model<IRefreshSession>("RefreshSession", refreshSessionSchema);
+export const RefreshSession = mongoose.model<IRefreshSession, IRefreshSessionModel>("RefreshSession", refreshSessionSchema);

@@ -7,7 +7,7 @@ import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "../utils/jwt.js";
 import { User } from "../modules/users/user.model.js";
 import { RefreshSession } from "../modules/auth/refreshSession.model.js";
-import ApiError from "../utils/ApiError.js";
+import { ApiError } from "../utils/ApiError.js";
 
 declare global {
   namespace Express {
@@ -34,7 +34,7 @@ export const protect = async (
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new ApiError(401, "No token provided. Please log in.");
+      throw new ApiError(401, "NO_TOKEN", "No token provided. Please log in.");
     }
     
     const token = authHeader.substring(7); // Remove "Bearer " prefix
@@ -46,11 +46,11 @@ export const protect = async (
     const user = await User.findById(decoded.userId).select("+isActive");
     
     if (!user) {
-      throw new ApiError(401, "User no longer exists. Please log in again.");
+      throw new ApiError(401, "USER_NOT_FOUND", "User no longer exists. Please log in again.");
     }
     
     if (!user.isActive) {
-      throw new ApiError(401, "Your account has been deactivated. Please contact support.");
+      throw new ApiError(401, "ACCOUNT_LOCKED", "Your account has been deactivated. Please contact support.");
     }
     
     // Attach user to request

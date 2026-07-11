@@ -49,7 +49,7 @@ export const verifyDocument = async (
     const { status, method, notes } = verifyDocumentSchema.parse(req.body);
 
     const verification = await verifyDocumentService({
-      documentId,
+      documentId: Array.isArray(documentId) ? documentId[0] : documentId,
       status,
       method,
       userId,
@@ -83,7 +83,7 @@ export const reverifyDocument = async (
     const { method, notes } = reverifyDocumentSchema.parse(req.body);
 
     const verification = await reverifyDocumentService({
-      documentId,
+      documentId: Array.isArray(documentId) ? documentId[0] : documentId,
       method,
       userId,
       userName,
@@ -110,7 +110,10 @@ export const getVerification = async (
     const { documentId } = req.params;
     const userId = (req as any).user?.id;
 
-    const verification = await getVerificationByDocumentId(documentId, userId);
+    const verification = await getVerificationByDocumentId(
+      Array.isArray(documentId) ? documentId[0] : documentId,
+      userId
+    );
 
     res.json({ data: verification });
   } catch (error) {
@@ -129,7 +132,9 @@ export const getVerificationHistoryController = async (
   try {
     const { documentId } = req.params;
 
-    const result = await getVerificationHistory(documentId);
+    const result = await getVerificationHistory(
+      Array.isArray(documentId) ? documentId[0] : documentId
+    );
 
     res.json({ data: result });
   } catch (error) {
@@ -150,7 +155,9 @@ export const publicVerify = async (
     const ipAddress = req.ip;
     const userAgent = req.get("user-agent");
 
-    const verification = await getVerificationByToken(token);
+    const verification = await getVerificationByToken(
+      Array.isArray(token) ? token[0] : token
+    );
 
     // Create audit log for public verification
     // (This is done inside the service, but we can add additional tracking here if needed)
@@ -232,7 +239,7 @@ export const revokeVerification = async (
     const { reason } = revokeVerificationSchema.parse(req.body);
 
     const verification = await revokeVerificationService({
-      verificationId,
+      verificationId: Array.isArray(verificationId) ? verificationId[0] : verificationId,
       userId,
       userName,
       reason,
@@ -357,7 +364,9 @@ export const generateQR = async (
   try {
     const { documentId } = req.params;
 
-    const result = await generateVerificationQR(documentId);
+    const result = await generateVerificationQR(
+      Array.isArray(documentId) ? documentId[0] : documentId
+    );
 
     res.json({ data: result });
   } catch (error) {
@@ -376,7 +385,9 @@ export const downloadQR = async (
   try {
     const { documentId } = req.params;
 
-    const { buffer, filename } = await downloadQRCode(documentId);
+    const { buffer, filename } = await downloadQRCode(
+      Array.isArray(documentId) ? documentId[0] : documentId
+    );
 
     res.setHeader("Content-Type", "image/png");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);

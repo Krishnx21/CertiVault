@@ -16,7 +16,7 @@ const VERIFICATION_RESULT_VALUES = ["success", "failure", "mismatch"] as const;
 
 // Verify document schema
 export const verifyDocumentSchema = z.object({
-  status: z.enum(VERIFICATION_STATUS_VALUES, {
+  status: z.enum(["verified", "rejected"], {
     errorMap: () => ({ message: "Invalid verification status" }),
   }),
   method: z.enum(VERIFICATION_METHOD_VALUES, {

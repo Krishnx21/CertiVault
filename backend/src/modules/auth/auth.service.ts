@@ -13,9 +13,8 @@ import {
   calculateTokenExpiration,
   type TokenPair,
 } from "../../utils/jwt.js";
-import { validatePassword } from "../../utils/passwordValidator.js";
 import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from "../../common/utils/email.js";
-import ApiError from "../../utils/ApiError.js";
+import { ApiError } from "../../utils/ApiError.js";
 import { getEnv } from "../../config/env.js";
 
 export interface RegisterInput {
@@ -49,16 +48,15 @@ export const register = async (
   ipAddress: string,
   userAgent: string
 ): Promise<AuthResult> => {
-  // Validate password
-  const passwordValidation = validatePassword(input.password);
-  if (!passwordValidation.valid) {
-    throw new ApiError(400, passwordValidation.error || "Invalid password");
+  // Validate password strength
+  if (input.password.length < 8) {
+    throw new ApiError(400, "INVALID_PASSWORD", "Password must be at least 8 characters long");
   }
 
   // Check if user already exists
   const existingUser = await User.findOne({ email: input.email.toLowerCase() });
   if (existingUser) {
-    throw new ApiError(409, "An account with this email already exists");
+    throw new ApiError(409, "EMAIL_EXISTS", "An account with this email already exists");
   }
 
   // Create user
@@ -131,17 +129,17 @@ export const login = async (
   );
 
   if (!user) {
-    throw new ApiError(401, "Invalid email or password");
+    throw new ApiError(401, "INVALID_CREDENTIALS", "Invalid email or password");
   }
 
   // Check if account is locked
   if (user.isLocked()) {
-    throw new ApiError(423, "Account is temporarily locked due to too many failed attempts. Please try again later.");
+    throw new ApiError(423, "ACCOUNT_LOCKED", "Account is temporarily locked due to too many failed attempts. Please try again later.");
   }
 
   // Check if account is active
   if (!user.isActive) {
-    throw new ApiError(401, "Your account has been deactivated. Please contact support.");
+    throw new ApiError(401, "ACCOUNT_DEACTIVATED", "Your account has been deactivated. Please contact support.");
   }
 
   // Verify password
@@ -157,7 +155,7 @@ export const login = async (
     
     await user.save();
     
-    throw new ApiError(401, "Invalid email or password");
+    throw new ApiError(401, "INVALID_CREDENTIALS", "Invalid email or password");
   }
 
   // Reset failed login attempts on successful login
@@ -212,17 +210,17 @@ export const refreshToken = async (
   const session = await RefreshSession.findByTokenHash(tokenHash);
   
   if (!session) {
-    throw new ApiError(401, "Invalid refresh token");
+    throw new ApiError(401, "INVALID_REFRESH_TOKEN", "Invalid refresh token");
   }
 
   // Check if session is expired
   if (session.isExpired()) {
-    throw new ApiError(401, "Refresh token has expired");
+    throw new ApiError(401, "REFRESH_TOKEN_EXPIRED", "Refresh token has expired");
   }
 
   // Check if session is revoked
   if (session.isRevoked()) {
-    throw new ApiError(401, "Refresh token has been revoked");
+    throw new ApiError(401, "REFRESH_TOKEN_REVOKED", "Refresh token has been revoked");
   }
 
   // Get user
@@ -231,7 +229,7 @@ export const refreshToken = async (
   if (!user || !user.isActive) {
     // Revoke session if user no longer exists or is inactive
     await session.revoke();
-    throw new ApiError(401, "User no longer exists or account is inactive");
+    throw new ApiError(401, "USER_INACTIVE", "User no longer exists or account is inactive");
   }
 
   // Revoke old session (token rotation)
@@ -286,7 +284,7 @@ export const getCurrentUser = async (userId: string) => {
   const user = await User.findById(userId);
   
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw new ApiError(404, "USER_NOT_FOUND", "User not found");
   }
 
   return {
@@ -338,10 +336,9 @@ export const resetPassword = async (
   token: string,
   newPassword: string
 ): Promise<void> => {
-  // Validate password
-  const passwordValidation = validatePassword(newPassword);
-  if (!passwordValidation.valid) {
-    throw new ApiError(400, passwordValidation.error || "Invalid password");
+  // Validate password strength
+  if (newPassword.length < 8) {
+    throw new ApiError(400, "INVALID_PASSWORD", "Password must be at least 8 characters long");
   }
 
   // Find user with valid reset token
@@ -351,7 +348,7 @@ export const resetPassword = async (
   }).select("+passwordResetToken +passwordResetExpires");
 
   if (!user) {
-    throw new ApiError(400, "Invalid or expired reset token");
+    throw new ApiError(400, "INVALID_TOKEN", "Invalid or expired reset token");
   }
 
   // Update password
@@ -374,7 +371,7 @@ export const verifyEmail = async (token: string): Promise<void> => {
   }).select("+emailVerificationToken +emailVerificationExpires");
 
   if (!user) {
-    throw new ApiError(400, "Invalid or expired verification token");
+    throw new ApiError(400, "INVALID_TOKEN", "Invalid or expired verification token");
   }
 
   user.isEmailVerified = true;
@@ -398,22 +395,21 @@ export const changePassword = async (
   currentPassword: string,
   newPassword: string
 ): Promise<void> => {
-  // Validate new password
-  const passwordValidation = validatePassword(newPassword);
-  if (!passwordValidation.valid) {
-    throw new ApiError(400, passwordValidation.error || "Invalid password");
+  // Validate new password strength
+  if (newPassword.length < 8) {
+    throw new ApiError(400, "INVALID_PASSWORD", "Password must be at least 8 characters long");
   }
 
   const user = await User.findById(userId).select("+passwordHash");
   
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw new ApiError(404, "USER_NOT_FOUND", "User not found");
   }
 
   // Verify current password
   const isPasswordValid = await user.comparePassword(currentPassword);
   if (!isPasswordValid) {
-    throw new ApiError(401, "Current password is incorrect");
+    throw new ApiError(401, "INVALID_PASSWORD", "Current password is incorrect");
   }
 
   // Update password
@@ -431,11 +427,11 @@ export const resendVerificationEmail = async (email: string): Promise<void> => {
   const user = await User.findOne({ email: email.toLowerCase() });
   
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw new ApiError(404, "USER_NOT_FOUND", "User not found");
   }
 
   if (user.isEmailVerified) {
-    throw new ApiError(400, "Email is already verified");
+    throw new ApiError(400, "EMAIL_ALREADY_VERIFIED", "Email is already verified");
   }
 
   // Generate new verification token
@@ -451,6 +447,6 @@ export const resendVerificationEmail = async (email: string): Promise<void> => {
     await sendVerificationEmail(user.email, user.name, verificationToken);
   } catch (error) {
     console.error("Failed to send verification email:", error);
-    throw new ApiError(500, "Failed to send verification email");
+    throw new ApiError(500, "EMAIL_SEND_FAILED", "Failed to send verification email");
   }
 };

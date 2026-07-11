@@ -184,7 +184,7 @@ const Register: React.FC = () => {
                     formData.confirmPassword && formData.password !== formData.confirmPassword
                       ? "border-red-500"
                       : ""
-                  }`}}
+                  }`}
                   placeholder="••••••••"
                 />
               </div>
