@@ -20,4 +20,11 @@ export const getEnv = () => ({
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: parsePort(process.env.API_PORT),
   frontendOrigin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173",
+  mongoUri: process.env.MONGODB_URI ?? "",
+  jwtSecret: process.env.JWT_SECRET ?? "dev-secret-change-in-production",
+  awsRegion: process.env.AWS_REGION ?? "us-east-1",
+  awsBucket: process.env.AWS_S3_BUCKET ?? "",
+  awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
+  awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
+  presignedUrlExpiry: Number(process.env.PRESIGNED_URL_EXPIRY_SECONDS ?? 3600),
 });
