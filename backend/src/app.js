@@ -9,6 +9,7 @@ import { healthRouter } from "./modules/health/health.routes.js";
 import { documentRouter } from "./modules/documents/document.routes.js";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
 import { infoRouter } from "./modules/info/info.routes.js";
+import { shareLinkRouter, publicShareRouter } from "./modules/share/share.routes.js";
 
 export const createApp = () => {
   const app = express();
@@ -22,6 +23,8 @@ export const createApp = () => {
   app.use("/health", healthRouter);
   app.use("/api", infoRouter);
   app.use("/api/documents", documentRouter);
+  app.use("/api/documents/:id/share-links", shareLinkRouter);
+  app.use("/api/share", publicShareRouter);
   app.use("/api/dashboard", dashboardRouter);
   app.use(notFound);
   app.use(errorHandler);
