@@ -44,9 +44,32 @@ export interface Summary {
   total: number;
   verified: number;
   pending: number;
+  rejected: number;
   archived: number;
   favorites: number;
   storageBytes: number;
+}
+
+export interface Activity {
+  id: string;
+  type: "upload" | "verify" | "favorite" | "archive" | "delete" | "share";
+  documentId: string;
+  documentTitle: string;
+  userId: string;
+  userName: string;
+  timestamp: string;
+  details?: string;
+}
+
+export interface Notification {
+  id: string;
+  type: "info" | "success" | "warning" | "error";
+  title: string;
+  message: string;
+  documentId?: string;
+  documentTitle?: string;
+  timestamp: string;
+  read: boolean;
 }
 
 export interface Verification {

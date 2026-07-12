@@ -132,7 +132,7 @@ export const httpLogger = (req: unknown, res: unknown, next: () => void) => {
     url: string;
     headers: Record<string, string>;
     ip: string;
-    user?: { id: string; email: string };
+    user?: { userId: string; email: string };
     requestId?: string;
   };
   
@@ -148,7 +148,7 @@ export const httpLogger = (req: unknown, res: unknown, next: () => void) => {
       level: "http",
       message: `${expressReq.method} ${expressReq.url}`,
       requestId: expressReq.requestId,
-      userId: expressReq.user?.id,
+      userId: expressReq.user?.userId,
       statusCode: expressRes.statusCode,
       durationMs,
       ip: expressReq.ip,

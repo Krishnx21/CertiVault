@@ -23,6 +23,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
   getCurrentUser: () => Promise<User>;
+  setUser: (user: User) => void;
+  setAccessToken: (token: string | null) => void;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
@@ -298,6 +300,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     refreshToken,
     getCurrentUser,
+    setUser,
+    setAccessToken,
     forgotPassword,
     resetPassword,
     verifyEmail,

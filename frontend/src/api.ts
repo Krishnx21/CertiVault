@@ -8,13 +8,17 @@ const getAuthHeader = (): Record<string, string> => {
 };
 
 const request = async <T>(path: string, options?: RequestInit): Promise<T> => {
+  const authHeader = getAuthHeader();
+  
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
+    credentials: "include",
     headers: {
-      ...getAuthHeader(),
+      ...authHeader,
       ...(options?.headers || {}),
     },
   });
+  
   if (!response.ok) {
     const body = await response.json().catch(() => ({})) as { error?: { message?: string } };
     throw new Error(body.error?.message || "Request failed");

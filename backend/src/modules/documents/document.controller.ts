@@ -17,6 +17,8 @@ import {
   getFavoriteDocuments,
   getDocumentDownloadUrl,
   getDocumentSummary,
+  getActivityTimeline,
+  getNotifications,
 } from "./document.service.js";
 import {
   uploadDocumentSchema,
@@ -44,7 +46,7 @@ export const uploadDocument = async (
 
     const { title, description, category, tags } = uploadDocumentSchema.parse(req.body);
 
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -78,13 +80,19 @@ export const listDocuments = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
 
+    // Convert "all" to undefined for status filter to support frontend "All" option
+    const queryToParse = { ...req.query };
+    if (queryToParse.status === "all") {
+      delete queryToParse.status;
+    }
+
     const { page, limit, search, status, category, isFavorite, isArchived, sortBy } =
-      getDocumentsSchema.parse(req.query);
+      getDocumentsSchema.parse(queryToParse);
 
     const result = await getDocuments({
       page,
@@ -113,7 +121,7 @@ export const getDocument = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -136,13 +144,19 @@ export const patchDocument = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
 
     const { id } = req.params;
-    const updates = updateDocumentSchema.parse(req.body);
+    const updates = updateDocumentSchema.parse(req.body) as Partial<{
+      title?: string;
+      description?: string;
+      category?: string;
+      tags?: string[];
+      status?: "pending" | "verified" | "rejected";
+    }>;
 
     const document = await updateDocument(Array.isArray(id) ? id[0] : id, updates, userId);
 
@@ -161,7 +175,7 @@ export const deleteDocument = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -184,7 +198,7 @@ export const archiveDocumentController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -209,7 +223,7 @@ export const restoreDocumentController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -232,7 +246,7 @@ export const favoriteDocumentController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -255,7 +269,7 @@ export const unfavoriteDocumentController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -278,7 +292,7 @@ export const verifyDocument = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -303,7 +317,7 @@ export const searchDocumentsController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -332,7 +346,7 @@ export const filterDocumentsController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -359,7 +373,7 @@ export const getRecentDocumentsController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -382,7 +396,7 @@ export const getFavoriteDocumentsController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -407,7 +421,7 @@ export const getDownloadUrl = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -430,7 +444,7 @@ export const getSummary = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
     }
@@ -438,6 +452,52 @@ export const getSummary = async (
     const summary = await getDocumentSummary(userId);
 
     res.json({ data: summary });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get activity timeline
+ */
+export const getActivityTimelineController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
+    }
+
+    const limit = parseInt(req.query.limit as string) || 20;
+    const activities = await getActivityTimeline(userId, limit);
+
+    res.json({ data: activities });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get notifications
+ */
+export const getNotificationsController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
+    }
+
+    const limit = parseInt(req.query.limit as string) || 10;
+    const notifications = await getNotifications(userId, limit);
+
+    res.json({ data: notifications });
   } catch (error) {
     next(error);
   }

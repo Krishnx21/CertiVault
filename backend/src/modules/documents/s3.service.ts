@@ -1,5 +1,6 @@
 /**
- * S3 Service - AWS S3 file upload and management
+ * File Storage Service - AWS S3 → Local Storage
+ * Uses AWS S3 for production, falls back to local storage in development
  */
 
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
@@ -7,28 +8,51 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getEnv } from "../../config/env.js";
 import crypto from "crypto";
 import path from "path";
+import fs from "fs/promises";
+import { existsSync } from "fs";
 
 const env = getEnv();
 
-// Initialize S3 client
-const s3Client = new S3Client({
-  region: env.AWS_REGION,
-  credentials: {
-    accessKeyId: env.AWS_ACCESS_KEY_ID || "",
-    secretAccessKey: env.AWS_SECRET_ACCESS_KEY || "",
-  },
-});
+// Check if AWS S3 credentials are configured (must be non-empty strings)
+const hasS3Credentials = 
+  env.AWS_ACCESS_KEY_ID && 
+  env.AWS_SECRET_ACCESS_KEY && 
+  env.AWS_S3_BUCKET &&
+  env.AWS_ACCESS_KEY_ID.length > 0 &&
+  env.AWS_SECRET_ACCESS_KEY.length > 0 &&
+  env.AWS_S3_BUCKET.length > 0;
+
+// Initialize S3 client only if credentials are available
+let s3Client: S3Client | null = null;
+if (hasS3Credentials) {
+  s3Client = new S3Client({
+    region: env.AWS_REGION,
+    credentials: {
+      accessKeyId: env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: env.AWS_SECRET_ACCESS_KEY!,
+    },
+  });
+}
 
 const BUCKET_NAME = env.AWS_S3_BUCKET || "certivault-documents";
 
+// Local storage directory for development
+const LOCAL_STORAGE_DIR = path.join(process.cwd(), "uploads", "documents");
+
+// Storage provider enum
+export enum StorageProvider {
+  S3 = "s3",
+  LOCAL = "local",
+}
+
 /**
- * Upload file to S3
+ * Upload file to S3 → Local Storage (fallback priority)
  */
 export const uploadToS3 = async (
   file: Buffer,
   fileName: string,
   mimeType: string
-): Promise<{ key: string; url: string }> => {
+): Promise<{ key: string; url: string; provider: StorageProvider }> => {
   // Generate unique key
   const fileExtension = path.extname(fileName);
   const baseName = path.basename(fileName, fileExtension);
@@ -36,44 +60,124 @@ export const uploadToS3 = async (
   const randomString = crypto.randomBytes(8).toString("hex");
   const key = `documents/${timestamp}-${randomString}-${baseName}${fileExtension}`;
 
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    Body: file,
-    ContentType: mimeType,
-    ServerSideEncryption: "AES256",
-  });
+  // Try S3 first
+  if (s3Client && hasS3Credentials) {
+    try {
+      const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+        Body: file,
+        ContentType: mimeType,
+        ServerSideEncryption: "AES256",
+      });
 
-  await s3Client.send(command);
+      await s3Client.send(command);
 
-  const url = `https://${BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
+      const url = `https://${BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${key}`;
+      return { key, url, provider: StorageProvider.S3 };
+    } catch (error) {
+      console.error("S3 upload failed, trying local storage:", error);
+    }
+  }
 
-  return { key, url };
+  // Fallback to local storage
+  const localDir = path.join(LOCAL_STORAGE_DIR, path.dirname(key));
+  if (!existsSync(localDir)) {
+    await fs.mkdir(localDir, { recursive: true });
+  }
+
+  const localPath = path.join(LOCAL_STORAGE_DIR, key);
+  await fs.writeFile(localPath, file);
+
+  const url = `/api/files/${key}`;
+  return { key, url, provider: StorageProvider.LOCAL };
 };
 
 /**
- * Generate presigned download URL
+ * Generate download URL (S3 → Local Storage)
  */
-export const getPresignedDownloadUrl = async (key: string): Promise<string> => {
-  const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  });
+export const getPresignedDownloadUrl = async (
+  key: string,
+  provider?: StorageProvider
+): Promise<string> => {
+  // If provider is specified, use it directly
+  if (provider === StorageProvider.S3 && s3Client && hasS3Credentials) {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+      });
 
-  const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
-  return url;
+      const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
+      return url;
+    } catch (error) {
+      console.error("S3 URL generation failed, trying local:", error);
+    }
+  }
+
+  // If provider is LOCAL or not specified, try in order
+  // Try S3 first
+  if (s3Client && hasS3Credentials) {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+      });
+
+      const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
+      return url;
+    } catch (error) {
+      console.error("S3 URL generation failed, trying local:", error);
+    }
+  }
+
+  // Fallback to local file URL
+  return `/api/files/${key}`;
 };
 
 /**
- * Delete file from S3
+ * Delete file from S3 → Local Storage
  */
-export const deleteFromS3 = async (key: string): Promise<void> => {
-  const command = new DeleteObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  });
+export const deleteFromS3 = async (
+  key: string,
+  provider?: StorageProvider
+): Promise<void> => {
+  // If provider is specified, use it directly
+  if (provider === StorageProvider.S3 && s3Client && hasS3Credentials) {
+    try {
+      const command = new DeleteObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+      });
 
-  await s3Client.send(command);
+      await s3Client.send(command);
+      return;
+    } catch (error) {
+      console.error("S3 deletion failed, trying local:", error);
+    }
+  }
+
+  // If provider is LOCAL or not specified, try in order
+  // Try S3 first
+  if (s3Client && hasS3Credentials) {
+    try {
+      const command = new DeleteObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+      });
+
+      await s3Client.send(command);
+      return;
+    } catch (error) {
+      console.error("S3 deletion failed, trying local:", error);
+    }
+  }
+
+  // Fallback to local storage
+  const localPath = path.join(LOCAL_STORAGE_DIR, key);
+  if (existsSync(localPath)) {
+    await fs.unlink(localPath);
+  }
 };
 
 /**

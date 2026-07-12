@@ -18,6 +18,8 @@ import {
   getFavoriteDocumentsController,
   getDownloadUrl,
   getSummary,
+  getActivityTimelineController,
+  getNotificationsController,
 } from "./document.controller.js";
 
 const upload = multer({
@@ -33,6 +35,8 @@ export const documentRouter = Router();
 documentRouter.use(protect);
 
 documentRouter.get("/summary", getSummary);
+documentRouter.get("/activity", getActivityTimelineController);
+documentRouter.get("/notifications", getNotificationsController);
 documentRouter.get("/search", searchDocumentsController);
 documentRouter.get("/filter", filterDocumentsController);
 documentRouter.get("/recent", getRecentDocumentsController);

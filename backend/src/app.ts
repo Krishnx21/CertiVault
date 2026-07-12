@@ -12,6 +12,7 @@ import cookieParser from "cookie-parser";
 // We handle NoSQL injection through input validation instead
 import hpp from "hpp";
 import rateLimit from "express-rate-limit";
+import path from "path";
 import { getEnv, isDevelopment, isProduction } from "./config/env.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
@@ -78,8 +79,10 @@ export const createApp = (): Express => {
       env.FRONTEND_ORIGIN,
       "http://localhost:5173",
       "http://localhost:5174",
+      "http://localhost:5175",
       "http://127.0.0.1:5173",
       "http://127.0.0.1:5174",
+      "http://127.0.0.1:5175",
       ...(isDevelopment ? ["http://localhost:3000", "http://127.0.0.1:3000"] : []),
     ])
   ).filter(Boolean);
@@ -166,11 +169,15 @@ export const createApp = (): Express => {
   app.use("/api/auth", authLimiter);
 
   // ============================================
-  // STATIC FILES (for production)
+  // STATIC FILES (for production and local file serving)
   // ============================================
   if (isProduction) {
     app.use(express.static("public"));
   }
+
+  // Serve uploaded files from local storage (for development without AWS S3)
+  const uploadsDir = path.join(process.cwd(), "uploads");
+  app.use("/api/files", express.static(uploadsDir));
 
   // ============================================
   // API ROUTES

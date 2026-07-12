@@ -17,7 +17,7 @@ export const isDocumentOwnerOrAdmin = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     const isAdmin = (req as any).user?.role === "admin";
     const { documentId } = req.params;
 
@@ -53,7 +53,7 @@ export const isVerificationOwnerOrAdmin = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     const isAdmin = (req as any).user?.role === "admin";
     const { verificationId } = req.params;
 

@@ -1,4 +1,5 @@
 import { Check, FileCheck2, Files, FolderOpen, LayoutDashboard, MoreHorizontal, Settings, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { Summary } from "../types.js";
 
 interface SidebarProps {
@@ -7,6 +8,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ mobileNav, summary }: SidebarProps) {
+  const location = useLocation();
+
   return (
     <aside className={`sidebar ${mobileNav ? "open" : ""}`}>
       <div className="brand">
@@ -20,25 +23,25 @@ export function Sidebar({ mobileNav, summary }: SidebarProps) {
       </div>
       <nav>
         <p>Workspace</p>
-        <a className="active">
+        <Link to="/dashboard" className={location.pathname === "/dashboard" ? "active" : ""}>
           <LayoutDashboard /> Dashboard
-        </a>
-        <a>
+        </Link>
+        <Link to="/documents" className={location.pathname === "/documents" ? "active" : ""}>
           <Files /> Documents <span className="nav-count">{summary.total}</span>
-        </a>
-        <a>
+        </Link>
+        <Link to="/verification" className={location.pathname === "/verification" ? "active" : ""}>
           <FileCheck2 /> Verification <span className="nav-count amber">{summary.pending}</span>
-        </a>
-        <a>
+        </Link>
+        <Link to="/shared-vaults" className={location.pathname === "/shared-vaults" ? "active" : ""}>
           <FolderOpen /> Shared vaults
-        </a>
+        </Link>
         <p>Manage</p>
-        <a>
+        <Link to="/team-members" className={location.pathname === "/team-members" ? "active" : ""}>
           <UserRound /> Team members
-        </a>
-        <a>
+        </Link>
+        <Link to="/settings" className={location.pathname === "/settings" ? "active" : ""}>
           <Settings /> Settings
-        </a>
+        </Link>
       </nav>
       <div className="trust-card">
         <div className="trust-icon">

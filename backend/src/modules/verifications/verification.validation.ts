@@ -6,10 +6,16 @@
 import { z } from "zod";
 
 // Verification status values
-const VERIFICATION_STATUS_VALUES = ["verified", "pending", "rejected", "expired", "tampered", "revoked"] as const;
+const VERIFICATION_STATUS_VALUES = ["all", "verified", "pending", "rejected", "expired", "tampered", "revoked"] as const;
+
+// Verification status values for operations (exclude "all")
+const VERIFICATION_STATUS_VALUES_STRICT = ["verified", "pending", "rejected", "expired", "tampered", "revoked"] as const;
 
 // Verification method values
-const VERIFICATION_METHOD_VALUES = ["manual", "qr", "public", "hash", "api"] as const;
+const VERIFICATION_METHOD_VALUES = ["all", "manual", "qr", "public", "hash", "api"] as const;
+
+// Verification method values for operations (exclude "all")
+const VERIFICATION_METHOD_VALUES_STRICT = ["manual", "qr", "public", "hash", "api"] as const;
 
 // Verification result values
 const VERIFICATION_RESULT_VALUES = ["success", "failure", "mismatch"] as const;
@@ -19,7 +25,7 @@ export const verifyDocumentSchema = z.object({
   status: z.enum(["verified", "rejected"], {
     errorMap: () => ({ message: "Invalid verification status" }),
   }),
-  method: z.enum(VERIFICATION_METHOD_VALUES, {
+  method: z.enum(VERIFICATION_METHOD_VALUES_STRICT, {
     errorMap: () => ({ message: "Invalid verification method" }),
   }).default("manual"),
   notes: z.string().max(500, "Notes cannot exceed 500 characters").optional(),
@@ -27,7 +33,7 @@ export const verifyDocumentSchema = z.object({
 
 // Re-verify document schema
 export const reverifyDocumentSchema = z.object({
-  method: z.enum(VERIFICATION_METHOD_VALUES, {
+  method: z.enum(VERIFICATION_METHOD_VALUES_STRICT, {
     errorMap: () => ({ message: "Invalid verification method" }),
   }).default("manual"),
   notes: z.string().max(500, "Notes cannot exceed 500 characters").optional(),

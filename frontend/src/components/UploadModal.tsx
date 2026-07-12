@@ -23,7 +23,6 @@ export function UploadModal({ onClose, onUploaded }: UploadModalProps) {
   const [tags, setTags] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   const submit = async () => {
     if (!file) return setError("Choose a document first.");
@@ -31,14 +30,16 @@ export function UploadModal({ onClose, onUploaded }: UploadModalProps) {
     
     setBusy(true);
     setError("");
-    setUploadProgress(0);
 
     const data = new FormData();
     data.append("file", file);
     data.append("title", title);
     if (description) data.append("description", description);
     data.append("category", category);
-    if (tags) data.append("tags", JSON.stringify(tags.split(",").map(t => t.trim())));
+    if (tags) {
+      const tagArray = tags.split(",").map(t => t.trim()).filter(t => t.length > 0);
+      tagArray.forEach(tag => data.append("tags", tag));
+    }
 
     try {
       await api.uploadDocument(data);

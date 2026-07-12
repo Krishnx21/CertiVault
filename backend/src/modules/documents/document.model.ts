@@ -17,6 +17,7 @@ export interface IDocument extends Document {
   verificationStatus: "not_verified" | "verified" | "failed";
   storageUrl: string;
   storageKey: string;
+  storageProvider?: "s3" | "local";
   thumbnailUrl?: string;
   fileName: string;
   fileSize: number;
@@ -103,6 +104,12 @@ const documentSchema = new Schema<IDocument>(
       type: String,
       required: [true, "Storage key is required"],
       unique: true,
+      sparse: true, // Allow null values in unique index
+    },
+    storageProvider: {
+      type: String,
+      enum: ["s3", "local"],
+      default: "local",
     },
     thumbnailUrl: {
       type: String,
@@ -202,3 +209,42 @@ documentSchema.index({ title: "text", description: "text", tags: "text" });
 documentSchema.index({ owner: 1, isArchived: 1, status: 1, createdAt: -1 });
 
 export const DocumentModel = mongoose.model<IDocument>("Document", documentSchema);
+
+// Clean up problematic indexes on model initialization
+DocumentModel.on('index', async (error) => {
+  if (error) {
+    console.error('Document model index error:', error);
+    // Clean up problematic indexes
+    const problematicIndexes = ['id_1', 'storageKey_1'];
+    for (const indexName of problematicIndexes) {
+      if (error.message.includes(indexName)) {
+        console.log(`Attempting to clean up ${indexName} index...`);
+        try {
+          await DocumentModel.collection.dropIndex(indexName);
+          console.log(`Successfully dropped ${indexName} index`);
+        } catch (dropError) {
+          console.log(`Could not drop ${indexName} index (may not exist):`, dropError.message);
+        }
+      }
+    }
+  }
+});
+
+// Also attempt to drop problematic indexes on model init (before any operations)
+DocumentModel.init().then(async () => {
+  const indexes = await DocumentModel.collection.listIndexes().toArray();
+  const problematicIndexes = ['id_1', 'storageKey_1'];
+  for (const index of indexes) {
+    if (problematicIndexes.includes(index.name)) {
+      console.log(`Found problematic index ${index.name}, attempting to drop...`);
+      try {
+        await DocumentModel.collection.dropIndex(index.name);
+        console.log(`Successfully dropped ${index.name} index`);
+      } catch (dropError) {
+        console.log(`Could not drop ${index.name}:`, dropError.message);
+      }
+    }
+  }
+}).catch(err => {
+  console.error('Error initializing DocumentModel:', err);
+});

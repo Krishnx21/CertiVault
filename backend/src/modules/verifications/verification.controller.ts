@@ -41,7 +41,7 @@ export const verifyDocument = async (
 ): Promise<void> => {
   try {
     const { documentId } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     const userName = (req as any).user?.name;
     const ipAddress = req.ip;
     const userAgent = req.get("user-agent");
@@ -75,7 +75,7 @@ export const reverifyDocument = async (
 ): Promise<void> => {
   try {
     const { documentId } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     const userName = (req as any).user?.name;
     const ipAddress = req.ip;
     const userAgent = req.get("user-agent");
@@ -108,7 +108,7 @@ export const getVerification = async (
 ): Promise<void> => {
   try {
     const { documentId } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
 
     const verification = await getVerificationByDocumentId(
       Array.isArray(documentId) ? documentId[0] : documentId,
@@ -227,7 +227,7 @@ export const revokeVerification = async (
 ): Promise<void> => {
   try {
     const { verificationId } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     const userName = (req as any).user?.name;
     const ipAddress = req.ip;
     const userAgent = req.get("user-agent");
@@ -262,7 +262,7 @@ export const getVerificationsController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
 
     const { page, limit, status, method, search } = getVerificationsSchema.parse(req.query);
 
@@ -290,7 +290,7 @@ export const searchVerificationsController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
 
     const { query, page, limit } = searchVerificationsSchema.parse(req.query);
 
@@ -316,7 +316,7 @@ export const filterVerificationsController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
 
     const filters = filterVerificationsSchema.parse(req.query);
 
@@ -343,7 +343,7 @@ export const getStatistics = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
 
     const statistics = await getVerificationStatistics(userId);
 

@@ -101,9 +101,9 @@ export const uploadDocument = async (input: UploadDocumentInput): Promise<IDocum
     throw new ApiError(409, "DUPLICATE_DOCUMENT", "Document with same content already exists");
   }
 
-  // Upload to S3
+  // Upload to storage (S3 → Cloudinary → Local fallback)
   const sanitizedFileName = sanitizeFilename(originalName);
-  const { key, url } = await uploadToS3(file, sanitizedFileName, mimeType);
+  const { key, url, provider } = await uploadToS3(file, sanitizedFileName, mimeType);
 
   // Create document record
   const document = await DocumentModel.create({
@@ -118,6 +118,7 @@ export const uploadDocument = async (input: UploadDocumentInput): Promise<IDocum
     verificationStatus: "not_verified",
     storageUrl: url,
     storageKey: key,
+    storageProvider: provider,
     fileName: sanitizedFileName,
     fileSize,
     mimeType,
@@ -157,7 +158,7 @@ export const getDocuments = async (input: GetDocumentsInput) => {
     isArchived: isArchived ?? false,
   };
 
-  if (status) {
+  if (status && status !== "all") {
     query.status = status;
   }
 
@@ -561,10 +562,11 @@ export const getDocumentDownloadUrl = async (
  * Get document summary stats
  */
 export const getDocumentSummary = async (ownerId: string) => {
-  const [total, verified, pending, archived, favorites, storageBytes] = await Promise.all([
+  const [total, verified, pending, rejected, archived, favorites, storageBytes] = await Promise.all([
     DocumentModel.countDocuments({ owner: ownerId, isArchived: false }),
     DocumentModel.countDocuments({ owner: ownerId, status: "verified", isArchived: false }),
     DocumentModel.countDocuments({ owner: ownerId, status: "pending", isArchived: false }),
+    DocumentModel.countDocuments({ owner: ownerId, status: "rejected", isArchived: false }),
     DocumentModel.countDocuments({ owner: ownerId, isArchived: true }),
     DocumentModel.countDocuments({ owner: ownerId, isFavorite: true, isArchived: false }),
     DocumentModel.aggregate([
@@ -577,8 +579,170 @@ export const getDocumentSummary = async (ownerId: string) => {
     total,
     verified,
     pending,
+    rejected,
     archived,
     favorites,
     storageBytes: storageBytes[0]?.total || 0,
   };
+};
+
+/**
+ * Get activity timeline for user
+ */
+export const getActivityTimeline = async (ownerId: string, limit = 20) => {
+  const documents = await DocumentModel.find({ owner: ownerId })
+    .sort({ updatedAt: -1 })
+    .limit(limit)
+    .select("title fileName status verifiedAt verifiedBy archivedAt archivedBy favoritedAt createdAt updatedAt ownerName");
+
+  const activities: Array<{
+    id: string;
+    type: "upload" | "verify" | "favorite" | "archive" | "delete" | "share";
+    documentId: string;
+    documentTitle: string;
+    userId: string;
+    userName: string;
+    timestamp: string;
+    details?: string;
+  }> = [];
+
+  documents.forEach((doc) => {
+    const docObj = doc.toObject();
+    
+    // Upload activity
+    activities.push({
+      id: `${docObj._id}_upload`,
+      type: "upload",
+      documentId: docObj._id.toString(),
+      documentTitle: docObj.title,
+      userId: ownerId,
+      userName: docObj.ownerName,
+      timestamp: docObj.createdAt.toISOString(),
+      details: `Uploaded ${docObj.fileName}`,
+    });
+
+    // Verification activity
+    if (docObj.verifiedAt && docObj.status === "verified") {
+      activities.push({
+        id: `${docObj._id}_verify`,
+        type: "verify",
+        documentId: docObj._id.toString(),
+        documentTitle: docObj.title,
+        userId: docObj.verifiedBy || ownerId,
+        userName: docObj.verifiedBy || docObj.ownerName,
+        timestamp: docObj.verifiedAt.toISOString(),
+        details: `Verified as ${docObj.status}`,
+      });
+    }
+
+    // Archive activity
+    if (docObj.archivedAt && docObj.isArchived) {
+      activities.push({
+        id: `${docObj._id}_archive`,
+        type: "archive",
+        documentId: docObj._id.toString(),
+        documentTitle: docObj.title,
+        userId: docObj.archivedBy || ownerId,
+        userName: docObj.archivedBy || docObj.ownerName,
+        timestamp: docObj.archivedAt.toISOString(),
+        details: "Archived document",
+      });
+    }
+
+    // Favorite activity
+    if (docObj.favoritedAt && docObj.isFavorite) {
+      activities.push({
+        id: `${docObj._id}_favorite`,
+        type: "favorite",
+        documentId: docObj._id.toString(),
+        documentTitle: docObj.title,
+        userId: ownerId,
+        userName: docObj.ownerName,
+        timestamp: docObj.favoritedAt.toISOString(),
+        details: "Added to favorites",
+      });
+    }
+  });
+
+  // Sort by timestamp descending and limit
+  return activities
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, limit);
+};
+
+/**
+ * Get notifications for user
+ */
+export const getNotifications = async (ownerId: string, limit = 10) => {
+  const documents = await DocumentModel.find({ owner: ownerId })
+    .sort({ updatedAt: -1 })
+    .limit(limit)
+    .select("title status verifiedAt createdAt updatedAt");
+
+  const notifications: Array<{
+    id: string;
+    type: "info" | "success" | "warning" | "error";
+    title: string;
+    message: string;
+    documentId?: string;
+    documentTitle?: string;
+    timestamp: string;
+    read: boolean;
+  }> = [];
+
+  documents.forEach((doc) => {
+    const docObj = doc.toObject();
+    
+    // Pending verification notification
+    if (docObj.status === "pending") {
+      notifications.push({
+        id: `${docObj._id}_pending`,
+        type: "warning",
+        title: "Verification Pending",
+        message: `"${docObj.title}" is awaiting verification`,
+        documentId: docObj._id.toString(),
+        documentTitle: docObj.title,
+        timestamp: docObj.createdAt.toISOString(),
+        read: false,
+      });
+    }
+
+    // Verified notification
+    if (docObj.status === "verified" && docObj.verifiedAt) {
+      const hoursSinceVerification = Math.floor(
+        (Date.now() - new Date(docObj.verifiedAt).getTime()) / (1000 * 60 * 60)
+      );
+      if (hoursSinceVerification < 24) {
+        notifications.push({
+          id: `${docObj._id}_verified`,
+          type: "success",
+          title: "Document Verified",
+          message: `"${docObj.title}" has been successfully verified`,
+          documentId: docObj._id.toString(),
+          documentTitle: docObj.title,
+          timestamp: docObj.verifiedAt.toISOString(),
+          read: false,
+        });
+      }
+    }
+
+    // Rejected notification
+    if (docObj.status === "rejected") {
+      notifications.push({
+        id: `${docObj._id}_rejected`,
+        type: "error",
+        title: "Verification Failed",
+        message: `"${docObj.title}" verification was rejected`,
+        documentId: docObj._id.toString(),
+        documentTitle: docObj.title,
+        timestamp: docObj.updatedAt.toISOString(),
+        read: false,
+      });
+    }
+  });
+
+  // Sort by timestamp descending and limit
+  return notifications
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, limit);
 };
