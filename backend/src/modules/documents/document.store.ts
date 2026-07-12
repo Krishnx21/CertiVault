@@ -1,9 +1,9 @@
 import { DocumentModel, IDocument } from "./document.model.js";
-
+import { eventBus } from "../../utils/eventBus.js";
 
 const now = Date.now();
 
-const initialDocuments: any[] = [
+const initialDocuments: IDocument[] = [
   {
     id: "demo-credential",
     name: "Cloud Security Certificate.pdf",
@@ -11,7 +11,7 @@ const initialDocuments: any[] = [
     size: 2457600,
     status: "verified",
     owner: "Krishna Kumar",
-    createdAt: new Date(now - 2 * 86400000),
+    createdAt: new Date(now - 2 * 86400000).toISOString(),
     checksum: "7b9f4c2e8a10d34f",
   },
   {
@@ -21,7 +21,7 @@ const initialDocuments: any[] = [
     size: 1153433,
     status: "pending",
     owner: "Krishna Kumar",
-    createdAt: new Date(now - 5 * 86400000),
+    createdAt: new Date(now - 5 * 86400000).toISOString(),
     checksum: "a41d9b6604cc82e1",
   },
   {
@@ -31,7 +31,7 @@ const initialDocuments: any[] = [
     size: 845414,
     status: "verified",
     owner: "Krishna Kumar",
-    createdAt: new Date(now - 8 * 86400000),
+    createdAt: new Date(now - 8 * 86400000).toISOString(),
     checksum: "18e613fea60aeb4d",
   },
 ];
@@ -53,20 +53,30 @@ export const documentStore = {
   all: async (): Promise<IDocument[]> => {
     return (await DocumentModel.find().lean()) as unknown as IDocument[];
   },
-  add: async (document: any): Promise<IDocument> => {
+  add: async (document: IDocument): Promise<IDocument> => {
     const created = await DocumentModel.create(document);
-    return created.toObject() as unknown as IDocument;
+    const doc = created.toObject() as unknown as IDocument;
+    eventBus.emit("documentCreated", doc);
+    return doc;
   },
   find: async (id: string): Promise<IDocument | null> => {
     return (await DocumentModel.findOne({ id }).lean()) as unknown as IDocument | null;
   },
   update: async (id: string, updates: Partial<IDocument>): Promise<IDocument | null> => {
-    return (await DocumentModel.findOneAndUpdate({ id }, updates, {
+    const updated = (await DocumentModel.findOneAndUpdate({ id }, updates, {
       new: true,
     }).lean()) as unknown as IDocument | null;
+    if (updated) {
+      eventBus.emit("documentUpdated", updated);
+    }
+    return updated;
   },
   remove: async (id: string): Promise<boolean> => {
     const result = await DocumentModel.deleteOne({ id });
-    return (result.deletedCount ?? 0) > 0;
+    const success = (result.deletedCount ?? 0) > 0;
+    if (success) {
+      eventBus.emit("documentDeleted", id);
+    }
+    return success;
   },
 };
