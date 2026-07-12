@@ -1,4 +1,4 @@
-import { Document, Summary } from "./types.js";
+import { Document, Summary, Activity, Notification } from "./types.js";
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
 
@@ -182,6 +182,12 @@ export const api = {
 
   getDocumentSummary: (): Promise<{ data: Summary }> =>
     request<{ data: Summary }>("/api/documents/summary"),
+
+  getActivityTimeline: (limit = 20): Promise<{ data: Activity[] }> =>
+    request<{ data: Activity[] }>(`/api/documents/activity?limit=${limit}`),
+
+  getNotifications: (limit = 10): Promise<{ data: Notification[] }> =>
+    request<{ data: Notification[] }>(`/api/documents/notifications?limit=${limit}`),
 
   // Verifications
   verifyDocument: (documentId: string, status: "verified" | "rejected", method = "manual", notes?: string): Promise<{ data: any }> =>
