@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { ApiError } from "../../utils/ApiError.js";
 import * as defaultStorage from "../../services/storage.service.js";
 import { Document } from "./document.model.js";
+import { eventBus } from "../../utils/eventBus.js";
 
 let storage = defaultStorage;
 export const _setStorage = (s) => {
@@ -106,6 +107,8 @@ export const uploadDocument = async (req, res, next) => {
         : [],
     });
 
+    eventBus.emit("documentCreated", doc);
+
     res.status(201).json({ data: toResponse(doc) });
   } catch (err) {
     next(err);
@@ -131,6 +134,8 @@ export const updateDocument = async (req, res, next) => {
       runValidators: true,
     }).lean();
 
+    eventBus.emit("documentUpdated", doc);
+
     res.json({ data: toResponse(doc) });
   } catch (err) {
     next(err);
@@ -145,6 +150,9 @@ export const verifyDocument = async (req, res, next) => {
       { new: true }
     ).lean();
     if (!doc) return next(new ApiError(404, "DOCUMENT_NOT_FOUND", "Document was not found"));
+    
+    eventBus.emit("documentUpdated", doc);
+    
     res.json({ data: toResponse(doc) });
   } catch (err) {
     next(err);
@@ -162,6 +170,9 @@ export const deleteDocument = async (req, res, next) => {
 
     await Document.findByIdAndDelete(req.params.id);
     await storage.deleteFromS3(doc.s3Key);
+    
+    eventBus.emit("documentDeleted", req.params.id);
+    
     res.status(204).send();
   } catch (err) {
     next(err);
