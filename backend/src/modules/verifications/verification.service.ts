@@ -480,16 +480,21 @@ export const getVerifications = async (params: {
 
   const query: any = {};
 
-  if (status) {
+  if (status && status !== "all") {
     query.verificationStatus = status;
   }
 
-  if (method) {
+  if (method && method !== "all") {
     query.verificationMethod = method;
   }
 
   if (userId) {
-    query.verifiedBy = new mongoose.Types.ObjectId(userId);
+    // Scope to verifications for documents owned by this user
+    const userDocIds = await DocumentModel.find(
+      { owner: new mongoose.Types.ObjectId(userId) },
+      { _id: 1 }
+    ).lean();
+    query.documentId = { $in: userDocIds.map((d) => d._id) };
   }
 
   if (search) {
@@ -520,7 +525,11 @@ export const getVerifications = async (params: {
 export const getVerificationStatistics = async (userId?: string) => {
   const match: any = {};
   if (userId) {
-    match.verifiedBy = new mongoose.Types.ObjectId(userId);
+    const userDocIds = await DocumentModel.find(
+      { owner: new mongoose.Types.ObjectId(userId) },
+      { _id: 1 }
+    ).lean();
+    match.documentId = { $in: userDocIds.map((d) => d._id) };
   }
 
   const stats = await VerificationModel.aggregate([
