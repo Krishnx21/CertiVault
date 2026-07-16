@@ -144,6 +144,7 @@ router.get(
       const tokens = generateTokenPair({
         userId: user._id.toString(),
         email: user.email,
+        name: user.name,
         role: user.role,
       });
 

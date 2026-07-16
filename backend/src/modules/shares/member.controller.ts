@@ -33,7 +33,7 @@ export const inviteMemberController = async (req: Request, res: Response, next: 
       memberName,
       permission,
       invitedBy: userId,
-      invitedByName: "Unknown",
+      invitedByName: req.user?.name || req.user?.email || "Unknown",
       invitedByEmail: req.user?.email || "",
       expiresAt: expiresAt ? new Date(expiresAt) : undefined,
     });
@@ -73,7 +73,7 @@ export const acceptInviteController = async (req: Request, res: Response, next: 
       inviteToken: tokenStr,
       userId,
       userEmail: req.user?.email || "",
-      userName: "Unknown",
+      userName: req.user?.name || req.user?.email || "Unknown",
     });
 
     res.json({

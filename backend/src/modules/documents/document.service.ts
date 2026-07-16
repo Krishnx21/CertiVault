@@ -562,14 +562,33 @@ export const getFavoriteDocuments = async (
 
 /**
  * Get document download URL
+ * Accessible by the document owner OR any accepted shared member
  */
 export const getDocumentDownloadUrl = async (
   id: string,
-  ownerId: string
+  requesterId: string
 ): Promise<string> => {
-  const document = await DocumentModel.findOne({ _id: id, owner: ownerId });
+  // Try owner first
+  let document = await DocumentModel.findOne({ _id: id, owner: requesterId });
+
+  // If not owner, check if the requester is an accepted shared member
   if (!document) {
-    throw new ApiError(404, "DOCUMENT_NOT_FOUND", "Document not found");
+    const { SharedMemberModel } = await import("../shares/sharedMember.model.js");
+    const sharedAccess = await SharedMemberModel.findOne({
+      documentId: id,
+      memberUserId: requesterId,
+      inviteStatus: "accepted",
+      isActive: true,
+    });
+
+    if (!sharedAccess) {
+      throw new ApiError(404, "DOCUMENT_NOT_FOUND", "Document not found or access denied");
+    }
+
+    document = await DocumentModel.findById(id);
+    if (!document) {
+      throw new ApiError(404, "DOCUMENT_NOT_FOUND", "Document not found");
+    }
   }
 
   // Increment download count

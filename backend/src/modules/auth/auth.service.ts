@@ -87,6 +87,7 @@ export const register = async (
   const tokens = generateTokenPair({
     userId: user._id.toString(),
     email: user.email,
+    name: user.name,
     role: user.role,
   });
 
@@ -168,6 +169,7 @@ export const login = async (
   const tokens = generateTokenPair({
     userId: user._id.toString(),
     email: user.email,
+    name: user.name,
     role: user.role,
   });
 
@@ -239,6 +241,7 @@ export const refreshToken = async (
   const tokens = generateTokenPair({
     userId: user._id.toString(),
     email: user.email,
+    name: user.name,
     role: user.role,
   });
 

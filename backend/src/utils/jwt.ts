@@ -9,6 +9,7 @@ import { getEnv } from "../config/env.js";
 export interface TokenPayload {
   userId: string;
   email: string;
+  name: string;
   role: string;
   iat?: number;
   exp?: number;

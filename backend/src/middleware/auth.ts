@@ -15,6 +15,7 @@ declare global {
       user?: {
         userId: string;
         email: string;
+        name: string;
         role: string;
       };
     }
@@ -57,6 +58,7 @@ export const protect = async (
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
+      name: decoded.name,
       role: decoded.role,
     };
     
