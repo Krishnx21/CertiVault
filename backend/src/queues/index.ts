@@ -5,6 +5,7 @@
 
 export {
   emailQueue,
+  getEmailQueue,
   EMAIL_QUEUE_NAME,
   queueWelcomeEmail,
   queueEmailVerification,
@@ -26,6 +27,7 @@ export type {
 
 export {
   notificationQueue,
+  getNotificationQueue,
   NOTIFICATION_QUEUE_NAME,
   queueUploadCompletedNotif,
   queueVerificationNotif,

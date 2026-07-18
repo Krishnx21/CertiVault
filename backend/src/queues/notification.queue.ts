@@ -1,6 +1,9 @@
 /**
  * Notification Job Queue
  * Defines the BullMQ queue and all typed job payloads for in-app notifications.
+ *
+ * The Queue instance is created lazily on first use so that importing this
+ * module never crashes when Redis is temporarily unavailable at startup.
  */
 
 import { Queue } from "bullmq";
@@ -57,33 +60,52 @@ export type NotificationJobData =
   | StorageWarningJobData
   | ExpiryReminderNotifJobData;
 
-// ─── Queue instance ───────────────────────────────────────────────────────────
+// ─── Queue instance (lazy singleton) ─────────────────────────────────────────
 
 export const NOTIFICATION_QUEUE_NAME = "notification";
 
-export const notificationQueue = new Queue<NotificationJobData>(
-  NOTIFICATION_QUEUE_NAME,
-  {
-    connection: createBullMQConnection(),
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 1000,
-      },
-      removeOnComplete: {
-        age: 24 * 3600,
-        count: 1000,
-      },
-      removeOnFail: {
-        age: 7 * 24 * 3600,
-      },
-    },
-  }
-);
+let _notificationQueue: Queue<NotificationJobData> | null = null;
 
-notificationQueue.on("error", (err: Error) => {
-  log.error("Notification queue error", { error: err.message });
+export function getNotificationQueue(): Queue<NotificationJobData> {
+  if (!_notificationQueue) {
+    _notificationQueue = new Queue<NotificationJobData>(
+      NOTIFICATION_QUEUE_NAME,
+      {
+        connection: createBullMQConnection(),
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: {
+            type: "exponential",
+            delay: 1000,
+          },
+          removeOnComplete: {
+            age: 24 * 3600,
+            count: 1000,
+          },
+          removeOnFail: {
+            age: 7 * 24 * 3600,
+          },
+        },
+      }
+    );
+
+    _notificationQueue.on("error", (err: Error) => {
+      log.error("Notification queue error", { error: err.message });
+    });
+
+    log.info("Notification queue initialised");
+  }
+  return _notificationQueue;
+}
+
+/**
+ * @deprecated Use getNotificationQueue() instead. Kept for backwards-compatibility
+ * with Bull Board and any direct queue references.
+ */
+export const notificationQueue = new Proxy({} as Queue<NotificationJobData>, {
+  get(_target, prop) {
+    return (getNotificationQueue() as unknown as Record<string | symbol, unknown>)[prop];
+  },
 });
 
 // ─── Typed job adder helpers ──────────────────────────────────────────────────
@@ -91,7 +113,7 @@ notificationQueue.on("error", (err: Error) => {
 export async function queueUploadCompletedNotif(
   data: Omit<UploadCompletedJobData, "type">
 ): Promise<void> {
-  await notificationQueue.add("upload-completed", {
+  await getNotificationQueue().add("upload-completed", {
     type: "upload-completed",
     ...data,
   });
@@ -101,7 +123,7 @@ export async function queueUploadCompletedNotif(
 export async function queueVerificationNotif(
   data: Omit<VerificationCompletedJobData, "type">
 ): Promise<void> {
-  await notificationQueue.add("verification-completed", {
+  await getNotificationQueue().add("verification-completed", {
     type: "verification-completed",
     ...data,
   });
@@ -111,7 +133,7 @@ export async function queueVerificationNotif(
 export async function queueDocumentSharedNotif(
   data: Omit<DocumentSharedNotifJobData, "type">
 ): Promise<void> {
-  await notificationQueue.add("document-shared-notif", {
+  await getNotificationQueue().add("document-shared-notif", {
     type: "document-shared-notif",
     ...data,
   });
@@ -123,7 +145,7 @@ export async function queueDocumentSharedNotif(
 export async function queueStorageWarningNotif(
   data: Omit<StorageWarningJobData, "type">
 ): Promise<void> {
-  await notificationQueue.add("storage-warning", {
+  await getNotificationQueue().add("storage-warning", {
     type: "storage-warning",
     ...data,
   });
@@ -133,7 +155,7 @@ export async function queueStorageWarningNotif(
 export async function queueExpiryReminderNotif(
   data: Omit<ExpiryReminderNotifJobData, "type">
 ): Promise<void> {
-  await notificationQueue.add("expiry-reminder-notif", {
+  await getNotificationQueue().add("expiry-reminder-notif", {
     type: "expiry-reminder-notif",
     ...data,
   });

@@ -1,6 +1,9 @@
 /**
  * Email Job Queue
  * Defines the BullMQ queue and all typed job payloads for email sending.
+ *
+ * The Queue instance is created lazily on first use so that importing this
+ * module never crashes when Redis is temporarily unavailable at startup.
  */
 
 import { Queue } from "bullmq";
@@ -74,30 +77,51 @@ export type EmailJobData =
   | DocumentVerifiedJobData
   | ExpiryReminderJobData;
 
-// ─── Queue instance ───────────────────────────────────────────────────────────
+// ─── Queue instance (lazy singleton) ─────────────────────────────────────────
+// Deferring construction until first use means a missing/unreachable Redis at
+// import time never kills the process.
 
 export const EMAIL_QUEUE_NAME = "email";
 
-export const emailQueue = new Queue<EmailJobData>(EMAIL_QUEUE_NAME, {
-  connection: createBullMQConnection(),
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: "exponential",
-      delay: 2000, // 2 s → 4 s → 8 s
-    },
-    removeOnComplete: {
-      age: 24 * 3600, // keep completed jobs for 24 h
-      count: 500,
-    },
-    removeOnFail: {
-      age: 7 * 24 * 3600, // keep failed jobs for 7 days for inspection
-    },
-  },
-});
+let _emailQueue: Queue<EmailJobData> | null = null;
 
-emailQueue.on("error", (err: Error) => {
-  log.error("Email queue error", { error: err.message });
+export function getEmailQueue(): Queue<EmailJobData> {
+  if (!_emailQueue) {
+    _emailQueue = new Queue<EmailJobData>(EMAIL_QUEUE_NAME, {
+      connection: createBullMQConnection(),
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 2000, // 2 s → 4 s → 8 s
+        },
+        removeOnComplete: {
+          age: 24 * 3600, // keep completed jobs for 24 h
+          count: 500,
+        },
+        removeOnFail: {
+          age: 7 * 24 * 3600, // keep failed jobs for 7 days for inspection
+        },
+      },
+    });
+
+    _emailQueue.on("error", (err: Error) => {
+      log.error("Email queue error", { error: err.message });
+    });
+
+    log.info("Email queue initialised");
+  }
+  return _emailQueue;
+}
+
+/**
+ * @deprecated Use getEmailQueue() instead. Kept for backwards-compatibility
+ * with Bull Board and any direct queue references.
+ */
+export const emailQueue = new Proxy({} as Queue<EmailJobData>, {
+  get(_target, prop) {
+    return (getEmailQueue() as unknown as Record<string | symbol, unknown>)[prop];
+  },
 });
 
 // ─── Typed job adder helpers ──────────────────────────────────────────────────
@@ -105,14 +129,14 @@ emailQueue.on("error", (err: Error) => {
 export async function queueWelcomeEmail(
   data: Omit<WelcomeEmailJobData, "type">
 ): Promise<void> {
-  await emailQueue.add("welcome-email", { type: "welcome-email", ...data });
+  await getEmailQueue().add("welcome-email", { type: "welcome-email", ...data });
   log.info("Queued welcome-email", { email: data.email });
 }
 
 export async function queueEmailVerification(
   data: Omit<EmailVerificationJobData, "type">
 ): Promise<void> {
-  await emailQueue.add("email-verification", {
+  await getEmailQueue().add("email-verification", {
     type: "email-verification",
     ...data,
   });
@@ -122,14 +146,14 @@ export async function queueEmailVerification(
 export async function queuePasswordReset(
   data: Omit<PasswordResetJobData, "type">
 ): Promise<void> {
-  await emailQueue.add("password-reset", { type: "password-reset", ...data });
+  await getEmailQueue().add("password-reset", { type: "password-reset", ...data });
   log.info("Queued password-reset", { email: data.email });
 }
 
 export async function queueDocumentShared(
   data: Omit<DocumentSharedJobData, "type">
 ): Promise<void> {
-  await emailQueue.add("document-shared", {
+  await getEmailQueue().add("document-shared", {
     type: "document-shared",
     ...data,
   });
@@ -139,7 +163,7 @@ export async function queueDocumentShared(
 export async function queueDocumentVerified(
   data: Omit<DocumentVerifiedJobData, "type">
 ): Promise<void> {
-  await emailQueue.add("document-verified", {
+  await getEmailQueue().add("document-verified", {
     type: "document-verified",
     ...data,
   });
@@ -149,7 +173,7 @@ export async function queueDocumentVerified(
 export async function queueExpiryReminder(
   data: Omit<ExpiryReminderJobData, "type">
 ): Promise<void> {
-  await emailQueue.add("expiry-reminder", {
+  await getEmailQueue().add("expiry-reminder", {
     type: "expiry-reminder",
     ...data,
   });

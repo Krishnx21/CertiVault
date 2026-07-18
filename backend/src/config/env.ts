@@ -8,7 +8,7 @@ const envSchema = z.object({
     .enum(["development", "test", "production", "staging"])
     .default("development"),
   PORT: z.string().transform(Number).pipe(z.number().int().min(1).max(65535)).default(5000),
-  FRONTEND_ORIGIN: z.string().url(),
+  FRONTEND_ORIGIN: z.string().url().default("http://localhost:5173"),
   MONGODB_URI: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),

@@ -10,8 +10,8 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import type { RequestHandler, Request, Response, NextFunction } from "express";
-import { emailQueue } from "../queues/email.queue.js";
-import { notificationQueue } from "../queues/notification.queue.js";
+import { getEmailQueue } from "../queues/email.queue.js";
+import { getNotificationQueue } from "../queues/notification.queue.js";
 import { getEnv } from "./env.js";
 import { createModuleLogger } from "../common/utils/logger.js";
 
@@ -62,8 +62,8 @@ export function createBullBoardRouter(): {
 
   createBullBoard({
     queues: [
-      new BullMQAdapter(emailQueue),
-      new BullMQAdapter(notificationQueue),
+      new BullMQAdapter(getEmailQueue()),
+      new BullMQAdapter(getNotificationQueue()),
     ],
     serverAdapter,
   });
