@@ -106,11 +106,11 @@ jobs:
           provenance: false  # disable attestation for simpler manifests
 
       # Trivy scans the pushed image for OS + package vulnerabilities.
-      # Uses the image digest output from the build step — this is the most
-      # precise ref, immune to tag races. Falls back to :latest if no digest.
+      # Uses the image digest so we always scan the exact image just built.
       - name: Trivy — scan backend image
         id: trivy_backend
         uses: aquasecurity/trivy-action@v0.36.0
+        if: steps.build.outputs.digest != ''
         continue-on-error: true   # CVE findings annotate the step but don't
                                    # retroactively fail the already-pushed build
         with:
@@ -120,6 +120,7 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: "1"
           ignore-unfixed: true
+          scanners: vuln
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
@@ -189,6 +190,7 @@ jobs:
       - name: Trivy — scan frontend image
         id: trivy_frontend
         uses: aquasecurity/trivy-action@v0.36.0
+        if: steps.build.outputs.digest != ''
         continue-on-error: true
         with:
           image-ref: ghcr.io/krishnx21/certivault-frontend@${{ steps.build.outputs.digest }}
@@ -197,6 +199,7 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: "1"
           ignore-unfixed: true
+          scanners: vuln
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
