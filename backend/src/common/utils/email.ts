@@ -5,7 +5,17 @@
 import { Resend } from "resend";
 import { getEnv } from "../../config/env.js";
 
-const resend = new Resend(getEnv().RESEND_API_KEY || "");
+// Lazy singleton — only instantiated when a key is present.
+// Calling new Resend("") throws immediately, so we must not create
+// the client at module load time if the key is absent.
+let _resend: Resend | null = null;
+
+function getResendClient(): Resend | null {
+  const key = getEnv().RESEND_API_KEY;
+  if (!key) return null;
+  if (!_resend) _resend = new Resend(key);
+  return _resend;
+}
 
 /**
  * Send email verification email
@@ -19,7 +29,8 @@ export const sendVerificationEmail = async (
   const verificationUrl = `${env.FRONTEND_ORIGIN}/verify-email?token=${verificationToken}`;
   
   try {
-    if (!env.RESEND_API_KEY) {
+    const resend = getResendClient();
+    if (!resend) {
       console.log("Skipping email send (RESEND_API_KEY not configured):", {
         to: email,
         type: "verification",
@@ -27,7 +38,7 @@ export const sendVerificationEmail = async (
       });
       return;
     }
-    
+
     await resend.emails.send({
       from: env.EMAIL_FROM || "CertiVault <noreply@certivault.com>",
       to: email,
@@ -129,7 +140,8 @@ export const sendPasswordResetEmail = async (
   const resetUrl = `${env.FRONTEND_ORIGIN}/reset-password?token=${resetToken}`;
   
   try {
-    if (!env.RESEND_API_KEY) {
+    const resend = getResendClient();
+    if (!resend) {
       console.log("Skipping email send (RESEND_API_KEY not configured):", {
         to: email,
         type: "password-reset",
@@ -137,7 +149,7 @@ export const sendPasswordResetEmail = async (
       });
       return;
     }
-    
+
     await resend.emails.send({
       from: env.EMAIL_FROM || "CertiVault <noreply@certivault.com>",
       to: email,
@@ -244,14 +256,15 @@ export const sendWelcomeEmail = async (
   const env = getEnv();
   
   try {
-    if (!env.RESEND_API_KEY) {
+    const resend = getResendClient();
+    if (!resend) {
       console.log("Skipping email send (RESEND_API_KEY not configured):", {
         to: email,
         type: "welcome",
       });
       return;
     }
-    
+
     await resend.emails.send({
       from: env.EMAIL_FROM || "CertiVault <noreply@certivault.com>",
       to: email,
