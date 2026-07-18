@@ -105,11 +105,13 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/krishnx21/certivault-backend:buildcache,mode=max
           provenance: false  # disable attestation for simpler manifests
 
-      # Trivy scans the pushed image for OS + package vulnerabilities
+      # Trivy scans the pushed image for OS + package vulnerabilities.
+      # We use the first tag from metadata-action output — guaranteed to exist
+      # and match what was just pushed (short SHA on push, semver on release).
       - name: Trivy — scan backend image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/krishnx21/certivault-backend:${{ github.sha }}
+          image-ref: ghcr.io/krishnx21/certivault-backend:${{ steps.meta.outputs.version }}
           format: sarif
           output: trivy-backend.sarif
           severity: CRITICAL,HIGH
@@ -183,7 +185,7 @@ jobs:
       - name: Trivy — scan frontend image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/krishnx21/certivault-frontend:${{ github.sha }}
+          image-ref: ghcr.io/krishnx21/certivault-frontend:${{ steps.meta.outputs.version }}
           format: sarif
           output: trivy-frontend.sarif
           severity: CRITICAL,HIGH
