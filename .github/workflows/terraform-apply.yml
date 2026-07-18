@@ -1,0 +1,167 @@
+# =============================================================================
+# CertiVault — Terraform Apply (on push to main)
+# =============================================================================
+# Applies the Terraform plan ONLY after code lands on main.
+# Uses the GitHub Environment "infrastructure" for manual approval gate
+# (configure in repo Settings → Environments → infrastructure → required reviewers).
+#
+# Required repository secrets (same as terraform-plan.yml):
+#   AWS_ACCESS_KEY_ID
+#   AWS_SECRET_ACCESS_KEY
+#   TF_STATE_BUCKET
+#   TF_LOCK_TABLE
+#
+# Safety features:
+#   - Runs plan first, then apply — never applies without a fresh plan
+#   - Uses -auto-approve only inside CI (TF_IN_AUTOMATION=true)
+#   - Protected by GitHub Environment approval gate
+#   - On failure: outputs terraform state list to help diagnose drift
+# =============================================================================
+
+name: Terraform Apply
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform-apply.yml"
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type APPLY to confirm you want to apply Terraform changes"
+        required: true
+
+concurrency:
+  # Never run two applies at the same time
+  group: terraform-apply
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write   # for OIDC auth (future — when moving off long-lived keys)
+
+jobs:
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+
+    # Manual approval gate via GitHub Environment
+    environment:
+      name: infrastructure
+
+    # Block manual dispatch unless user typed APPLY
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm == 'APPLY')
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    env:
+      TF_IN_AUTOMATION: "true"
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ap-south-1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.7"
+          terraform_wrapper: false   # raw output for apply (no wrapper wrapping)
+
+      # ── Initialise ──────────────────────────────────────────────────────────
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=certivault/terraform.tfstate" \
+            -backend-config="region=ap-south-1" \
+            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}" \
+            -backend-config="encrypt=true" \
+            -reconfigure
+
+      # ── Validate before applying ────────────────────────────────────────────
+      - name: Terraform Validate
+        run: terraform validate -no-color
+
+      # ── Plan (fresh plan — never apply a stale one) ─────────────────────────
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+            -no-color \
+            -input=false \
+            -out=tfplan.bin \
+            -var="environment=production" \
+            2>&1 | tee plan.txt
+
+      # ── Show what will change ───────────────────────────────────────────────
+      - name: Show plan summary
+        run: |
+          echo "### Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E '(Plan:|No changes|must be|will be)' plan.txt || true >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # ── Apply ───────────────────────────────────────────────────────────────
+      - name: Terraform Apply
+        id: apply
+        run: |
+          terraform apply \
+            -no-color \
+            -input=false \
+            -auto-approve \
+            tfplan.bin \
+            2>&1 | tee apply.txt
+
+      # ── Capture outputs ─────────────────────────────────────────────────────
+      - name: Terraform Output
+        id: output
+        run: terraform output -no-color -json | tee outputs.json
+        continue-on-error: true
+
+      # ── Upload outputs as artifact ──────────────────────────────────────────
+      - name: Upload Terraform outputs
+        uses: actions/upload-artifact@v4
+        if: steps.output.outcome == 'success'
+        with:
+          name: terraform-outputs-${{ github.sha }}
+          path: terraform/outputs.json
+          retention-days: 30
+
+      # ── Diagnose on failure ──────────────────────────────────────────────────
+      - name: Show state on failure
+        if: failure()
+        run: |
+          echo "Apply failed — current state:"
+          terraform state list || true
+          echo ""
+          echo "Last 100 lines of apply output:"
+          tail -100 apply.txt || true
+
+      # ── Write summary ───────────────────────────────────────────────────────
+      - name: Write apply summary
+        if: always()
+        run: |
+          echo "## Terraform Apply Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Plan | ${{ steps.plan.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Apply | ${{ steps.apply.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Actor:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          if [ -f outputs.json ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Key Outputs" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat outputs.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi

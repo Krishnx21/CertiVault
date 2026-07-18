@@ -1,0 +1,177 @@
+# =============================================================================
+# CertiVault — Terraform Plan (on Pull Request)
+# =============================================================================
+# Runs `terraform plan` for every PR targeting main.
+# Posts the plan output as a PR comment so reviewers can see
+# exactly what infrastructure will change before merging.
+#
+# Required repository secrets:
+#   AWS_ACCESS_KEY_ID       → IAM user key with Terraform permissions
+#   AWS_SECRET_ACCESS_KEY   → IAM user secret
+#   TF_STATE_BUCKET         → S3 bucket name for Terraform remote state
+#                             (certivault-terraform-state)
+#   TF_LOCK_TABLE           → DynamoDB table for state locking
+#                             (certivault-terraform-locks)
+#
+# Optional secrets (set to override Terraform variables):
+#   TF_VAR_environment      → "staging" | "production"
+#
+# The workflow does NOT apply changes — that is done by terraform-apply.yml
+# which runs only after the PR is merged to main.
+# =============================================================================
+
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform-plan.yml"
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write   # post plan as PR comment
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    env:
+      TF_IN_AUTOMATION: "true"   # suppresses interactive prompts
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ap-south-1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.7"
+          terraform_wrapper: true   # wraps output for cleaner PR comments
+
+      # ── Initialise with remote S3 backend ───────────────────────────────────
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=certivault/terraform.tfstate" \
+            -backend-config="region=ap-south-1" \
+            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}" \
+            -backend-config="encrypt=true" \
+            -reconfigure
+
+      # ── Validate syntax and configuration ──────────────────────────────────
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      # ── Format check (fail if code is not formatted) ────────────────────────
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive -no-color
+        continue-on-error: true   # warn but don't block — format issues go in the comment
+
+      # ── Generate the plan ───────────────────────────────────────────────────
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+            -no-color \
+            -input=false \
+            -out=tfplan.bin \
+            -var="environment=staging" \
+            2>&1 | tee plan.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+        continue-on-error: true   # capture output even on plan failure
+
+      # ── Save plan artifact for apply job (if merged) ────────────────────────
+      - name: Upload plan artifact
+        if: steps.plan.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ github.sha }}
+          path: terraform/tfplan.bin
+          retention-days: 7
+
+      # ── Post plan as PR comment ─────────────────────────────────────────────
+      - name: Post plan to PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('terraform/plan.txt', 'utf8');
+            const maxLength = 65000;  // GitHub comment limit ~65k chars
+            const truncated = plan.length > maxLength
+              ? plan.slice(0, maxLength) + '\n\n...truncated (see full logs)'
+              : plan;
+
+            const outcome = '${{ steps.plan.outcome }}';
+            const fmtOutcome = '${{ steps.fmt.outcome }}';
+
+            const body = `## Terraform Plan — \`${{ github.event.pull_request.head.ref }}\`
+
+            | Step | Status |
+            |---|---|
+            | \`terraform init\` | ${{ steps.init.outcome == 'success' && '✅' || '❌' }} |
+            | \`terraform validate\` | ${{ steps.validate.outcome == 'success' && '✅' || '❌' }} |
+            | \`terraform fmt\` | ${fmtOutcome === 'success' ? '✅' : '⚠️ needs formatting'} |
+            | \`terraform plan\` | ${outcome === 'success' ? '✅' : '❌'} |
+
+            <details>
+            <summary>Show plan output</summary>
+
+            \`\`\`hcl
+            ${truncated}
+            \`\`\`
+
+            </details>
+
+            *Pushed by @${{ github.actor }}, action: \`${{ github.event_name }}\`*`;
+
+            // Delete previous plan comments to keep the PR clean
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            for (const comment of comments) {
+              if (comment.user.login === 'github-actions[bot]' &&
+                  comment.body.includes('Terraform Plan')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
+            // Post fresh comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      # ── Fail the job if plan itself errored ─────────────────────────────────
+      - name: Check plan result
+        if: steps.plan.outputs.exit_code != '0'
+        run: |
+          echo "Terraform plan failed with exit code ${{ steps.plan.outputs.exit_code }}"
+          exit 1
