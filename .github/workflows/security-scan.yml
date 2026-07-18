@@ -14,7 +14,8 @@
 # Required secrets: none (uses GITHUB_TOKEN for GHCR pull)
 #
 # Fail behaviour:
-#   CRITICAL severity in image deps → exit code 1 (blocks PR)
+#   CRITICAL severity in image deps → step is marked failed (continue-on-error
+#   keeps the rest of the pipeline running so SARIF always gets uploaded)
 #   Results always uploaded to GitHub Security Advisories (SARIF)
 # =============================================================================
 
@@ -76,8 +77,13 @@ jobs:
         continue-on-error: true   # if image fails to build, scan still runs on fs
 
       # ── Scan 1: OS + language packages inside the container image ──────────
+      # continue-on-error: true so that a CVE hit doesn't block the dep scan
+      # steps below from running (and producing their SARIF files).
+      # The step is still marked red in the UI when exit-code: "1" fires.
       - name: Trivy — image scan (OS + npm packages)
+        id: image_scan
         uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
         with:
           image-ref: certivault-backend:scan
           format: sarif
@@ -96,17 +102,20 @@ jobs:
 
       # ── Scan 2: Secrets embedded in the image filesystem ───────────────────
       - name: Trivy — secret scan (backend image)
+        id: secret_scan
         uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
         with:
           image-ref: certivault-backend:scan
           format: table
           exit-code: "1"
           scanners: secret
-        continue-on-error: false
 
       # ── Scan 3: npm dependencies (source tree — fast, no Docker needed) ────
       - name: Trivy — backend npm dependency scan
+        id: deps_scan
         uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
         with:
           scan-type: fs
           scan-ref: ./backend
@@ -123,6 +132,27 @@ jobs:
         with:
           sarif_file: trivy-backend-deps.sarif
           category: deps-backend
+
+      # ── Final gate: fail the job if any scan found issues ──────────────────
+      # Reads the outcomes of the continue-on-error steps and fails the job
+      # explicitly, so PRs are still blocked when real findings exist.
+      - name: Fail job if any scan found vulnerabilities
+        if: always()
+        run: |
+          failed=0
+          if [ "${{ steps.image_scan.outcome }}" = "failure" ]; then
+            echo "::error::Backend image scan found CRITICAL/HIGH vulnerabilities"
+            failed=1
+          fi
+          if [ "${{ steps.secret_scan.outcome }}" = "failure" ]; then
+            echo "::error::Backend secret scan found embedded secrets"
+            failed=1
+          fi
+          if [ "${{ steps.deps_scan.outcome }}" = "failure" ]; then
+            echo "::error::Backend dependency scan found CRITICAL/HIGH vulnerabilities"
+            failed=1
+          fi
+          exit $failed
 
   scan-frontend:
     name: Scan Frontend Image
@@ -149,7 +179,9 @@ jobs:
         continue-on-error: true
 
       - name: Trivy — image scan (OS + npm packages)
+        id: image_scan
         uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
         with:
           image-ref: certivault-frontend:scan
           format: sarif
@@ -167,7 +199,9 @@ jobs:
           category: container-frontend
 
       - name: Trivy — frontend npm dependency scan
+        id: deps_scan
         uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
         with:
           scan-type: fs
           scan-ref: ./frontend
@@ -184,6 +218,20 @@ jobs:
         with:
           sarif_file: trivy-frontend-deps.sarif
           category: deps-frontend
+
+      - name: Fail job if any scan found vulnerabilities
+        if: always()
+        run: |
+          failed=0
+          if [ "${{ steps.image_scan.outcome }}" = "failure" ]; then
+            echo "::error::Frontend image scan found CRITICAL/HIGH vulnerabilities"
+            failed=1
+          fi
+          if [ "${{ steps.deps_scan.outcome }}" = "failure" ]; then
+            echo "::error::Frontend dependency scan found CRITICAL/HIGH vulnerabilities"
+            failed=1
+          fi
+          exit $failed
 
   # ===========================================================================
   # Generate consolidated security report as a job summary
