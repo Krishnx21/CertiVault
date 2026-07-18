@@ -106,7 +106,7 @@ jobs:
         run: |
           echo "### Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          grep -E '(Plan:|No changes|must be|will be)' plan.txt || true >> $GITHUB_STEP_SUMMARY
+          (grep -E '(Plan:|No changes|must be|will be)' plan.txt || true) >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       # ── Apply ───────────────────────────────────────────────────────────────

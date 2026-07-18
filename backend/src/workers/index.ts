@@ -29,14 +29,21 @@ async function start(): Promise<void> {
   // Connect to MongoDB (notifications worker writes to DB)
   await connectDB(env.MONGODB_URI);
 
-  // Wait for Redis to be ready before spawning workers
+  // Wait for Redis to be ready before spawning workers.
+  // If Redis is not configured, skip workers entirely (queues won't function).
+  if (!redis) {
+    log.warn("Workers: Redis is not configured — no workers will be started");
+    return;
+  }
+
   await new Promise<void>((resolve, reject) => {
-    if (redis.status === "ready") {
+    const r = redis; // already narrowed to non-null above
+    if (r.status === "ready") {
       resolve();
       return;
     }
-    redis.once("ready", resolve);
-    redis.once("error", reject);
+    r.once("ready", resolve);
+    r.once("error", reject);
     // Timeout after 15 s
     setTimeout(() => reject(new Error("Redis did not become ready within 15 s")), 15_000);
   });

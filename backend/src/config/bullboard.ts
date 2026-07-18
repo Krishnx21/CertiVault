@@ -60,15 +60,21 @@ export function createBullBoardRouter(): {
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath("/admin/queues");
 
-  createBullBoard({
-    queues: [
-      new BullMQAdapter(getEmailQueue()),
-      new BullMQAdapter(getNotificationQueue()),
-    ],
-    serverAdapter,
-  });
+  // Only register queues that are actually available (Redis may not be configured)
+  const emailQueue = getEmailQueue();
+  const notificationQueue = getNotificationQueue();
+  const queues = [
+    ...(emailQueue ? [new BullMQAdapter(emailQueue)] : []),
+    ...(notificationQueue ? [new BullMQAdapter(notificationQueue)] : []),
+  ];
 
-  log.info("Bull Board: initialised (email, notification queues registered)");
+  createBullBoard({ queues, serverAdapter });
+
+  if (queues.length > 0) {
+    log.info(`Bull Board: initialised (${queues.length} queue(s) registered)`);
+  } else {
+    log.warn("Bull Board: initialised with no queues (Redis not configured)");
+  }
 
   return {
     router: serverAdapter.getRouter(),

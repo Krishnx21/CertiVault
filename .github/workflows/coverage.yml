@@ -15,6 +15,15 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    env:
+      NODE_ENV: test
+      PORT: "5000"
+      MONGODB_URI: mongodb://localhost:27017/certivault_test
+      JWT_ACCESS_SECRET: ci-test-access-secret-minimum-32-chars-long
+      JWT_REFRESH_SECRET: ci-test-refresh-secret-minimum-32-chars-long
+      JWT_ISSUER: certivault-api
+      JWT_AUDIENCE: certivault-web
+      FRONTEND_ORIGIN: http://localhost:5173
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

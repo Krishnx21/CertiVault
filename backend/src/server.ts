@@ -19,10 +19,12 @@ const start = async () => {
     await connectDB(env.MONGODB_URI);
 
     // Wait for Redis to be ready before accepting traffic.
-    // Redis is optional — a connection failure logs a warning but does NOT abort startup.
-    if (env.REDIS_URL || env.REDIS_HOST) {
+    // Redis is optional — a connection failure (or absent config) logs a warning
+    // but does NOT abort startup.
+    if (redis) {
+      const r = redis; // capture for TS narrowing inside callbacks
       await new Promise<void>((resolve) => {
-        if (redis.status === "ready") {
+        if (r.status === "ready") {
           resolve();
           return;
         }
@@ -33,11 +35,11 @@ const start = async () => {
           resolve(); // degrade gracefully instead of crashing
         };
         const cleanup = () => {
-          redis.off("ready", onReady);
-          redis.off("error", onError);
+          r.off("ready", onReady);
+          r.off("error", onError);
         };
-        redis.once("ready", onReady);
-        redis.once("error", onError);
+        r.once("ready", onReady);
+        r.once("error", onError);
         setTimeout(() => {
           cleanup();
           console.warn("Redis did not become ready within 10 s — continuing without cache");

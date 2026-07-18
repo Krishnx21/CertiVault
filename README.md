@@ -2,7 +2,7 @@
 
 # CertiVault
 
-### Smart Document Management and Verification Platform
+**Smart Document Management and Verification Platform**
 
 A secure, cloud-native document vault built for trust, traceability, and effortless sharing.
 

@@ -21,17 +21,84 @@ services:
       - key: NODE_ENV
         value: production
 
-      # ── Required — set these in the Render dashboard ─────────────────────
-      # MONGODB_URI          (MongoDB Atlas connection string)
-      # JWT_ACCESS_SECRET    (min 32 chars)
-      # JWT_REFRESH_SECRET   (min 32 chars)
-      # FRONTEND_ORIGIN      (e.g. https://certivault.onrender.com)
-      # REDIS_URL            (e.g. redis://default:password@host:port)
+      # ── MongoDB ───────────────────────────────────────────────────────────
+      - key: MONGODB_URI
+        sync: false   # set value in Render dashboard → Environment
 
-      # ── Optional ─────────────────────────────────────────────────────────
-      # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_REGION / AWS_S3_BUCKET
-      # CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
-      # RESEND_API_KEY
-      # SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / EMAIL_FROM
-      # GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_CALLBACK_URL
-      # BULL_BOARD_USERNAME / BULL_BOARD_PASSWORD
+      # ── JWT ───────────────────────────────────────────────────────────────
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_ISSUER
+        value: certivault-api
+      - key: JWT_AUDIENCE
+        value: certivault-web
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+
+      # ── CORS ──────────────────────────────────────────────────────────────
+      - key: FRONTEND_ORIGIN
+        sync: false   # e.g. https://certivault-frontend.onrender.com
+
+      # ── Redis ─────────────────────────────────────────────────────────────
+      - key: REDIS_URL
+        sync: false   # e.g. rediss://default:PASSWORD@host:PORT
+
+      # ── AWS S3 (optional) ────────────────────────────────────────────────
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_S3_BUCKET
+        sync: false
+
+      # ── Cloudinary (optional) ────────────────────────────────────────────
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+      # ── Email / SMTP (optional) ──────────────────────────────────────────
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+
+      # ── Google OAuth (optional) ──────────────────────────────────────────
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+
+      # ── Bull Board (optional) ────────────────────────────────────────────
+      - key: BULL_BOARD_USERNAME
+        sync: false
+      - key: BULL_BOARD_PASSWORD
+        sync: false
+
+      # ── Misc ──────────────────────────────────────────────────────────────
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: MAX_UPLOAD_BYTES
+        value: "10485760"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: LOG_LEVEL
+        value: info

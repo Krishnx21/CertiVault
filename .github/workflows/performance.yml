@@ -106,6 +106,7 @@ jobs:
         id: spike
         if: steps.scenario.outputs.scenario == 'spike' || steps.scenario.outputs.scenario == 'all'
         run: |
+          set -o pipefail
           k6 run \
             --env BASE_URL=${{ steps.url.outputs.url }} \
             --env API_TOKEN=${{ secrets.STAGING_API_TOKEN }} \
@@ -121,6 +122,7 @@ jobs:
         id: soak
         if: steps.scenario.outputs.scenario == 'soak' || steps.scenario.outputs.scenario == 'all'
         run: |
+          set -o pipefail
           k6 run \
             --env BASE_URL=${{ steps.url.outputs.url }} \
             --env API_TOKEN=${{ secrets.STAGING_API_TOKEN }} \

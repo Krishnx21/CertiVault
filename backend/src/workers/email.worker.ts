@@ -352,8 +352,7 @@ export function startEmailWorker(): Worker<EmailJobData> {
     EMAIL_QUEUE_NAME,
     processEmailJob,
     {
-      connection: createBullMQConnection(),
-      concurrency: 5,
+      connection: createBullMQConnection()!,
       // Automatically extend the job lock while processing
       lockDuration: 30_000,
     }

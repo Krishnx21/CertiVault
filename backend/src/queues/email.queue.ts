@@ -80,102 +80,113 @@ export type EmailJobData =
 // ─── Queue instance (lazy singleton) ─────────────────────────────────────────
 // Deferring construction until first use means a missing/unreachable Redis at
 // import time never kills the process.
+// Returns null when Redis is not configured so callers can skip gracefully.
 
 export const EMAIL_QUEUE_NAME = "email";
 
 let _emailQueue: Queue<EmailJobData> | null = null;
 
-export function getEmailQueue(): Queue<EmailJobData> {
-  if (!_emailQueue) {
-    _emailQueue = new Queue<EmailJobData>(EMAIL_QUEUE_NAME, {
-      connection: createBullMQConnection(),
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: "exponential",
-          delay: 2000, // 2 s → 4 s → 8 s
-        },
-        removeOnComplete: {
-          age: 24 * 3600, // keep completed jobs for 24 h
-          count: 500,
-        },
-        removeOnFail: {
-          age: 7 * 24 * 3600, // keep failed jobs for 7 days for inspection
-        },
-      },
-    });
+export function getEmailQueue(): Queue<EmailJobData> | null {
+  if (_emailQueue) return _emailQueue;
 
-    _emailQueue.on("error", (err: Error) => {
-      log.error("Email queue error", { error: err.message });
-    });
-
-    log.info("Email queue initialised");
+  const connection = createBullMQConnection();
+  if (!connection) {
+    log.warn("Email queue: Redis not configured — queue is disabled");
+    return null;
   }
+
+  _emailQueue = new Queue<EmailJobData>(EMAIL_QUEUE_NAME, {
+    connection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 2000, // 2 s → 4 s → 8 s
+      },
+      removeOnComplete: {
+        age: 24 * 3600, // keep completed jobs for 24 h
+        count: 500,
+      },
+      removeOnFail: {
+        age: 7 * 24 * 3600, // keep failed jobs for 7 days for inspection
+      },
+    },
+  });
+
+  _emailQueue.on("error", (err: Error) => {
+    log.error("Email queue error", { error: err.message });
+  });
+
+  log.info("Email queue initialised");
   return _emailQueue;
 }
 
 /**
  * @deprecated Use getEmailQueue() instead. Kept for backwards-compatibility
- * with Bull Board and any direct queue references.
+ * with Bull Board and any direct queue references. Returns an empty proxy when
+ * Redis is not configured.
  */
 export const emailQueue = new Proxy({} as Queue<EmailJobData>, {
   get(_target, prop) {
-    return (getEmailQueue() as unknown as Record<string | symbol, unknown>)[prop];
+    const q = getEmailQueue();
+    if (!q) return undefined;
+    return (q as unknown as Record<string | symbol, unknown>)[prop];
   },
 });
 
 // ─── Typed job adder helpers ──────────────────────────────────────────────────
+// All helpers silently skip when Redis is not configured (queue is null).
 
 export async function queueWelcomeEmail(
   data: Omit<WelcomeEmailJobData, "type">
 ): Promise<void> {
-  await getEmailQueue().add("welcome-email", { type: "welcome-email", ...data });
+  const q = getEmailQueue();
+  if (!q) { log.warn("queueWelcomeEmail: skipped (queue disabled)"); return; }
+  await q.add("welcome-email", { type: "welcome-email", ...data });
   log.info("Queued welcome-email", { email: data.email });
 }
 
 export async function queueEmailVerification(
   data: Omit<EmailVerificationJobData, "type">
 ): Promise<void> {
-  await getEmailQueue().add("email-verification", {
-    type: "email-verification",
-    ...data,
-  });
+  const q = getEmailQueue();
+  if (!q) { log.warn("queueEmailVerification: skipped (queue disabled)"); return; }
+  await q.add("email-verification", { type: "email-verification", ...data });
   log.info("Queued email-verification", { email: data.email });
 }
 
 export async function queuePasswordReset(
   data: Omit<PasswordResetJobData, "type">
 ): Promise<void> {
-  await getEmailQueue().add("password-reset", { type: "password-reset", ...data });
+  const q = getEmailQueue();
+  if (!q) { log.warn("queuePasswordReset: skipped (queue disabled)"); return; }
+  await q.add("password-reset", { type: "password-reset", ...data });
   log.info("Queued password-reset", { email: data.email });
 }
 
 export async function queueDocumentShared(
   data: Omit<DocumentSharedJobData, "type">
 ): Promise<void> {
-  await getEmailQueue().add("document-shared", {
-    type: "document-shared",
-    ...data,
-  });
+  const q = getEmailQueue();
+  if (!q) { log.warn("queueDocumentShared: skipped (queue disabled)"); return; }
+  await q.add("document-shared", { type: "document-shared", ...data });
   log.info("Queued document-shared", { email: data.email });
 }
 
 export async function queueDocumentVerified(
   data: Omit<DocumentVerifiedJobData, "type">
 ): Promise<void> {
-  await getEmailQueue().add("document-verified", {
-    type: "document-verified",
-    ...data,
-  });
+  const q = getEmailQueue();
+  if (!q) { log.warn("queueDocumentVerified: skipped (queue disabled)"); return; }
+  await q.add("document-verified", { type: "document-verified", ...data });
   log.info("Queued document-verified", { email: data.email });
 }
 
 export async function queueExpiryReminder(
   data: Omit<ExpiryReminderJobData, "type">
 ): Promise<void> {
-  await getEmailQueue().add("expiry-reminder", {
-    type: "expiry-reminder",
-    ...data,
-  });
+  const q = getEmailQueue();
+  if (!q) { log.warn("queueExpiryReminder: skipped (queue disabled)"); return; }
+  await q.add("expiry-reminder", { type: "expiry-reminder", ...data });
   log.info("Queued expiry-reminder", { email: data.email });
 }

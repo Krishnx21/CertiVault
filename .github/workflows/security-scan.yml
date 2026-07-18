@@ -48,7 +48,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image for scanning
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         continue-on-error: true
         with:
           context: ./backend
@@ -117,7 +117,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build frontend image for scanning
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         continue-on-error: true
         with:
           context: .

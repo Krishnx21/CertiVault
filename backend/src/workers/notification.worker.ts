@@ -207,9 +207,8 @@ export function startNotificationWorker(): Worker<NotificationJobData> {
     NOTIFICATION_QUEUE_NAME,
     processNotificationJob,
     {
-      connection: createBullMQConnection(),
+      connection: createBullMQConnection()!,
       concurrency: 10,
-      lockDuration: 15_000,
     }
   );
 

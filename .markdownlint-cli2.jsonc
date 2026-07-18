@@ -1,0 +1,10 @@
+// markdownlint-cli2 configuration
+// Applies when running: markdownlint-cli2 "**/*.md"
+// Ignores are relative to the config file location (repo root).
+{
+  "ignores": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.git/**"
+  ]
+}
