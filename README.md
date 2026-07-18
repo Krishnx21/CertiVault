@@ -1,585 +1,528 @@
 <div align="center">
 
-# Smart Document Management & Verification Platform (CertiVault)
+# CertiVault
 
-### A secure, cloud-native document vault built for trust, traceability, and effortless sharing.
+### Smart Document Management and Verification Platform
 
-Upload once. Find instantly. Verify confidently. Share safely. Track everything.
+A secure, cloud-native document vault built for trust, traceability, and effortless sharing.
 
-<br />
+**Upload once. Find instantly. Verify confidently. Share safely. Track everything.**
 
-[![Status: Blueprint](https://img.shields.io/badge/status-architecture_blueprint-2563EB?style=for-the-badge)](#project-status)
-[![Security First](https://img.shields.io/badge/security-first-DC2626?style=for-the-badge)](#security-by-design)
-[![Cloud Native](https://img.shields.io/badge/cloud-native-0F766E?style=for-the-badge)](#cloud-architecture)
-[![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-7C3AED?style=for-the-badge)](#contributing)
-[![ECSoC 2026](https://img.shields.io/badge/ECSoC-2026-FF7A00?style=for-the-badge)](https://summerofcode.xyz)
-[![MIT License](https://img.shields.io/badge/license-MIT-F59E0B?style=for-the-badge)](LICENSE)
+![version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)
+![license](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
+![node](https://img.shields.io/badge/node-20%2B-brightgreen?style=for-the-badge&logo=node.js)
+![typescript](https://img.shields.io/badge/TypeScript-strict-blue?style=for-the-badge&logo=typescript)
+![docker](https://img.shields.io/badge/docker-ready-blue?style=for-the-badge&logo=docker)
+![kubernetes](https://img.shields.io/badge/kubernetes-ready-326CE5?style=for-the-badge&logo=kubernetes)
+![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)
+![workflows](https://img.shields.io/badge/GitHub%20Actions-21%20workflows-orange?style=for-the-badge&logo=github-actions)
 
-<br />
-
-### Skills & Technologies
-
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=000000)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
-![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
-![Render](https://img.shields.io/badge/Render-000000?style=for-the-badge&logo=render&logoColor=46E3B7)
-![Terraform](https://img.shields.io/badge/Terraform-844FBA?style=for-the-badge&logo=terraform&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
-![NGINX](https://img.shields.io/badge/NGINX-009639?style=for-the-badge&logo=nginx&logoColor=white)
-![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
-![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
-
-<br />
-
-[Why it matters](#why-it-matters) |
-[Features](#feature-map) |
-[3D Platform Flow](#3d-platform-flow) |
-[Architecture](#cloud-architecture) |
-[Roadmap](#delivery-roadmap) |
-[API](#api-blueprint) |
-[Contributing](#contributing) |
-[License](#license)
+[Features](#features) · [Architecture](#architecture) · [Quick Start](#quick-start) · [API](#api-reference) · [Deployment](#deployment) · [Contributing](#contributing)
 
 </div>
 
 ---
 
-## The Big Idea
+## What Is CertiVault
 
-Important documents deserve more than a folder and a download button.
+CertiVault is a production-grade document management and verification platform that solves a real problem — important documents like certificates, contracts, IDs, and compliance records are stored across email threads, local folders, and generic cloud drives with no verification, no access control, and no audit trail.
 
-The **Smart Document Management & Verification Platform** is a blueprint for a modern document trust system: one place to securely store documents, verify their authenticity, control how they are shared, and preserve a complete history of every meaningful action.
+CertiVault replaces that chaos with a single secure platform where documents are uploaded once, indexed and searchable, cryptographically verified, shared only to trusted members with role-based access, and every meaningful action is permanently recorded.
 
-It brings together the convenience of cloud storage, the confidence of identity-linked document systems, and the accountability of an auditable verification workflow.
+---
 
-```text
-Traditional storage:  Upload -> Store -> Download
+## The Problem It Solves
 
-This platform:         Upload -> Protect -> Index -> Verify -> Share -> Audit -> Remind
+```
+Traditional document storage:
+  Upload → Store → Download
+  No verification. No access control. No audit trail.
+
+CertiVault:
+  Upload → Protect → Index → Verify → Share → Audit → Alert
+  Cryptographic hashes. Vault-level access control.
+  Full audit trail. Expiry reminders. QR verification.
 ```
 
-> [!IMPORTANT]
-> This repository currently documents the product vision, architecture, and delivery plan. Application code will be introduced incrementally through the roadmap below.
+**Real use cases:**
 
-## Why It Matters
-
-Document workflows often break down in the moments that matter most:
-
-- A certificate is shared, but nobody can confirm whether it was modified.
-- A contract expires, but the reminder arrives too late.
-- A sensitive link stays active long after it should have been revoked.
-- A reviewer approves a document, but the decision history is unclear.
-- A team stores thousands of files, but cannot quickly find the right one.
-
-This platform is designed to replace those gaps with **verifiable status, controlled access, searchable metadata, and a trustworthy audit trail**.
-
-## Product Principles
-
-| Principle | What it means in practice |
-| --- | --- |
-| **Trust is visible** | Every document has a clear verification state and traceable history. |
-| **Access is intentional** | Sharing links expire, permissions are explicit, and access can be revoked. |
-| **Security is foundational** | Encryption, authorization, validation, and auditing are part of the design. |
-| **Search should feel instant** | Metadata, tags, ownership, status, and extracted text make documents discoverable. |
-| **Operations should be observable** | Metrics, logs, alerts, and background-job health are first-class concerns. |
-| **Infrastructure should be repeatable** | Containers, CI/CD, and Infrastructure as Code enable predictable deployment. |
+| Use Case | How CertiVault Helps |
+|----------|---------------------|
+| Academic credentials | Institutions verify certificates. Graduates share access to trusted reviewers. |
+| Employee records | HR teams organize contracts, IDs, certifications with expiry tracking. |
+| Legal documents | Sensitive agreements with scoped access and complete audit logs. |
+| Vendor compliance | Collect and review licenses, insurance, compliance evidence in one place. |
+| Personal vault | One searchable source of truth for identity and financial documents. |
 
 ---
 
-## Feature Map
+## Features
 
-### Document Experience
+### Document Management
+- Upload PDFs, images, and documents with automatic SHA-256 and MD5 checksum generation
+- Dual storage: AWS S3 as primary, Cloudinary as secondary, local filesystem as fallback
+- Rich metadata — titles, tags, categories, expiry dates, custom metadata fields
+- Full-text search across all documents
+- Filter by verification status, category, date range, favorites, archived state
+- Soft delete with archive and restore
+- Document preview without leaving the platform
+- Presigned S3 URLs for secure, time-limited downloads
 
-| Capability | User value |
-| --- | --- |
-| Secure uploads | Store PDFs, images, IDs, certificates, contracts, and other important files. |
-| Rich organization | Add titles, tags, types, expiry dates, owners, and custom metadata. |
-| Smart search | Find documents by metadata, verification state, date, owner, or extracted text. |
-| Document preview | Review files and important metadata without leaving the platform. |
-| Expiry reminders | Receive alerts before time-sensitive documents expire. |
+### Trust and Verification
+- Four verification states: pending, verified, rejected, expired
+- Manual verification by admin and verifier roles
+- QR code generation per document for physical verification
+- Public verification endpoint — anyone with the link can verify authenticity without an account
+- Verification history with full audit trail per document
+- Cryptographic hash comparison to detect document tampering or duplication
 
-### Trust & Sharing
+### Vault Member System
+- Add trusted people as secondary members of your entire document vault
+- Two roles: Viewer (read and download) and Editor (read, download, and upload)
+- Email-based invite system with 24-hour expiry tokens
+- Members accept or decline invites from their dashboard
+- Owners can change roles or remove members at any time
+- Members can leave vaults themselves
+- Full notification system for every invite and membership event
 
-| Capability | User value |
-| --- | --- |
-| Verification workflows | Move documents through pending, verified, rejected, and expired states. |
-| Integrity checks | Use cryptographic hashes to detect changed or duplicate files. |
-| Protected share links | Set expiration, permissions, view limits, and revocation rules. |
-| Role-based access | Separate permissions for users, verifiers, admins, and organizations. |
-| Audit history | Track views, downloads, updates, shares, and verification decisions. |
+### Background Jobs and Workers
+- BullMQ job queues for all async operations
+- Email worker handles: welcome emails, email verification, password reset, vault invites, expiry reminders
+- Notification worker handles: in-app notification creation and delivery
+- Bull Board admin UI for queue monitoring and job inspection
+- Daily expiry-reminder job for documents approaching their expiry date
 
-### Platform Operations
+### Security
+- JWT access tokens (short-lived) with refresh token rotation
+- Google OAuth 2.0 via Passport.js
+- bcrypt password hashing with 12 rounds
+- Brute-force lockout after 5 failed login attempts (15 minute lockout)
+- Helmet security headers (CSP, HSTS, X-Frame-Options)
+- CSRF protection middleware
+- Rate limiting on all routes, stricter on auth routes
+- HTTP parameter pollution prevention
+- NoSQL injection prevention via Mongoose typing and Zod validation
+- Input sanitization with xss-clean and mongo-sanitize
 
-| Capability | System value |
-| --- | --- |
-| Background processing | Run OCR, indexing, reminders, notifications, and verification jobs asynchronously. |
-| Object storage | Keep files in durable cloud storage instead of the application database. |
-| Caching and rate limits | Improve performance and protect sensitive endpoints with Redis. |
-| Centralized observability | Monitor metrics, dashboards, logs, failures, and service health. |
-| Automated delivery | Test, build, and deploy through a repeatable CI/CD pipeline. |
+### Observability
+- Prometheus metrics exposed at `/metrics`
+- Custom business metrics: documents uploaded, verifications, vault invites, auth failures
+- Queue metrics: job depth, duration, completion rates
+- Pre-built Grafana dashboard with 6 rows: HTTP, business activity, documents, queues, auth, vault members
+- Alert rules for: error rate above 5%, queue depth above 100, response time above 2 seconds
+- Winston structured JSON logging with request IDs
+- Liveness and readiness health endpoints for Kubernetes probes
 
 ---
 
-## Real-World Use Cases
+## Tech Stack
 
-| Use case | How the platform helps | Expected outcome |
-| --- | --- | --- |
-| Academic credentials | Institutions issue and verify certificates while graduates share protected links. | Faster checks with a traceable verification history. |
-| Employee records | HR teams organize contracts, IDs, certifications, and renewal dates. | Fewer missed expirations and clearer access control. |
-| Legal documents | Teams manage sensitive agreements with scoped sharing and audit logs. | Confidential collaboration with accountable access. |
-| Vendor compliance | Organizations collect and review licenses, insurance, and compliance evidence. | Centralized status tracking and timely renewal reminders. |
-| Personal document vault | Individuals securely store and share important identity and financial documents. | One searchable source of truth with controlled sharing. |
+### Backend
+
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Node.js 20 |
+| Framework | Express 5 |
+| Language | TypeScript (strict mode) |
+| Database | MongoDB Atlas + Mongoose 9 |
+| Auth | JWT access and refresh tokens, Google OAuth, Passport.js |
+| Password | bcryptjs (12 rounds) |
+| File Storage | AWS S3 + Cloudinary + local fallback |
+| Cache | Redis via ioredis (Upstash) |
+| Queue | BullMQ + Bull Board |
+| Email | Nodemailer + Resend API |
+| Validation | Zod + express-validator |
+| Logging | Winston |
+| Metrics | prom-client |
+| Security | Helmet, CORS, express-rate-limit, HPP, CSRF, xss-clean, mongo-sanitize |
+| QR Codes | qrcode |
+| File Processing | multer + sharp |
+
+### Frontend
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 19 |
+| Build | Vite |
+| Language | TypeScript |
+| Routing | React Router v7 |
+| HTTP Client | Axios |
+| Forms | react-hook-form + Zod |
+| Icons | Lucide React |
+| Styling | CSS3 + Tailwind CSS 3 |
+| State | React Context + useReducer |
+
+### Infrastructure
+
+| Layer | Technology |
+|-------|-----------|
+| Containers | Docker + Docker Compose |
+| Reverse Proxy | Nginx |
+| Orchestration | Kubernetes + Helm |
+| IaC | Terraform (AWS) |
+| CI/CD | GitHub Actions (21 workflows) |
+| Registry | GitHub Container Registry |
+| Monitoring | Prometheus + Grafana |
+| Cloud | AWS (EKS, S3, ECR, ElastiCache, DocumentDB, VPC) |
 
 ---
 
-## 3D Platform Flow
+## Architecture
 
-```mermaid
-flowchart TB
-    A["User Portal<br/>Upload, Search, Share"]:::front
-    B["API Gateway / NGINX Ingress<br/>Traffic Routing"]:::edge
-    C["Backend Services<br/>Auth, Documents, Verification"]:::service
-    D["Database Layer<br/>MongoDB Atlas / PostgreSQL"]:::data
-    E["Object Storage<br/>AWS S3 / Cloudinary"]:::storage
-    F["Redis Cache<br/>Sessions, Tokens, Fast Reads"]:::cache
-    G["Queue System<br/>RabbitMQ / Kafka"]:::queue
-    H["Workers<br/>OCR, Reminders, Verification Jobs"]:::worker
-    I["Observability<br/>Prometheus, Grafana, ELK"]:::observe
-    J["CI/CD Pipeline<br/>GitHub Actions"]:::cicd
-    K["Cloud Infrastructure<br/>Docker, Kubernetes, Terraform"]:::cloud
-
-    A --> B
-    B --> C
-    C --> D
-    C --> E
-    C --> F
-    C --> G
-    G --> H
-    H --> D
-    H --> E
-    C --> I
-    H --> I
-    J --> K
-    K --> B
-    K --> C
-    K --> D
-    K --> F
-    K --> G
-
-    classDef front fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#0f172a;
-    classDef edge fill:#ccfbf1,stroke:#0f766e,stroke-width:2px,color:#0f172a;
-    classDef service fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#0f172a;
-    classDef data fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#0f172a;
-    classDef storage fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#0f172a;
-    classDef cache fill:#fce7f3,stroke:#db2777,stroke-width:2px,color:#0f172a;
-    classDef queue fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0f172a;
-    classDef worker fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#0f172a;
-    classDef observe fill:#f3f4f6,stroke:#374151,stroke-width:2px,color:#0f172a;
-    classDef cicd fill:#fae8ff,stroke:#a21caf,stroke-width:2px,color:#0f172a;
-    classDef cloud fill:#ecfccb,stroke:#65a30d,stroke-width:2px,color:#0f172a;
 ```
-
-### 3D Style Project Journey
-
-```mermaid
-flowchart LR
-    U["1. Upload<br/>User adds document"]:::step
-    S["2. Store<br/>File goes to cloud storage"]:::step
-    M["3. Metadata<br/>Database stores searchable info"]:::step
-    V["4. Verify<br/>Hash, status, verifier, rules"]:::step
-    L["5. Share Link<br/>Secure permission-based access"]:::step
-    T["6. Track<br/>Every access event is recorded"]:::step
-    R["7. Remind<br/>Expiry alerts and lifecycle jobs"]:::step
-
-    U --> S --> M --> V --> L --> T --> R
-
-    classDef step fill:#ffffff,stroke:#2563eb,stroke-width:3px,color:#111827;
-```
-
----
-
-## Cloud Architecture
-
-```mermaid
-flowchart TB
-    subgraph Clients["Client Layer"]
-        Web["Web Application"]
-        Mobile["Mobile-Friendly UI"]
-    end
-
-    subgraph Edge["Edge & Delivery"]
-        DNS["DNS"]
-        Ingress["NGINX Ingress"]
-        TLS["TLS / HTTPS"]
-    end
-
-    subgraph Services["Application Services"]
-        Auth["Authentication"]
-        Documents["Document Management"]
-        Verification["Verification"]
-        Notifications["Notifications"]
-    end
-
-    subgraph Platform["Platform Services"]
-        Cache["Redis"]
-        Queue["RabbitMQ / Kafka"]
-        Workers["Background Workers"]
-    end
-
-    subgraph Data["Data Layer"]
-        Database["PostgreSQL / MongoDB Atlas"]
-        Storage["AWS S3 / Cloudinary"]
-        Search["Search Index"]
-    end
-
-    subgraph Operations["Delivery & Observability"]
-        Actions["GitHub Actions"]
-        Vercel["Vercel<br/>Frontend Deployment"]
-        Render["Render<br/>API and Workers"]
-        Registry["Container Registry"]
-        Kubernetes["Kubernetes"]
-        Terraform["Terraform"]
-        Monitor["Prometheus + Grafana"]
-        Logs["Centralized Logs"]
-    end
-
-    Web --> DNS
-    Mobile --> DNS
-    DNS --> Ingress --> TLS --> Auth
-    Auth --> Documents --> Verification --> Notifications
-    Documents --> Cache
-    Documents --> Queue --> Workers
-    Documents --> Database
-    Documents --> Storage
-    Workers --> Database
-    Workers --> Storage
-    Workers --> Search
-    Actions --> Vercel
-    Actions --> Render
-    Actions --> Registry --> Kubernetes
-    Terraform --> Kubernetes
-    Kubernetes --> Monitor
-    Kubernetes --> Logs
-```
-
-### Architecture Notes
-
-- **Files and metadata are separated:** large binary objects live in object storage; searchable records live in the database.
-- **Slow work stays off the request path:** OCR, indexing, reminders, and notifications run through queued workers.
-- **Services begin as logical boundaries:** they can ship as a modular monolith first and split only when scale demands it.
-- **Every sensitive action emits an audit event:** document access and state changes remain traceable.
-- **Cloud vendors remain replaceable:** the final provider choices should be recorded as Architecture Decision Records.
-
----
-
-## Security By Design
-
-Security is a system property, not a feature toggle.
-
-| Control area | Planned protections |
-| --- | --- |
-| Identity | Strong password hashing, secure sessions or short-lived JWTs, optional MFA |
-| Authorization | Role-based access plus document-level ownership and permission checks |
-| Upload safety | Allowlisted file types, size limits, malware scanning, isolated processing |
-| Data protection | TLS in transit, encryption at rest, secret management, least-privilege access |
-| Share links | High-entropy tokens, expiration, view limits, revocation, scoped permissions |
-| Integrity | Cryptographic hashing and duplicate/change detection |
-| Abuse prevention | Redis-backed rate limiting, anomaly alerts, suspicious activity review |
-| Auditing | Append-oriented records for access, sharing, updates, and verification decisions |
-| Privacy | Data minimization, retention policies, secure deletion, metadata protection |
-
-> [!CAUTION]
-> The platform should not claim regulatory compliance until its implementation, operating controls, and deployment environment have been independently assessed.
-
-### Verification State Model
-
-```mermaid
-stateDiagram-v2
-    [*] --> Processing
-    Processing --> PendingReview
-    Processing --> Failed: processing error
-    PendingReview --> Verified: approved
-    PendingReview --> Rejected: rejected
-    Verified --> Expired: expiry date reached
-    Verified --> PendingReview: document updated
-    Rejected --> PendingReview: resubmitted
-    Failed --> Processing: retried
+Browser / Mobile
+      ↓
+  Nginx (reverse proxy, gzip, static cache)
+      ↓
+  React 19 + Vite (frontend)
+      ↓
+  Express 5 API (backend, TypeScript)
+      ↓
+  ┌─────────────────────────────────────┐
+  │          Services Layer             │
+  │  Auth  Documents  Vault  Verify    │
+  │  Notifications  Search  Dashboard  │
+  └─────────────────────────────────────┘
+      ↓             ↓           ↓
+  MongoDB       Redis         AWS S3
+  Atlas         (cache        (file
+  (data)         + queues)     storage)
+      ↓             ↓
+  BullMQ        Workers
+  Queues    (email + notification)
+      ↓
+  Prometheus → Grafana
+  (metrics)   (dashboards)
 ```
 
 ---
 
-## Suggested Technology Stack
+## Quick Start
 
-The project intentionally leaves several implementation choices open while the architecture is being validated.
+### Requirements
 
-| Layer | Recommended options | Purpose |
-| --- | --- | --- |
-| Frontend | React / Next.js | Responsive dashboard, previews, and sharing experience |
-| Backend | Node.js / JavaScript | APIs, authorization, workflows, and integrations |
-| Application hosting | Vercel / Render | Deploy the frontend, API, and background workers |
-| Database | PostgreSQL / MongoDB Atlas | Users, metadata, verification records, and audit events |
-| Object storage | AWS S3 / Cloudinary / Azure Blob | Durable file storage |
-| Cache | Redis | Sessions, tokens, rate limits, and hot reads |
-| Queue | RabbitMQ / Kafka | Asynchronous processing and event delivery |
-| Containers | Docker | Reproducible local and production environments |
-| Orchestration | Kubernetes | Deployment, scaling, health checks, and resilience |
-| Infrastructure | Terraform | Version-controlled cloud infrastructure |
-| CI/CD | GitHub Actions | Automated testing, builds, scans, and deployments |
-| Observability | Prometheus, Grafana, centralized logs | Metrics, dashboards, alerts, and debugging |
+- Node.js 20 or higher
+- Docker and Docker Compose
+- Git
 
-### Decision Strategy
-
-Choose the smallest stack that safely supports the current phase:
-
-1. Start with a modular application, one primary database, object storage, Redis, and a job queue.
-2. Deploy the frontend on Vercel and the API or workers on Render for an accessible first production environment.
-3. Add Kubernetes, advanced event streaming, and specialized search only when usage or operational needs justify them.
-4. Record meaningful technology choices and tradeoffs in `docs/decisions/`.
-
----
-
-## API Blueprint
-
-The first API can stay compact and resource-oriented.
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `POST` | `/api/auth/register` | Create an account |
-| `POST` | `/api/auth/login` | Authenticate a user |
-| `POST` | `/api/documents` | Upload a document and metadata |
-| `GET` | `/api/documents` | Search and list accessible documents |
-| `GET` | `/api/documents/:id` | View document details |
-| `PATCH` | `/api/documents/:id` | Update document metadata |
-| `POST` | `/api/documents/:id/share-links` | Create a protected share link |
-| `DELETE` | `/api/documents/:id/share-links/:linkId` | Revoke a share link |
-| `GET` | `/api/share/:token` | Access a shared document |
-| `POST` | `/api/documents/:id/verifications` | Submit a verification decision |
-| `GET` | `/api/documents/:id/history` | View the document audit history |
-| `GET` | `/api/notifications` | View reminders and alerts |
-
-<details>
-<summary><strong>Example document response</strong></summary>
-
-```json
-{
-  "id": "doc_01J...",
-  "title": "Cloud Security Certificate",
-  "type": "certificate",
-  "status": "verified",
-  "tags": ["cloud", "security"],
-  "ownerId": "usr_01J...",
-  "expiresAt": "2027-06-30T00:00:00Z",
-  "verification": {
-    "status": "verified",
-    "reviewedAt": "2026-06-09T09:30:00Z"
-  }
-}
-```
-
-</details>
-
----
-
-## Repository Blueprint
-
-```text
-.
-|-- frontend/               # Web application
-|-- backend/                # API and domain logic
-|-- workers/                # Asynchronous jobs
-|-- infrastructure/         # Terraform and Kubernetes manifests
-|-- monitoring/             # Metrics, dashboards, alerts, and logging
-|-- docs/
-|   |-- architecture/       # Architecture documentation
-|   `-- decisions/          # Architecture Decision Records
-|-- tests/                  # Cross-service and end-to-end tests
-|-- docker-compose.yml      # Local service orchestration
-`-- README.md               # Project overview
-```
-
----
-
-## Delivery Roadmap
-
-### Phase 1: Foundation
-
-- [ ] Establish frontend, backend, and local development environments
-- [ ] Implement registration, login, authorization, and protected routes
-- [ ] Add secure document upload and basic document listing
-- [ ] Define users, documents, metadata, and audit-event schemas
-- [ ] Run application dependencies with Docker Compose
-
-### Phase 2: Useful Document Management
-
-- [ ] Add metadata search, tags, filters, and sorting
-- [ ] Build PDF and image previews
-- [ ] Add protected sharing with expiration and revocation
-- [ ] Display document access history
-- [ ] Schedule expiry reminders
-
-### Phase 3: Verification & Automation
-
-- [ ] Implement pending, verified, rejected, and expired states
-- [ ] Add cryptographic integrity and duplicate detection
-- [ ] Build a dedicated verifier workflow
-- [ ] Process OCR, reminders, and notifications through workers
-- [ ] Export audit and verification reports
-
-### Phase 4: Production Readiness
-
-- [ ] Automate tests, builds, security scans, and deployments
-- [ ] Define infrastructure with Terraform
-- [ ] Deploy services with Kubernetes and HTTPS ingress
-- [ ] Add metrics, dashboards, alerts, and centralized logs
-- [ ] Run backup, restore, load, and failure-recovery exercises
-
----
-
-## Local Development
-
-The repository now includes a runnable React dashboard and Express API MVP.
-Use two terminals from the repository root:
+### One command setup
 
 ```bash
-# Terminal 1: API at http://localhost:5000
-cd backend
-npm install
-npm run dev
-
-# Terminal 2: dashboard at http://localhost:5173
-cd frontend
-npm install
-npm run dev
+git clone https://github.com/krishnx21/certivault.git
+cd certivault
+cp backend/.env.example backend/.env
+# Fill in your values in backend/.env
+docker compose up --build
 ```
 
-The starter environment configuration is documented in `backend/.env.example`
-and `frontend/.env.example`. The current in-memory MVP demonstrates document
-upload, checksum generation, listing, filtering, verification, deletion, and
-dashboard metrics. Persistent MongoDB and S3 storage remain roadmap work.
+Everything starts automatically:
 
-Run the available checks with:
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:5000 |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3001 |
+| Bull Board | http://localhost:5000/admin/queues |
+
+### Environment Variables
+
+```env
+# Server
+PORT=5000
+NODE_ENV=development
+CLIENT_URL=http://localhost:3000
+
+# MongoDB Atlas
+MONGO_URI=mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/certivault
+
+# JWT
+JWT_ACCESS_SECRET=your_64_char_secret
+JWT_REFRESH_SECRET=your_other_64_char_secret
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Google OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+
+# AWS S3
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=ap-south-1
+AWS_S3_BUCKET=certivault-documents
+
+# Redis (Upstash)
+REDIS_URL=rediss://default:password@your-upstash-url:6379
+
+# Email
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your@gmail.com
+SMTP_PASS=your_app_password
+EMAIL_FROM=CertiVault <noreply@certivault.com>
+
+# Bull Board
+BULL_BOARD_USERNAME=admin
+BULL_BOARD_PASSWORD=securepassword
+```
+
+---
+
+## API Reference
+
+### Authentication
+
+```
+POST  /api/auth/register              Register with email and password
+POST  /api/auth/login                 Login, returns access and refresh tokens
+POST  /api/auth/logout                Logout current device
+POST  /api/auth/logout-all            Logout all devices
+POST  /api/auth/refresh               Rotate refresh token
+POST  /api/auth/forgot-password       Send password reset email
+POST  /api/auth/reset-password        Set new password via token
+POST  /api/auth/verify-email          Verify email via token
+GET   /api/auth/google                Google OAuth redirect
+GET   /api/auth/google/callback       Google OAuth callback
+GET   /api/auth/me                    Get current user profile
+```
+
+### Documents
+
+```
+POST  /api/documents                  Upload document and file
+GET   /api/documents                  List documents (paginated, filterable)
+GET   /api/documents/:id              Get document detail
+PATCH /api/documents/:id              Update metadata
+DELETE /api/documents/:id             Soft delete document
+POST  /api/documents/:id/archive      Archive document
+POST  /api/documents/:id/restore      Restore archived document
+POST  /api/documents/:id/favorite     Toggle favorite
+GET   /api/documents/:id/download     Download (presigned S3 URL)
+GET   /api/documents/recent           Recently accessed documents
+GET   /api/documents/favorites        Favorite documents
+GET   /api/documents/stats            Storage and count summary
+```
+
+### Verifications
+
+```
+POST  /api/verifications/:documentId/verify    Submit verification decision
+POST  /api/verifications/:documentId/revoke    Revoke a verification
+GET   /api/verifications/:documentId           Get verification detail
+GET   /api/verifications/:documentId/history   Verification history
+GET   /api/verifications/:documentId/qr        Generate QR code (base64)
+GET   /api/verifications/list                  List all verifications
+GET   /api/verifications/stats                 Verification statistics
+GET   /public/verify/:token                    Public verification (no auth)
+```
+
+### Vault Members
+
+```
+POST   /api/vault/members                      Invite member by email
+GET    /api/vault/members                      List my vault members
+PATCH  /api/vault/members/:memberId            Change member role
+DELETE /api/vault/members/:memberId            Remove member
+
+GET    /api/vault/invites                      Pending invites for me
+POST   /api/vault/invites/:token/accept        Accept an invite
+POST   /api/vault/invites/:token/decline       Decline an invite
+DELETE /api/vault/access/:vaultOwnerId         Leave a vault
+
+GET    /api/vault/shared-with-me               Vaults I have access to
+GET    /api/documents?vaultOwnerId=:id         Documents from shared vault
+```
+
+### Notifications
+
+```
+GET   /api/notifications              List notifications (paginated)
+GET   /api/notifications/unread-count Unread notification count
+PATCH /api/notifications/:id/read     Mark one as read
+PATCH /api/notifications/read-all     Mark all as read
+DELETE /api/notifications/:id         Delete one notification
+DELETE /api/notifications             Delete all read notifications
+```
+
+### Search and Dashboard
+
+```
+GET   /api/search?q=query             Full-text document search
+GET   /api/dashboard/stats            Dashboard statistics
+GET   /api/dashboard/activity         Recent activity timeline
+```
+
+### Health and Monitoring
+
+```
+GET   /health/live                    Liveness probe
+GET   /health/ready                   Readiness probe (MongoDB + Redis)
+GET   /metrics                        Prometheus metrics endpoint
+GET   /admin/queues                   Bull Board queue admin UI
+```
+
+---
+
+## Frontend Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Login | /login | Email and password login with Google OAuth |
+| Register | /register | Account creation |
+| Forgot Password | /forgot-password | Password reset email |
+| Reset Password | /reset-password | Set new password via token |
+| Verify Email | /verify-email | Email verification via token |
+| OAuth Callback | /auth/callback | Google OAuth token exchange |
+| Dashboard | /dashboard | Stats, recent activity, quick actions |
+| Documents | /documents | Full document list with search and filters |
+| Document Detail | /documents/:id | Document view with tabs: Details, History, Verification |
+| Verifications | /verification | All verifications with status filter |
+| Verification Detail | /verification/:documentId | Verify document, view QR code, history |
+| Public Verify | /public/verify/:token | Unauthenticated public verification page |
+| Vault Members | /vault/members | Manage vault members (invite, roles, remove) |
+| Shared Vaults | /vault/shared | Vaults shared with you, pending invites |
+| Shared Vault Docs | /vault/shared/:ownerId/documents | Browse a shared vault |
+| Settings | /settings | Profile, password, notification preferences |
+
+---
+
+## CI/CD Pipelines (21 Workflows)
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| ci.yml | push and PR | Build, typecheck, lint, test |
+| coverage.yml | push | Test coverage report |
+| quality.yml | push and PR | ESLint and Prettier |
+| security.yml | push and PR | npm audit for vulnerabilities |
+| security-scan.yml | push | Trivy container scan → GitHub Security |
+| docker-build.yml | push to main | Build and push images to GHCR (multi-platform) |
+| k8s-deploy.yml | release | Deploy to Kubernetes cluster |
+| terraform-plan.yml | PR | Run terraform plan, comment results |
+| terraform-apply.yml | push to main | Apply Terraform changes |
+| performance.yml | PR to main | k6 load test (spike and soak scenarios) |
+| release.yml | tag | Create GitHub release and changelog |
+| commit-message.yml | PR | Enforce conventional commits |
+| pr-governance.yml | PR | Size labels, required reviewers |
+| validate-pr-base.yml | PR | Prevent direct merges to main |
+| labeler.yml | PR | Auto-label by file path |
+| issue-labeler.yml | issues | Auto-label issues |
+| stale.yml | schedule | Close stale issues and PRs |
+| community.yml | issues | Welcome new contributors |
+| thank-merged-contributor.yml | PR merged | Thank contributor |
+| sync-labels.yml | push | Sync repo labels from config |
+| dependabot.yml | schedule | Automated dependency updates |
+
+---
+
+## Deployment
+
+### Docker Compose (Local and Staging)
 
 ```bash
-cd backend && npm test
-cd frontend && npm run build
+# Start all 7 services
+docker compose up --build
+
+# Production mode (pulls from GHCR, resource limits applied)
+docker compose -f docker-compose.prod.yml up
 ```
 
-Never commit real credentials. Use a managed secret store in deployed environments.
+### Kubernetes
 
----
+```bash
+# Apply all manifests
+kubectl apply -f kubernetes/
 
-## Deployment Plan
+# Or use Helm
+helm install certivault ./helm/certivault \
+  --namespace certivault \
+  --create-namespace \
+  -f helm/certivault/values.prod.yaml
 
-| Component | Initial platform | Scale-up path |
-| --- | --- | --- |
-| Next.js frontend | Vercel | Vercel or containerized deployment |
-| Node.js API | Render Web Service | Kubernetes deployment |
-| Background workers | Render Background Workers | Kubernetes worker deployments |
-| Database | Managed PostgreSQL / MongoDB Atlas | Multi-zone managed database |
-| Files | AWS S3 / compatible object storage | Replicated object storage with lifecycle policies |
-| Cache and jobs | Managed Redis / queue service | Highly available platform services |
+# Verify deployment
+kubectl get pods -n certivault
+```
 
-Vercel and Render provide a straightforward first deployment path. Kubernetes and Terraform remain the production scale-up strategy when traffic, resilience, or operational requirements justify the added complexity.
+### Terraform (AWS)
 
----
+```bash
+# One-time: create remote state bucket manually in AWS S3
+# Then initialize
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
 
-## Quality Bar
-
-The platform is ready for production only when it can demonstrate:
-
-| Area | Definition of success |
-| --- | --- |
-| Reliability | Uploads are durable, retryable, and protected against partial failure. |
-| Performance | Common searches and document views stay responsive under expected load. |
-| Trust | Every verification decision is attributable and every integrity check is reproducible. |
-| Security | Sensitive operations are authorized, rate-limited, logged, and tested. |
-| Recoverability | Backups are automated and restores are routinely verified. |
-| Accessibility | Core workflows are keyboard-friendly and meet applicable WCAG guidance. |
-| Operability | Failures are visible through actionable logs, metrics, dashboards, and alerts. |
-
----
-
-## Future Possibilities
-
-- OCR-powered full-text search for scanned documents
-- Automatic document classification and metadata suggestions
-- QR-based public verification pages
-- Digital signatures and issuer integrations
-- Organization workspaces and delegated administration
-- Configurable retention and legal-hold policies
-- Native mobile capture and verification
-- Tamper-evident external hash registry
-
----
-
-## Contributing
-
-Contributions are welcome as the platform moves from blueprint to implementation.
-
-CertiVault is participating in **Elite Coders Summer of Code (ECSoC) 2026**, with
-[Krishna Kumar](https://github.com/Krishnx21) serving as the **Project Admin**.
-ECSoC contributors and first-time open-source contributors are warmly encouraged
-to explore the roadmap, discuss an issue, and submit focused pull requests.
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Backend Development Guide](docs/operations/backend-development.md) before opening a pull request. By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
-
-Security issues must be reported privately according to [SECURITY.md](SECURITY.md), not through public issues.
-
-If this project is useful to you, please **[star CertiVault](https://github.com/Krishnx21/CertiVault)**
-and **[follow the Project Admin](https://github.com/Krishnx21)** for updates.
+AWS resources provisioned:
+- VPC with 2 public and 2 private subnets, IGW, NAT Gateway
+- S3 bucket (encrypted, versioned, Glacier lifecycle)
+- ECR repositories (backend and frontend)
+- ElastiCache Redis cluster (private subnet)
+- EKS cluster 1.29 with autoscaling node group
+- DocumentDB cluster (encrypted, TLS, Secrets Manager)
 
 ---
 
 ## Project Status
 
-**Current stage:** Architecture blueprint and implementation planning.
+| Area | Status |
+|------|--------|
+| Core application (auth, documents, verifications, search, dashboard) | Complete |
+| Vault member system (invite, roles, shared access) | Complete |
+| Background workers (email, notifications, expiry reminders) | Complete |
+| Docker and Docker Compose | Complete |
+| Prometheus metrics and Grafana dashboards | Complete |
+| Kubernetes and Helm | Complete |
+| GitHub Actions CI/CD (21 workflows) | Complete |
+| Terraform AWS infrastructure | Complete |
+| MFA / TOTP | Dependency installed, not yet wired |
+| Audit and verification report export | Not built |
+| Automated MongoDB backup | Not configured |
 
-| Artifact | Status |
-| --- | --- |
-| Product vision | Defined |
-| Feature map | Defined |
-| Cloud architecture | Proposed |
-| Security model | Proposed |
-| Domain model | Proposed |
-| API surface | Proposed |
-| Application implementation | Not started |
-| Production deployment | Not started |
+---
+
+## Contributing
+
+CertiVault is open source under ECSoC 2026. Contributions are welcome.
+
+Good first issues:
+
+| Task | Difficulty |
+|------|-----------|
+| Write missing unit tests | Easy |
+| Add PDF export for audit reports | Medium |
+| Wire up MFA with speakeasy | Medium |
+| Add document version history | Medium |
+| Improve mobile responsiveness | Easy |
+
+Before contributing:
+
+```bash
+git clone https://github.com/krishnx21/certivault.git
+cd certivault
+cp backend/.env.example backend/.env
+docker compose up mongodb redis -d
+cd backend && npm install && npm run dev
+```
+
+Read [CONTRIBUTING.md](./CONTRIBUTING.md) for code standards and the PR process.
 
 ---
 
 ## License
 
-<p align="center">
-  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/Open%20Source-MIT%20License-f59e0b?style=for-the-badge"></a>
-</p>
-
-This project is proudly released under the **MIT License**.
-
-You may use, modify, distribute, and build upon the project while preserving
-the copyright and license notice. See the [LICENSE](LICENSE) file for the full
-terms.
-
-| Permission | Included |
-| --- | --- |
-| Commercial use | Yes |
-| Modification | Yes |
-| Distribution | Yes |
-| Private use | Yes |
+MIT License. See [LICENSE](./LICENSE) for full terms.
 
 ---
 
 <div align="center">
 
-### Build more than document storage. Build document trust.
+Built by [Krishna Kumar](https://github.com/krishnx21)
 
-**Secure documents | Verifiable history | Controlled sharing | Cloud-ready architecture**
+*Part of the portfolio: CertiVault → SecretSentinel → PipelineGuard → OpsPilot*
+
+If CertiVault is useful to you, give it a star.
 
 </div>
