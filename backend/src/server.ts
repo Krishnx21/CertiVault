@@ -18,15 +18,20 @@ const start = async () => {
     // Connect to MongoDB
     await connectDB(env.MONGODB_URI);
 
-    // UPDATED — wait for Redis to be ready before accepting traffic
+    // Wait for Redis to be ready before accepting traffic.
+    // Redis is optional — a connection failure logs a warning but does NOT abort startup.
     if (env.REDIS_URL || env.REDIS_HOST) {
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         if (redis.status === "ready") {
           resolve();
           return;
         }
         const onReady = () => { cleanup(); resolve(); };
-        const onError = (err: Error) => { cleanup(); reject(err); };
+        const onError = (err: Error) => {
+          cleanup();
+          console.warn(`Redis connection failed at startup (${err.message}) — continuing without cache`);
+          resolve(); // degrade gracefully instead of crashing
+        };
         const cleanup = () => {
           redis.off("ready", onReady);
           redis.off("error", onError);
@@ -35,7 +40,6 @@ const start = async () => {
         redis.once("error", onError);
         setTimeout(() => {
           cleanup();
-          // Resolve anyway — Redis is optional; app degrades gracefully
           console.warn("Redis did not become ready within 10 s — continuing without cache");
           resolve();
         }, 10_000);

@@ -48,17 +48,44 @@ const bullmqOptions: Partial<RedisOptions> = {
   reconnectOnError,
 };
 
+// ─── Validate a Redis URL before handing it to ioredis ───────────────────────
+// ioredis throws a synchronous TypeError on module load if the URL is malformed,
+// which crashes the process before any error handler can catch it.
+
+function validateRedisUrl(raw: string): string | null {
+  try {
+    const parsed = new URL(raw);
+    if (!["redis:", "rediss:"].includes(parsed.protocol)) {
+      log.warn(
+        `Redis: REDIS_URL has unexpected protocol "${parsed.protocol}" — expected redis:// or rediss://. Ignoring.`
+      );
+      return null;
+    }
+    return raw;
+  } catch {
+    log.warn(
+      `Redis: REDIS_URL is not a valid URL ("${raw.slice(0, 80)}...") — ignoring and falling back to host/port config.`
+    );
+    return null;
+  }
+}
+
 // ─── Create the singleton client ─────────────────────────────────────────────
 
 function createRedisClient(): Redis {
   const env = getEnv();
 
-  // Prefer a full REDIS_URL (e.g. redis://:password@host:6379/0)
-  const client: Redis = env.REDIS_URL
-    ? new Redis(env.REDIS_URL, sharedOptions)
+  const redisUrl = env.REDIS_URL ? validateRedisUrl(env.REDIS_URL) : null;
+
+  // Prefer a full REDIS_URL (e.g. rediss://:password@host:6379/0)
+  const client: Redis = redisUrl
+    ? new Redis(redisUrl, sharedOptions)
     : new Redis({
         host: env.REDIS_HOST ?? "127.0.0.1",
         port: env.REDIS_PORT ? parseInt(env.REDIS_PORT, 10) : 6379,
+        username: env.REDIS_USERNAME,
+        password: env.REDIS_PASSWORD,
+        tls: env.REDIS_TLS === "true" ? {} : undefined,
         ...sharedOptions,
       });
 
@@ -102,11 +129,16 @@ export const redis = createRedisClient();
 export function createBullMQConnection(): Redis {
   const env = getEnv();
 
-  const client: Redis = env.REDIS_URL
-    ? new Redis(env.REDIS_URL, bullmqOptions)
+  const redisUrl = env.REDIS_URL ? validateRedisUrl(env.REDIS_URL) : null;
+
+  const client: Redis = redisUrl
+    ? new Redis(redisUrl, bullmqOptions)
     : new Redis({
         host: env.REDIS_HOST ?? "127.0.0.1",
         port: env.REDIS_PORT ? parseInt(env.REDIS_PORT, 10) : 6379,
+        username: env.REDIS_USERNAME,
+        password: env.REDIS_PASSWORD,
+        tls: env.REDIS_TLS === "true" ? {} : undefined,
         ...bullmqOptions,
       });
 
