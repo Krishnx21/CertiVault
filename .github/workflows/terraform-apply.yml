@@ -4,17 +4,43 @@
 # Applies the Terraform plan ONLY after code lands on main AND the push
 # touched files under terraform/.
 #
-# Required repository secrets:
-#   AWS_ACCESS_KEY_ID       → IAM user key with Terraform permissions
-#   AWS_SECRET_ACCESS_KEY   → IAM user secret
+# ── Required GitHub Repository Secrets ───────────────────────────────────────
+# Configure these at: Settings → Secrets and variables → Actions → New secret
 #
-# The S3 backend bucket and DynamoDB lock table are defined in backend.tf:
-#   bucket         = "certivault-terraform-state"
-#   dynamodb_table = "certivault-terraform-locks"
-# These resources must exist in ap-south-1 before the first apply.
-# See backend.tf for the aws CLI commands to create them.
+#   AWS_ACCESS_KEY_ID         → IAM user access key with Terraform permissions
+#   AWS_SECRET_ACCESS_KEY     → IAM user secret access key
+#   AWS_REGION                → AWS region (e.g. ap-south-1)
+#                               NOTE: currently hardcoded to ap-south-1 in the
+#                               workflow env block; set this secret if you want
+#                               to make it configurable.
 #
-# Safety features:
+# ── S3 Backend Secrets (if overriding backend.tf values via CI) ───────────────
+# These are NOT required if backend.tf already contains the hard-coded bucket
+# and table names (which it does for this project). They are documented here
+# for teams that prefer to pass backend config dynamically:
+#
+#   TF_STATE_BUCKET           → S3 bucket name for remote state
+#                               (default: certivault-terraform-state)
+#   TF_LOCK_TABLE             → DynamoDB table name for state locking
+#                               (default: certivault-terraform-locks)
+#
+# ── IAM Permissions Required ─────────────────────────────────────────────────
+# The IAM user/role must have at minimum:
+#   - AmazonEC2FullAccess (VPC, subnets, security groups)
+#   - AmazonEKSFullAccess
+#   - AmazonElastiCacheFullAccess
+#   - AmazonS3FullAccess (state bucket + document bucket)
+#   - AmazonDynamoDBFullAccess (state lock table)
+#   - AmazonECRFullAccess
+#   - IAMFullAccess (for EKS node role, OIDC provider)
+#   - SecretsManagerFullAccess (for DocumentDB password)
+#   - AmazonDocDBFullAccess
+#
+# ── Pre-requisites (one-time bootstrap) ──────────────────────────────────────
+# The S3 backend bucket and DynamoDB lock table must exist before the first
+# terraform init. See backend.tf for the aws CLI commands to create them.
+#
+# ── Safety features ──────────────────────────────────────────────────────────
 #   - Skips gracefully (exit 0) when AWS credentials are not configured
 #   - Runs a fresh plan first — never applies without it
 #   - Uses -auto-approve only inside CI (TF_IN_AUTOMATION=true)
