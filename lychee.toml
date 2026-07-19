@@ -23,7 +23,7 @@ exclude_path = [
 ]
 
 # Accept these HTTP status codes as "valid" (429 = rate limited, treat as ok)
-accept = [200, 201, 204, 206, 301, 302, 307, 308, 429]
+accept = ["200", "201", "204", "206", "301", "302", "307", "308", "429"]
 
 # Timeout per request in seconds
 timeout = 20
