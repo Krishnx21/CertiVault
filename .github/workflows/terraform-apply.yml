@@ -1,31 +1,31 @@
-﻿# =============================================================================
-# CertiVault ΓÇö Terraform Apply (on push to main)
+# =============================================================================
+# CertiVault — Terraform Apply (on push to main)
 # =============================================================================
 # Applies the Terraform plan ONLY after code lands on main AND the push
 # touched files under terraform/.
-# Last triggered: 2026-07-19 ΓÇö force fresh run after re-run loop on stale SHA
+# Last triggered: 2026-07-19 — force fresh run after re-run loop on stale SHA
 #
-# ΓöÇΓöÇ Required GitHub Repository Secrets ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-# Configure these at: Settings ΓåÆ Secrets and variables ΓåÆ Actions ΓåÆ New secret
+# ── Required GitHub Repository Secrets ───────────────────────────────────────
+# Configure these at: Settings → Secrets and variables → Actions → New secret
 #
-#   AWS_ACCESS_KEY_ID         ΓåÆ IAM user access key with Terraform permissions
-#   AWS_SECRET_ACCESS_KEY     ΓåÆ IAM user secret access key
-#   AWS_REGION                ΓåÆ AWS region (e.g. ap-south-1)
+#   AWS_ACCESS_KEY_ID         → IAM user access key with Terraform permissions
+#   AWS_SECRET_ACCESS_KEY     → IAM user secret access key
+#   AWS_REGION                → AWS region (e.g. ap-south-1)
 #                               NOTE: currently hardcoded to ap-south-1 in the
 #                               workflow env block; set this secret if you want
 #                               to make it configurable.
 #
-# ΓöÇΓöÇ S3 Backend Secrets (if overriding backend.tf values via CI) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── S3 Backend Secrets (if overriding backend.tf values via CI) ───────────────
 # These are NOT required if backend.tf already contains the hard-coded bucket
 # and table names (which it does for this project). They are documented here
 # for teams that prefer to pass backend config dynamically:
 #
-#   TF_STATE_BUCKET           ΓåÆ S3 bucket name for remote state
+#   TF_STATE_BUCKET           → S3 bucket name for remote state
 #                               (default: certivault-terraform-state)
-#   TF_LOCK_TABLE             ΓåÆ DynamoDB table name for state locking
+#   TF_LOCK_TABLE             → DynamoDB table name for state locking
 #                               (default: certivault-terraform-locks)
 #
-# ΓöÇΓöÇ IAM Permissions Required ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── IAM Permissions Required ─────────────────────────────────────────────────
 # The IAM user/role must have at minimum:
 #   - AmazonEC2FullAccess (VPC, subnets, security groups)
 #   - AmazonEKSFullAccess
@@ -37,13 +37,13 @@
 #   - SecretsManagerFullAccess (for DocumentDB password)
 #   - AmazonDocDBFullAccess
 #
-# ΓöÇΓöÇ Pre-requisites (one-time bootstrap) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── Pre-requisites (one-time bootstrap) ──────────────────────────────────────
 # The S3 backend bucket and DynamoDB lock table must exist before the first
 # terraform init. See backend.tf for the aws CLI commands to create them.
 #
-# ΓöÇΓöÇ Safety features ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── Safety features ──────────────────────────────────────────────────────────
 #   - Skips gracefully (exit 0) when AWS credentials are not configured
-#   - Runs a fresh plan first ΓÇö never applies without it
+#   - Runs a fresh plan first — never applies without it
 #   - Uses -auto-approve only inside CI (TF_IN_AUTOMATION=true)
 #   - On failure: outputs terraform state list to help diagnose drift
 #   - Manual workflow_dispatch requires typing "APPLY" to confirm
@@ -70,7 +70,7 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write   # for OIDC auth (future ΓÇö when moving off long-lived keys)
+  id-token: write   # for OIDC auth (future — when moving off long-lived keys)
 
 jobs:
   terraform-apply:
@@ -96,7 +96,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ΓöÇΓöÇ Guard: skip entire job if AWS credentials are not configured ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+      # ── Guard: skip entire job if AWS credentials are not configured ─────────
       # Without this, terraform init produces a confusing "no valid credential
       # sources" error. Instead we exit 0 with a clear message so the job shows
       # as skipped rather than failed.
@@ -105,8 +105,8 @@ jobs:
         shell: bash
         run: |
           if [[ -z "$AWS_ACCESS_KEY_ID" || -z "$AWS_SECRET_ACCESS_KEY" ]]; then
-            echo "ΓÜá∩╕Å  AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY secret is not set."
-            echo "   Add them in: Settings ΓåÆ Secrets and variables ΓåÆ Actions"
+            echo "⚠️  AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY secret is not set."
+            echo "   Add them in: Settings → Secrets and variables → Actions"
             echo "   Skipping Terraform Apply."
             echo "skip=true" >> $GITHUB_OUTPUT
           else
@@ -120,11 +120,11 @@ jobs:
           terraform_version: "~1.7"
           terraform_wrapper: false   # raw output for apply (no wrapper wrapping)
 
-      # ΓöÇΓöÇ Initialise ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-      # Backend config is fully defined in backend.tf ΓÇö no -backend-config
+      # ── Initialise ──────────────────────────────────────────────────────────
+      # Backend config is fully defined in backend.tf — no -backend-config
       # overrides needed. Passing empty secrets as -backend-config args would
       # cause "bucket must not be empty" errors.
-      # If the S3 backend bucket does not exist yet, init will fail ΓÇö we catch
+      # If the S3 backend bucket does not exist yet, init will fail — we catch
       # that and skip the rest of the job gracefully.
       - name: Terraform Init
         id: init
@@ -135,17 +135,17 @@ jobs:
       - name: Skip if backend unavailable
         if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome != 'success'
         run: |
-          echo "ΓÜá∩╕Å  terraform init failed ΓÇö S3 backend may not exist yet." >> $GITHUB_STEP_SUMMARY
+          echo "⚠️  terraform init failed — S3 backend may not exist yet." >> $GITHUB_STEP_SUMMARY
           echo "   Create the state bucket and DynamoDB table (see backend.tf)" >> $GITHUB_STEP_SUMMARY
           echo "   then re-run this workflow." >> $GITHUB_STEP_SUMMARY
           echo "backend_ready=false" >> $GITHUB_ENV
 
-      # ΓöÇΓöÇ Validate before applying ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+      # ── Validate before applying ────────────────────────────────────────────
       - name: Terraform Validate
         if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success'
         run: terraform validate -no-color
 
-      # ΓöÇΓöÇ Plan (fresh plan ΓÇö never apply a stale one) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+      # ── Plan (fresh plan — never apply a stale one) ─────────────────────────
       - name: Terraform Plan
         id: plan
         if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success'
@@ -158,7 +158,7 @@ jobs:
             -var="environment=production" \
             2>&1 | tee plan.txt
 
-      # ΓöÇΓöÇ Show what will change ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+      # ── Show what will change ───────────────────────────────────────────────
       - name: Show plan summary
         if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success'
         run: |
@@ -167,7 +167,7 @@ jobs:
           (grep -E '(Plan:|No changes|must be|will be)' plan.txt || true) >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-      # ΓöÇΓöÇ Apply ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+      # ── Apply ───────────────────────────────────────────────────────────────
       - name: Terraform Apply
         id: apply
         if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success'
@@ -180,14 +180,14 @@ jobs:
             tfplan.bin \
             2>&1 | tee apply.txt
 
-      # ΓöÇΓöÇ Capture outputs ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+      # ── Capture outputs ─────────────────────────────────────────────────────
       - name: Terraform Output
         id: output
         if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success' && steps.apply.outcome == 'success'
         run: terraform output -no-color -json | tee outputs.json
         continue-on-error: true
 
-      # ΓöÇΓöÇ Upload outputs as artifact ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+      # ── Upload outputs as artifact ──────────────────────────────────────────
       - name: Upload Terraform outputs
         uses: actions/upload-artifact@v4
         if: steps.check-creds.outputs.skip != 'true' && steps.output.outcome == 'success'
@@ -196,32 +196,32 @@ jobs:
           path: terraform/outputs.json
           retention-days: 30
 
-      # ΓöÇΓöÇ Diagnose on failure ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+      # ── Diagnose on failure ──────────────────────────────────────────────────
       - name: Show state on failure
         if: failure() && steps.check-creds.outputs.skip != 'true'
         run: |
-          echo "Apply failed ΓÇö current state:"
+          echo "Apply failed — current state:"
           terraform state list || true
           echo ""
           echo "Last 100 lines of apply output:"
           tail -100 apply.txt || true
 
-      # ΓöÇΓöÇ Write summary ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+      # ── Write summary ───────────────────────────────────────────────────────
       - name: Write apply summary
         if: always()
         run: |
           echo "## Terraform Apply Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ steps.check-creds.outputs.skip }}" == "true" ]]; then
-            echo "ΓÜá∩╕Å **Skipped** ΓÇö AWS credentials not configured." >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Skipped** — AWS credentials not configured." >> $GITHUB_STEP_SUMMARY
             exit 0
           fi
           echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
           PLAN_STATUS="${{ steps.plan.outcome }}"
           APPLY_STATUS="${{ steps.apply.outcome }}"
-          [[ "$PLAN_STATUS"  == "success" ]] && PLAN_ICON="Γ£à"  || PLAN_ICON="Γ¥î ($PLAN_STATUS)"
-          [[ "$APPLY_STATUS" == "success" ]] && APPLY_ICON="Γ£à" || APPLY_ICON="Γ¥î ($APPLY_STATUS)"
+          [[ "$PLAN_STATUS"  == "success" ]] && PLAN_ICON="✅"  || PLAN_ICON="❌ ($PLAN_STATUS)"
+          [[ "$APPLY_STATUS" == "success" ]] && APPLY_ICON="✅" || APPLY_ICON="❌ ($APPLY_STATUS)"
           echo "| Plan  | $PLAN_ICON  |" >> $GITHUB_STEP_SUMMARY
           echo "| Apply | $APPLY_ICON |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

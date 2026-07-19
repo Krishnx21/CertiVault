@@ -1,0 +1,57 @@
+# =============================================================================
+# CertiVault — ConfigMap  (non-sensitive environment variables)
+# Sensitive values (JWT secrets, passwords, API keys) go in secret.yaml.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: certivault-config
+  namespace: certivault
+  labels:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/component: config
+data:
+  NODE_ENV: "production"
+  PORT: "5000"
+
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  # Update this to your real domain after DNS is configured.
+  FRONTEND_ORIGIN: "https://certivault.example.com"
+  FRONTEND_URL: "https://certivault.example.com"
+  CLIENT_URL: "https://certivault.example.com"
+
+  # ── MongoDB ───────────────────────────────────────────────────────────────
+  # When using MongoDB Atlas, override MONGO_URI in secret.yaml instead.
+  # This entry is for in-cluster MongoDB (if used).
+  # MONGO_URI is intentionally left out of ConfigMap — it contains credentials.
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  # Host/port split form for environments where the full URL is assembled.
+  REDIS_HOST: "certivault-redis-master"
+  REDIS_PORT: "6379"
+
+  # ── AWS ───────────────────────────────────────────────────────────────────
+  AWS_REGION: "ap-south-1"
+  AWS_S3_BUCKET: "certivault-documents"
+
+  # ── Email ─────────────────────────────────────────────────────────────────
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  EMAIL_FROM: "CertiVault <noreply@certivault.com>"
+  APP_NAME: "CertiVault"
+
+  # ── JWT (non-secret settings) ─────────────────────────────────────────────
+  JWT_ACCESS_EXPIRES_IN: "15m"
+  JWT_REFRESH_EXPIRES_IN: "7d"
+  JWT_ISSUER: "certivault-api"
+  JWT_AUDIENCE: "certivault-web"
+
+  # ── Rate limiting ─────────────────────────────────────────────────────────
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX: "100"
+
+  # ── Misc ──────────────────────────────────────────────────────────────────
+  LOG_LEVEL: "info"
+  TRUST_PROXY: "true"
+  BCRYPT_ROUNDS: "12"
+  MAX_UPLOAD_BYTES: "52428800"

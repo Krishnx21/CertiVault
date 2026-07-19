@@ -1,0 +1,604 @@
+{
+  "__inputs": [],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "11.0.0" },
+    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" }
+  ],
+  "annotations": { "list": [] },
+  "description": "CertiVault — Application Metrics Dashboard",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Row 1 — System Overview",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 1 },
+      "id": 2,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "sum(rate(certivault_http_requests_total[1m]))",
+          "legendFormat": "req/s",
+          "refId": "A"
+        }
+      ],
+      "title": "Requests per Second",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 500 },
+          { "color": "red", "value": 2000 }
+        ]}, "color": { "mode": "thresholds" } },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 1 },
+      "id": 3,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "graphMode": "area" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(certivault_http_request_duration_ms_bucket[5m])) by (le))",
+          "legendFormat": "p95 latency",
+          "refId": "A"
+        }
+      ],
+      "title": "p95 Response Time",
+      "type": "gauge"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 2 },
+          { "color": "red", "value": 5 }
+        ]}, "color": { "mode": "thresholds" }, "max": 100 },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 1 },
+      "id": 4,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "graphMode": "area" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "sum(rate(certivault_http_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(certivault_http_requests_total[5m])) * 100",
+          "legendFormat": "error rate %",
+          "refId": "A"
+        }
+      ],
+      "title": "Error Rate %",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "none", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 50 },
+          { "color": "red", "value": 100 }
+        ]}},
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 1 },
+      "id": 5,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "graphMode": "none" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "certivault_http_active_requests",
+          "legendFormat": "active",
+          "refId": "A"
+        }
+      ],
+      "title": "Active HTTP Connections",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "id": 10,
+      "title": "Row 2 — Business Activity",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "color": { "fixedColor": "blue", "mode": "fixed" } }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 10 },
+      "id": 11,
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "orientation": "auto", "textMode": "auto", "graphMode": "area" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "increase(certivault_documents_uploaded_total[24h])",
+          "legendFormat": "uploads today",
+          "refId": "A"
+        }
+      ],
+      "title": "Documents Uploaded Today",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "color": { "fixedColor": "purple", "mode": "fixed" } }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 10 },
+      "id": 12,
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "orientation": "auto", "textMode": "auto", "graphMode": "area" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "increase(certivault_documents_downloaded_total[24h])",
+          "legendFormat": "downloads today",
+          "refId": "A"
+        }
+      ],
+      "title": "Documents Downloaded Today",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "color": { "fixedColor": "green", "mode": "fixed" } }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 10 },
+      "id": 13,
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "orientation": "auto", "textMode": "auto", "graphMode": "area" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "increase(certivault_users_registered_total[24h])",
+          "legendFormat": "new users today",
+          "refId": "A"
+        }
+      ],
+      "title": "New Users Today",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "color": { "fixedColor": "orange", "mode": "fixed" } }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 10 },
+      "id": 14,
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "orientation": "auto", "textMode": "auto", "graphMode": "area" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "increase(certivault_verifications_total[24h])",
+          "legendFormat": "verifications today",
+          "refId": "A"
+        }
+      ],
+      "title": "Verifications Today",
+      "type": "stat"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 20,
+      "title": "Row 3 — Document Operations",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "ops" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 15 },
+      "id": 21,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "sum(rate(certivault_documents_uploaded_total[5m])) by (file_type)",
+          "legendFormat": "{{file_type}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Upload Rate by File Type",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "ops" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 15 },
+      "id": 22,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "rate(certivault_documents_downloaded_total[5m])",
+          "legendFormat": "downloads/s",
+          "refId": "A"
+        }
+      ],
+      "title": "Download Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 1073741824 },
+          { "color": "red", "value": 5368709120 }
+        ]}, "color": { "mode": "thresholds" } },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 15 },
+      "id": 23,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "graphMode": "none" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "certivault_storage_bytes_total",
+          "legendFormat": "storage used",
+          "refId": "A"
+        }
+      ],
+      "title": "Storage Used",
+      "type": "gauge"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "id": 30,
+      "title": "Row 4 — Queue Health",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "none" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
+      "id": 31,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "certivault_queue_depth",
+          "legendFormat": "{{queue}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Queue Depth",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "ops" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
+      "id": 32,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "sum(rate(certivault_queue_jobs_total{status=\"completed\"}[1m])) by (queue)",
+          "legendFormat": "{{queue}} completed/min",
+          "refId": "A"
+        }
+      ],
+      "title": "Jobs Processed per Minute",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "none", "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null },
+          { "color": "red", "value": 1 }
+        ]}, "color": { "mode": "thresholds" } },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 24 },
+      "id": 33,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "graphMode": "none" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "sum(increase(certivault_queue_jobs_total{status=\"failed\"}[1h]))",
+          "legendFormat": "failed jobs",
+          "refId": "A"
+        }
+      ],
+      "title": "Failed Jobs (1h)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 2000 },
+          { "color": "red", "value": 10000 }
+        ]}, "color": { "mode": "thresholds" } },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 24 },
+      "id": 34,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "graphMode": "area" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(certivault_queue_job_duration_ms_bucket[5m])) by (le, queue))",
+          "legendFormat": "{{queue}} p95",
+          "refId": "A"
+        }
+      ],
+      "title": "Job Duration p95",
+      "type": "stat"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "id": 40,
+      "title": "Row 5 — Authentication",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "ops" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 33 },
+      "id": 41,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "sum(rate(certivault_users_registered_total[5m])) by (method)",
+          "legendFormat": "registrations ({{method}})",
+          "refId": "A"
+        }
+      ],
+      "title": "Registration Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "ops" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 33 },
+      "id": 42,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "sum(rate(certivault_auth_failures_total[5m])) by (reason)",
+          "legendFormat": "{{reason}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Auth Failures by Reason",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "color": { "fixedColor": "green", "mode": "fixed" } }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 33 },
+      "id": 43,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto", "graphMode": "none" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "certivault_active_users_total",
+          "legendFormat": "active users",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Users (24h)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "none", "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null },
+          { "color": "red", "value": 1 }
+        ]}, "color": { "mode": "thresholds" } },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 33 },
+      "id": 44,
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "textMode": "auto", "graphMode": "none" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "increase(certivault_auth_failures_total{reason=\"locked\"}[1h])",
+          "legendFormat": "locked accounts",
+          "refId": "A"
+        }
+      ],
+      "title": "Accounts Locked (1h)",
+      "type": "stat"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 41 },
+      "id": 50,
+      "title": "Row 6 — Vault Member Activity",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "color": { "fixedColor": "blue", "mode": "fixed" } }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 42 },
+      "id": 51,
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "textMode": "auto", "graphMode": "area" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "increase(certivault_vault_invites_sent_total[24h])",
+          "legendFormat": "invites sent today",
+          "refId": "A"
+        }
+      ],
+      "title": "Invites Sent Today",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "color": { "fixedColor": "green", "mode": "fixed" } }, "overrides": [] },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 42 },
+      "id": 52,
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "textMode": "auto", "graphMode": "area" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "increase(certivault_vault_invites_accepted_total[168h])",
+          "legendFormat": "accepted this week",
+          "refId": "A"
+        }
+      ],
+      "title": "Invites Accepted (7d)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "ops" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 42 },
+      "id": 53,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "rate(certivault_vault_invites_sent_total[1h])",
+          "legendFormat": "invites sent/h",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "rate(certivault_vault_invites_accepted_total[1h])",
+          "legendFormat": "invites accepted/h",
+          "refId": "B"
+        }
+      ],
+      "title": "Vault Invite Activity Over Time",
+      "type": "timeseries"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 50 },
+      "id": 60,
+      "title": "Row 7 — Node.js Runtime",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "bytes" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 51 },
+      "id": 61,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "certivault_nodejs_process_heap_bytes",
+          "legendFormat": "heap used",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "certivault_nodejs_process_resident_memory_bytes",
+          "legendFormat": "RSS",
+          "refId": "B"
+        }
+      ],
+      "title": "Node.js Memory",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "s" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 51 },
+      "id": 62,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "certivault_nodejs_eventloop_lag_seconds",
+          "legendFormat": "event loop lag",
+          "refId": "A"
+        }
+      ],
+      "title": "Event Loop Lag",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "color": { "fixedColor": "green", "mode": "fixed" } },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 51 },
+      "id": 63,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto", "graphMode": "area" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "certivault-prometheus" },
+          "expr": "certivault_nodejs_process_uptime_seconds",
+          "legendFormat": "uptime",
+          "refId": "A"
+        }
+      ],
+      "title": "Process Uptime",
+      "type": "stat"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["certivault", "api", "production"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "CertiVault — Application Metrics",
+  "uid": "certivault-main",
+  "version": 1
+}

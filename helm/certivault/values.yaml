@@ -1,0 +1,166 @@
+# =============================================================================
+# CertiVault Helm Chart — Default Values
+# Override with:  helm install certivault ./helm/certivault -f values.prod.yaml
+# Or inline:      helm upgrade certivault ./helm/certivault --set image.backend.tag=v1.2.0
+# =============================================================================
+
+# ── Namespace ──────────────────────────────────────────────────────────────
+namespace: certivault
+
+# ── Image configuration ───────────────────────────────────────────────────
+image:
+  registry: ghcr.io
+  backend:
+    repository: krishnx21/certivault-backend
+    tag: latest
+  frontend:
+    repository: krishnx21/certivault-frontend
+    tag: latest
+  pullPolicy: Always
+  # pullSecrets: []   # Uncomment and add secret name for private registries
+
+# ── Replica counts ────────────────────────────────────────────────────────
+replicaCount:
+  backend: 2
+  frontend: 2
+  workers: 1
+
+# ── Resource requests/limits ─────────────────────────────────────────────
+resources:
+  backend:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  frontend:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+  workers:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+# ── Ingress ───────────────────────────────────────────────────────────────
+ingress:
+  enabled: true
+  className: nginx
+  host: certivault.example.com   # ← override in values.prod.yaml
+  tls:
+    enabled: true
+    secretName: certivault-tls
+    clusterIssuer: letsencrypt-prod
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "15m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+# ── Horizontal Pod Autoscaler ─────────────────────────────────────────────
+autoscaling:
+  enabled: true
+  backend:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  frontend:
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# ── Health probes ─────────────────────────────────────────────────────────
+probes:
+  backend:
+    liveness:
+      path: /health/live
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      failureThreshold: 3
+    readiness:
+      path: /health/ready
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 3
+  frontend:
+    liveness:
+      path: /
+      initialDelaySeconds: 10
+      periodSeconds: 30
+      failureThreshold: 3
+    readiness:
+      path: /
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+
+# ── Service ───────────────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  backend:
+    port: 5000
+  frontend:
+    port: 80
+
+# ── Non-sensitive environment variables (go into ConfigMap) ───────────────
+config:
+  NODE_ENV: "production"
+  PORT: "5000"
+  FRONTEND_ORIGIN: "https://certivault.example.com"
+  FRONTEND_URL: "https://certivault.example.com"
+  CLIENT_URL: "https://certivault.example.com"
+  AWS_REGION: "ap-south-1"
+  AWS_S3_BUCKET: "certivault-documents"
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  EMAIL_FROM: "CertiVault <noreply@certivault.com>"
+  APP_NAME: "CertiVault"
+  JWT_ACCESS_EXPIRES_IN: "15m"
+  JWT_REFRESH_EXPIRES_IN: "7d"
+  JWT_ISSUER: "certivault-api"
+  JWT_AUDIENCE: "certivault-web"
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX: "100"
+  LOG_LEVEL: "info"
+  TRUST_PROXY: "true"
+  BCRYPT_ROUNDS: "12"
+  MAX_UPLOAD_BYTES: "52428800"
+
+# ── Sensitive values (base64-encoded, go into Secret) ─────────────────────
+# IMPORTANT: Override all of these in values.prod.yaml or via --set.
+# Never commit real secrets to git.
+secrets:
+  MONGO_URI: "UkVQTEFDRV9NRQ=="
+  JWT_ACCESS_SECRET: "UkVQTEFDRV9NRQ=="
+  JWT_REFRESH_SECRET: "UkVQTEFDRV9NRQ=="
+  REDIS_URL: "UkVQTEFDRV9NRQ=="
+  REDIS_PASSWORD: "UkVQTEFDRV9NRQ=="
+  AWS_ACCESS_KEY_ID: "UkVQTEFDRV9NRQ=="
+  AWS_SECRET_ACCESS_KEY: "UkVQTEFDRV9NRQ=="
+  SMTP_USER: "UkVQTEFDRV9NRQ=="
+  SMTP_PASS: "UkVQTEFDRV9NRQ=="
+  GOOGLE_CLIENT_ID: "UkVQTEFDRV9NRQ=="
+  GOOGLE_CLIENT_SECRET: "UkVQTEFDRV9NRQ=="
+  BULL_BOARD_USERNAME: "YWRtaW4="
+  BULL_BOARD_PASSWORD: "UkVQTEFDRV9NRQ=="
+
+# ── Pod security ──────────────────────────────────────────────────────────
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+
+# ── Termination grace period ──────────────────────────────────────────────
+terminationGracePeriodSeconds:
+  backend: 30
+  frontend: 15
+  workers: 60

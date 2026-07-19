@@ -1,0 +1,104 @@
+version: "1"
+
+services:
+  # ─── Backend API ────────────────────────────────────────────────────────────
+  - type: web
+    name: certivault-backend
+    runtime: node
+    region: oregon
+    plan: free
+
+    # All commands run from the repo root, so prefix with the subdirectory
+    rootDir: backend
+
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/server.js
+
+    # Health-check — Render will restart the instance if this path stops responding
+    healthCheckPath: /health/live
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # ── MongoDB ───────────────────────────────────────────────────────────
+      - key: MONGODB_URI
+        sync: false   # set value in Render dashboard → Environment
+
+      # ── JWT ───────────────────────────────────────────────────────────────
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_ISSUER
+        value: certivault-api
+      - key: JWT_AUDIENCE
+        value: certivault-web
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+
+      # ── CORS ──────────────────────────────────────────────────────────────
+      - key: FRONTEND_ORIGIN
+        sync: false   # e.g. https://certivault-frontend.onrender.com
+
+      # ── Redis ─────────────────────────────────────────────────────────────
+      - key: REDIS_URL
+        sync: false   # e.g. rediss://default:PASSWORD@host:PORT
+
+      # ── AWS S3 (optional) ────────────────────────────────────────────────
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_S3_BUCKET
+        sync: false
+
+      # ── Cloudinary (optional) ────────────────────────────────────────────
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+      # ── Email / SMTP (optional) ──────────────────────────────────────────
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+
+      # ── Google OAuth (optional) ──────────────────────────────────────────
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+
+      # ── Bull Board (optional) ────────────────────────────────────────────
+      - key: BULL_BOARD_USERNAME
+        sync: false
+      - key: BULL_BOARD_PASSWORD
+        sync: false
+
+      # ── Misc ──────────────────────────────────────────────────────────────
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: MAX_UPLOAD_BYTES
+        value: "10485760"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: LOG_LEVEL
+        value: info

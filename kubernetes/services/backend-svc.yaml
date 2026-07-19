@@ -1,0 +1,22 @@
+# =============================================================================
+# CertiVault — Backend Service  (ClusterIP — internal only)
+# Ingress controller routes /api/* and /health/* to this service.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: certivault-backend
+  namespace: certivault
+  labels:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/component: backend
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+      protocol: TCP

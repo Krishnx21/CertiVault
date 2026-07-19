@@ -6,6 +6,7 @@ interview.txt
 node_modules/
 coverage/
 dist/
+.terraform/
 
 # Local environment and logs
 .env

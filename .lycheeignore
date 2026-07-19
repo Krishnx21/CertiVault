@@ -1,0 +1,20 @@
+# Lychee link-checker ignore patterns
+# Syntax: one pattern per line (glob or literal prefix)
+
+# Localhost / 127.0.0.1 — never reachable in CI
+http://localhost
+http://127.0.0.1
+
+# Placeholder / example URLs used in documentation code blocks
+https://your-api-url.onrender.com
+https://api.certi-vault.com
+
+# Shield.io badges — flaky in CI but always resolve
+https://img.shields.io
+
+# Anchor-only links are checked by the markdown linter, not the link checker
+#
+
+# Docs paths that are directories (lychee resolves them as file links)
+docs/api/
+docs/architecture/

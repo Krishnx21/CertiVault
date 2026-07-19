@@ -1,0 +1,206 @@
+# =============================================================================
+# CertiVault — docker-compose.yml  (local development / CI)
+# =============================================================================
+# Usage:
+#   docker compose up --build          first run
+#   docker compose up                  subsequent runs (uses cache)
+#   docker compose down                stop + remove containers
+#   docker compose down -v             also remove named volumes
+#
+# Services (7):
+#   backend      Node.js 20 API         → http://localhost:5000
+#   frontend     Nginx + React SPA      → http://localhost:3000
+#   workers      BullMQ worker process  (no public port)
+#   mongodb      MongoDB 7              → localhost:27017
+#   redis        Redis 7                → localhost:6379
+#   prometheus   Prometheus             → http://localhost:9090
+#   grafana      Grafana                → http://localhost:3001
+# =============================================================================
+
+name: certivault
+
+services:
+
+  # ── MongoDB ──────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: certivault-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: certivault
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - certivault-net
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: certivault-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    # Enable AOF persistence so jobs survive restarts
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - certivault-net
+
+  # ── Backend API ──────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: certivault-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override connection URLs to use Docker service names
+      MONGO_URI: mongodb://mongodb:27017/certivault
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+    volumes:
+      # Persist local uploads when S3 is not configured
+      - uploads_data:/app/uploads
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - certivault-net
+
+  # ── BullMQ Workers ───────────────────────────────────────────────────────────
+  workers:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: certivault-workers
+    restart: unless-stopped
+    # Override default CMD to run the workers entry point
+    command: ["node", "dist/workers/index.js"]
+    env_file:
+      - ./backend/.env
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/certivault
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - certivault-net
+
+  # ── Frontend (Nginx + React SPA) ─────────────────────────────────────────────
+  frontend:
+    build:
+      # Context is the REPO ROOT so the Dockerfile can reach nginx/nginx.conf.
+      # The frontend/Dockerfile's builder stage only copies frontend/** files.
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: production
+    container_name: certivault-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - certivault-net
+
+  # ── Prometheus ───────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: certivault-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus-rules.yml:/etc/prometheus/rules/certivault-rules.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    depends_on:
+      - backend
+    networks:
+      - certivault-net
+
+  # ── Grafana ───────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: certivault-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      # Disable telemetry
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - certivault-net
+
+# =============================================================================
+# Named Volumes
+# =============================================================================
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+  uploads_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  certivault-net:
+    driver: bridge

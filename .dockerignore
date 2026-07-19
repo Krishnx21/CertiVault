@@ -1,0 +1,58 @@
+# =============================================================================
+# Root .dockerignore — applies when build context is the repo root
+# (used by frontend/Dockerfile via docker-compose frontend service)
+# =============================================================================
+
+# ── Always keep Dockerfiles in context (never exclude them) ──────────────────
+!frontend/Dockerfile
+!backend/Dockerfile
+
+# ── Backend source (not needed for frontend image) ───────────────────────────
+backend/node_modules/
+backend/dist/
+backend/uploads/
+backend/coverage/
+backend/tests/
+backend/*.log
+
+# ── Frontend output & deps (re-generated inside container) ───────────────────
+frontend/node_modules/
+frontend/dist/
+
+# ── Environment files ────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+frontend/.env
+frontend/.env.*
+backend/.env
+backend/.env.*
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+frontend/frontend-dev.log
+dev.log
+
+# ── Git ──────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ── Editor / OS ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── CI / docs ─────────────────────────────────────────────────────────────────
+.github/
+docs/
+*.md
+!README.md
+
+# ── Infra / test artifacts ────────────────────────────────────────────────────
+infra/
+workers/
+coverage/
+node_modules/

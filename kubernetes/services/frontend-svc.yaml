@@ -1,0 +1,22 @@
+# =============================================================================
+# CertiVault — Frontend Service  (ClusterIP — internal only)
+# Ingress controller routes all other traffic (/) to this service.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: certivault-frontend
+  namespace: certivault
+  labels:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/component: frontend
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/component: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

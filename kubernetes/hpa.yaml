@@ -1,0 +1,87 @@
+# =============================================================================
+# CertiVault — Horizontal Pod Autoscaler
+# =============================================================================
+# Requires: metrics-server installed in the cluster
+#   kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+# =============================================================================
+
+# ── Backend HPA ──────────────────────────────────────────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: certivault-backend-hpa
+  namespace: certivault
+  labels:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/component: backend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: certivault-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60     # wait 60s before scaling up again
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60              # add at most 2 pods per minute
+    scaleDown:
+      stabilizationWindowSeconds: 300    # wait 5min before scaling down (avoid thrash)
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120             # remove at most 1 pod per 2 minutes
+
+---
+# ── Frontend HPA ─────────────────────────────────────────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: certivault-frontend-hpa
+  namespace: certivault
+  labels:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/component: frontend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: certivault-frontend
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120

@@ -1,0 +1,25 @@
+# =============================================================================
+# CertiVault — Grafana Dashboard Provisioning Config
+# =============================================================================
+# Grafana reads this file on startup and imports all *.json dashboard files
+# found in the configured path.
+#
+# File is mounted read-only into:
+#   /etc/grafana/provisioning/dashboards/dashboard.yml
+#
+# Dashboard JSON files should be placed alongside this file:
+#   monitoring/grafana/dashboards/certivault.json   ← created in Phase 4
+# =============================================================================
+
+apiVersion: 1
+
+providers:
+  - name: CertiVault Dashboards
+    orgId: 1
+    type: file
+    disableDeletion: true       # prevent deleting provisioned dashboards from UI
+    updateIntervalSeconds: 30   # Grafana re-reads JSON files every 30 s
+    allowUiUpdates: false       # force all changes through the JSON file
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false

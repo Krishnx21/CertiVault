@@ -1,0 +1,121 @@
+# =============================================================================
+# CertiVault — Backend API Deployment
+# Image: ghcr.io/krishnx21/certivault-backend:latest
+# Replicas: 2  |  RollingUpdate (maxSurge 1, maxUnavailable 0)
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: certivault-backend
+  namespace: certivault
+  labels:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: certivault
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: certivault
+      app.kubernetes.io/component: backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0        # zero-downtime: new pod must be ready before old is removed
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: certivault
+        app.kubernetes.io/component: backend
+        app.kubernetes.io/part-of: certivault
+      annotations:
+        # Force pod restart when ConfigMap/Secret changes
+        checksum/config: "{{ include (print .Template.BasePath \"/configmap.yaml\") . | sha256sum }}"
+    spec:
+      # ── Security context ────────────────────────────────────────────────
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      # ── Graceful termination ─────────────────────────────────────────────
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: backend
+          image: ghcr.io/krishnx21/certivault-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+
+          # ── Environment — non-sensitive from ConfigMap ──────────────────
+          envFrom:
+            - configMapRef:
+                name: certivault-config
+            - secretRef:
+                name: certivault-secrets
+
+          # ── Resources ────────────────────────────────────────────────────
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          # ── Liveness probe — is the process alive? ───────────────────────
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          # ── Readiness probe — is the pod ready to receive traffic? ───────
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          # ── Startup probe — gives slow-starting pods more time ───────────
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 12    # 12 × 5s = 60s max startup window
+            successThreshold: 1
+
+          # ── Volume mounts ─────────────────────────────────────────────────
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+
+      # ── Volumes ───────────────────────────────────────────────────────────
+      volumes:
+        - name: uploads
+          emptyDir: {}            # Use a PersistentVolume in production if S3 unavailable
+
+      # ── Pod scheduling ───────────────────────────────────────────────────
+      # Prefer spreading pods across nodes for availability
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/component: backend

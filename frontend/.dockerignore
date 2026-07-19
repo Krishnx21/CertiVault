@@ -1,0 +1,31 @@
+# ── Build output (re-generated inside container) ─────────────────────────────
+dist/
+
+# ── Dependencies (re-installed inside container) ─────────────────────────────
+node_modules/
+
+# ── Environment files ────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+frontend-dev.log
+
+# ── Git ──────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ── Editor / OS ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── CI / docs ─────────────────────────────────────────────────────────────────
+.github/
+docs/
+*.md
