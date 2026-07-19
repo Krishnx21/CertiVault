@@ -1,20 +1,22 @@
 # =============================================================================
 # CertiVault — Terraform Plan (on Pull Request)
 # =============================================================================
-# Runs `terraform plan` for every PR targeting main.
-# Posts the plan output as a PR comment so reviewers can see
-# exactly what infrastructure will change before merging.
+# Runs `terraform plan` for every PR targeting main that touches terraform/.
+# Posts the plan output as a PR comment so reviewers can see exactly what
+# infrastructure will change before merging.
 #
 # Required repository secrets:
 #   AWS_ACCESS_KEY_ID       → IAM user key with Terraform permissions
 #   AWS_SECRET_ACCESS_KEY   → IAM user secret
-#   TF_STATE_BUCKET         → S3 bucket name for Terraform remote state
-#                             (certivault-terraform-state)
-#   TF_LOCK_TABLE           → DynamoDB table for state locking
-#                             (certivault-terraform-locks)
 #
-# Optional secrets (set to override Terraform variables):
-#   TF_VAR_environment      → "staging" | "production"
+# Backend config (S3 bucket + DynamoDB table) is defined in backend.tf —
+# no extra secrets needed.  The bucket/table must exist before first init:
+#   bucket         = "certivault-terraform-state"   (ap-south-1)
+#   dynamodb_table = "certivault-terraform-locks"   (ap-south-1)
+#
+# When AWS credentials are not configured the job exits gracefully with a
+# warning instead of failing with a confusing "no valid credential sources"
+# error from terraform.
 #
 # The workflow does NOT apply changes — that is done by terraform-apply.yml
 # which runs only after the PR is merged to main.
@@ -56,39 +58,54 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ── Guard: skip if AWS credentials are not configured ──────────────────
+      - name: Check AWS credentials are configured
+        id: check-creds
+        shell: bash
+        run: |
+          if [[ -z "$AWS_ACCESS_KEY_ID" || -z "$AWS_SECRET_ACCESS_KEY" ]]; then
+            echo "⚠️  AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY secret is not set."
+            echo "   Add them in: Settings → Secrets and variables → Actions"
+            echo "   Skipping Terraform Plan."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Setup Terraform
+        if: steps.check-creds.outputs.skip != 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "~1.7"
           terraform_wrapper: true   # wraps output for cleaner PR comments
 
       # ── Initialise with remote S3 backend ───────────────────────────────────
+      # Backend config is fully defined in backend.tf — no -backend-config
+      # overrides needed.
       - name: Terraform Init
         id: init
-        run: |
-          terraform init \
-            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-            -backend-config="key=certivault/terraform.tfstate" \
-            -backend-config="region=ap-south-1" \
-            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}" \
-            -backend-config="encrypt=true" \
-            -reconfigure
+        if: steps.check-creds.outputs.skip != 'true'
+        run: terraform init -reconfigure
 
       # ── Validate syntax and configuration ──────────────────────────────────
       - name: Terraform Validate
         id: validate
+        if: steps.check-creds.outputs.skip != 'true'
         run: terraform validate -no-color
 
       # ── Format check (fail if code is not formatted) ────────────────────────
       - name: Terraform Format Check
         id: fmt
+        if: steps.check-creds.outputs.skip != 'true'
         run: terraform fmt -check -recursive -no-color
         continue-on-error: true   # warn but don't block — format issues go in the comment
 
       # ── Generate the plan ───────────────────────────────────────────────────
       - name: Terraform Plan
         id: plan
+        if: steps.check-creds.outputs.skip != 'true'
         run: |
+          set -o pipefail
           terraform plan \
             -no-color \
             -input=false \
@@ -100,7 +117,7 @@ jobs:
 
       # ── Save plan artifact for apply job (if merged) ────────────────────────
       - name: Upload plan artifact
-        if: steps.plan.outcome == 'success'
+        if: steps.check-creds.outputs.skip != 'true' && steps.plan.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: tfplan-${{ github.sha }}
@@ -110,7 +127,7 @@ jobs:
       # ── Post plan as PR comment ─────────────────────────────────────────────
       - name: Post plan to PR
         uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
+        if: steps.check-creds.outputs.skip != 'true' && github.event_name == 'pull_request'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -171,7 +188,16 @@ jobs:
 
       # ── Fail the job if plan itself errored ─────────────────────────────────
       - name: Check plan result
-        if: steps.plan.outputs.exit_code != '0'
+        if: steps.check-creds.outputs.skip != 'true' && steps.plan.outputs.exit_code != '0'
         run: |
           echo "Terraform plan failed with exit code ${{ steps.plan.outputs.exit_code }}"
           exit 1
+
+      # ── Skip notice ────────────────────────────────────────────────────────
+      - name: Notice — credentials not configured
+        if: steps.check-creds.outputs.skip == 'true'
+        run: |
+          echo "### ⚠️ Terraform Plan Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "AWS credentials are not configured in repository secrets." >> $GITHUB_STEP_SUMMARY
+          echo "Add \`AWS_ACCESS_KEY_ID\` and \`AWS_SECRET_ACCESS_KEY\` in:" >> $GITHUB_STEP_SUMMARY
+          echo "Settings → Secrets and variables → Actions" >> $GITHUB_STEP_SUMMARY

@@ -124,12 +124,16 @@ function validateRedisUrl(raw: string): string | null {
 
 // ─── Resolve the effective connection URL / options ───────────────────────────
 
-function resolveRedisConfig(): { url: string } | { hostPort: Partial<RedisOptions> } | null {
+function resolveRedisConfig(): { url: string; tls: boolean } | { hostPort: Partial<RedisOptions> } | null {
   const env = getEnv();
 
   if (env.REDIS_URL) {
     const url = validateRedisUrl(env.REDIS_URL);
-    if (url) return { url };
+    if (url) {
+      // rediss:// means TLS — Upstash always requires this
+      const tls = url.startsWith("rediss://");
+      return { url, tls };
+    }
     // URL was present but invalid — fall through to host/port
   }
 
@@ -149,6 +153,20 @@ function resolveRedisConfig(): { url: string } | { hostPort: Partial<RedisOption
   return null;
 }
 
+// ─── TLS options for rediss:// connections ────────────────────────────────────
+// Upstash (and other TLS-only providers) use rediss:// and require an explicit
+// tls object with servername set for SNI — without it ioredis gets ECONNRESET
+// because the TLS handshake fails silently.
+
+function buildTlsOptions(url: string): Partial<RedisOptions> {
+  try {
+    const { hostname } = new URL(url);
+    return { tls: { servername: hostname } };
+  } catch {
+    return { tls: {} };
+  }
+}
+
 // ─── Client factories ─────────────────────────────────────────────────────────
 
 function createRedisClient(): Redis | null {
@@ -158,9 +176,11 @@ function createRedisClient(): Redis | null {
     return null;
   }
 
+  const extraOpts = "url" in config && config.tls ? buildTlsOptions(config.url) : {};
+
   const client: Redis =
     "url" in config
-      ? new Redis(config.url, sharedOptions)
+      ? new Redis(config.url, { ...sharedOptions, ...extraOpts })
       : new Redis({ ...config.hostPort, ...sharedOptions });
 
   client.on("connect", () => log.info("Redis: TCP connection established"));
@@ -198,9 +218,11 @@ export function createBullMQConnection(): Redis | null {
     return _bullmqConnection;
   }
 
+  const extraOpts = "url" in config && config.tls ? buildTlsOptions(config.url) : {};
+
   const client: Redis =
     "url" in config
-      ? new Redis(config.url, bullmqOptions)
+      ? new Redis(config.url, { ...bullmqOptions, ...extraOpts })
       : new Redis({ ...config.hostPort, ...bullmqOptions });
 
   client.on("error", (err: Error) =>
