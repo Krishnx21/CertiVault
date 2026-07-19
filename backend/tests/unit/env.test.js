@@ -1,8 +1,28 @@
-process.env.MONGODB_URI = "mongodb://localhost:27017/test";
-process.env.JWT_SECRET = "supersecretkey";
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { after, before, test } from "node:test";
 import { getEnv } from "../../src/config/env.js";
+
+const originalMongoUri = process.env.MONGODB_URI;
+const originalJwtSecret = process.env.JWT_SECRET;
+
+before(() => {
+  process.env.MONGODB_URI = "mongodb://localhost:27017/test";
+  process.env.JWT_SECRET = "supersecretkey";
+});
+
+after(() => {
+  if (originalMongoUri === undefined) {
+    delete process.env.MONGODB_URI;
+  } else {
+    process.env.MONGODB_URI = originalMongoUri;
+  }
+
+  if (originalJwtSecret === undefined) {
+    delete process.env.JWT_SECRET;
+  } else {
+    process.env.JWT_SECRET = originalJwtSecret;
+  }
+});
 
 test("env: default port when API_PORT is missing", () => {
   const originalEnv = process.env.API_PORT;
