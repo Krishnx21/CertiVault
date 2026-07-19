@@ -1,3 +1,5 @@
+# CertiVault Auth — Execution Plan
+
 ## Goal
 
 Implement a production-ready authentication system for CertiVault using the current React + TypeScript + Express + MongoDB architecture, without redesigning the UI or removing any existing functionality.

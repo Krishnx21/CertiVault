@@ -156,7 +156,7 @@ jobs:
       # ── Capture outputs ─────────────────────────────────────────────────────
       - name: Terraform Output
         id: output
-        if: steps.check-creds.outputs.skip != 'true'
+        if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success' && steps.apply.outcome == 'success'
         run: terraform output -no-color -json | tee outputs.json
         continue-on-error: true
 
@@ -191,8 +191,12 @@ jobs:
           fi
           echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| Plan | ${{ steps.plan.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Apply | ${{ steps.apply.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          PLAN_STATUS="${{ steps.plan.outcome }}"
+          APPLY_STATUS="${{ steps.apply.outcome }}"
+          [[ "$PLAN_STATUS"  == "success" ]] && PLAN_ICON="✅"  || PLAN_ICON="❌ ($PLAN_STATUS)"
+          [[ "$APPLY_STATUS" == "success" ]] && APPLY_ICON="✅" || APPLY_ICON="❌ ($APPLY_STATUS)"
+          echo "| Plan  | $PLAN_ICON  |" >> $GITHUB_STEP_SUMMARY
+          echo "| Apply | $APPLY_ICON |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Actor:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
