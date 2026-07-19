@@ -1,0 +1,35 @@
+# Lychee link checker configuration
+# https://lychee.cli.rs/configuration/
+
+# Skip these URL patterns (regex)
+exclude = [
+  # Anchor-only links — validated by markdownlint instead
+  "^#",
+  # Localhost and loopback URLs — never reachable in CI
+  "^http://localhost",
+  "^http://127\\.0\\.0\\.1",
+  # Shields.io badges — occasionally flaky; content is not a real link target
+  "^https://img\\.shields\\.io",
+  # Placeholder / example URLs used in documentation
+  "^https://your-api-url",
+  "^https://api\\.certi-vault\\.com",
+]
+
+# Skip these filesystem paths entirely (regex applied to path strings)
+exclude_path = [
+  "node_modules",
+  "dist",
+  ".git",
+]
+
+# Accept these HTTP status codes as "valid" (429 = rate limited, treat as ok)
+accept = [200, 201, 204, 206, 301, 302, 307, 308, 429]
+
+# Timeout per request in seconds
+timeout = 20
+
+# Number of retries for transient failures
+max_retries = 3
+
+# Treat warnings as errors? No — some anchors may be dynamic
+include_verbatim = false

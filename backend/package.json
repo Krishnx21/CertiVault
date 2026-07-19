@@ -16,7 +16,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.json\"",
     "test": "cross-env NODE_ENV=test tsx --test tests/unit/env.test.js tests/unit/gracefulShutdown.test.js",
     "test:watch": "cross-env NODE_ENV=test tsx --watch --test tests/unit/env.test.js tests/unit/gracefulShutdown.test.js tests/integration/app.test.ts",
-    "test:coverage": "cross-env NODE_ENV=test c8 tsx --test tests/unit/env.test.js tests/unit/gracefulShutdown.test.js",
+    "test:coverage": "cross-env NODE_ENV=test c8 --reporter=text --reporter=lcov tsx --test tests/unit/env.test.js tests/unit/gracefulShutdown.test.js",
     "test:integration": "cross-env NODE_ENV=test tsx --test tests/integration/app.test.ts",
     "test:unit": "cross-env NODE_ENV=test tsx --test tests/unit/env.test.js tests/unit/gracefulShutdown.test.js",
     "seed": "tsx src/scripts/seed-admin.ts",
