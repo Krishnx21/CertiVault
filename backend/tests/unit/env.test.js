@@ -1,3 +1,5 @@
+process.env.MONGODB_URI = "mongodb://localhost:27017/test";
+process.env.JWT_SECRET = "supersecretkey";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { getEnv } from "../../src/config/env.js";
