@@ -12,13 +12,13 @@
   "dependencies": {
     "@vitejs/plugin-react": "^6.0.3",
     "axios": "^1.7.9",
-    "lucide-react": "^1.24.0",
+    "lucide-react": "^1.25.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-hook-form": "^7.54.2",
+    "react-hook-form": "^7.82.0",
     "react-router-dom": "^7.18.1",
-    "vite": "^8.1.4",
-    "zod": "^3.24.1"
+    "vite": "^8.1.5",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
