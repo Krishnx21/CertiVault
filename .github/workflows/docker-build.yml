@@ -79,7 +79,7 @@ jobs:
       #   release       → :v1.2.0, :1.2.0, :1.2, :1, :latest
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/krishnx21/certivault-backend
           tags: |
@@ -161,7 +161,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/krishnx21/certivault-frontend
           tags: |
