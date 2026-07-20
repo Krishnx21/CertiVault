@@ -15,7 +15,7 @@ jobs:
     name: Markdown lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: DavidAnson/markdownlint-cli2-action@v17
         with:
           globs: "**/*.md"
@@ -24,7 +24,7 @@ jobs:
     name: YAML validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ibiqlik/action-yamllint@v3
         with:
           file_or_dir: .github
@@ -41,7 +41,7 @@ jobs:
     name: Link checker
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: lycheeverse/lychee-action@v2
         with:
           # lychee.toml at repo root controls excludes, paths, timeouts, and retries
@@ -52,7 +52,7 @@ jobs:
     name: Validate issue templates
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/github-script@v9
         with:
           script: |
@@ -69,7 +69,7 @@ jobs:
     name: License checker
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Ensure required license files exist
         run: |
           test -f LICENSE

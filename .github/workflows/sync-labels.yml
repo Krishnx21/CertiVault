@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out label manifest
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Create or update labels
         uses: actions/github-script@v9

@@ -94,7 +94,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # ── Guard: skip entire job if AWS credentials are not configured ─────────
       # Without this, terraform init produces a confusing "no valid credential
