@@ -12,7 +12,7 @@ import {
   calculateTokenExpiration,
 } from "../utils/jwt.js";
 import { RefreshSession } from "../modules/auth/refreshSession.model.js";
-import { getEnv } from "./env.js";
+import { getEnv, isProduction } from "./env.js";
 
 // Configure Google Strategy
 passport.use(
@@ -20,7 +20,7 @@ passport.use(
     {
       clientID: getEnv().GOOGLE_CLIENT_ID || "",
       clientSecret: getEnv().GOOGLE_CLIENT_SECRET || "",
-      callbackURL: getEnv().GOOGLE_CALLBACK_URL,
+      callbackURL: getEnv().GOOGLE_CALLBACK_URL || (isProduction ? "https://certivault-ixzb.onrender.com/api/auth/google/callback" : "http://localhost:5000/api/auth/google/callback"),
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
