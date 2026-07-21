@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Archive, ArchiveRestore, CheckCircle2, Files,
   Filter, Grid3x3, List, ShieldCheck, Upload, X, Star,
@@ -23,7 +22,6 @@ const formatBytes = (bytes?: number) => {
 };
 
 export default function Documents() {
-  const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [summary, setSummary] = useState<Summary>({ total: 0, verified: 0, pending: 0, rejected: 0, archived: 0, favorites: 0, storageBytes: 0 });
   const [filteredTotal, setFilteredTotal] = useState(0);
@@ -97,6 +95,15 @@ export default function Documents() {
   };
   const download = async (id: string) => {
     try { await api.downloadDocument(id); setToast("Download started."); } catch (err: any) { setToast(err.message || "Download failed"); }
+  };
+  const verify = async (id: string) => {
+    try { 
+      await api.verifyDocument(id, "verified", "manual"); 
+      setToast("Document verified successfully."); 
+      await load(); 
+    } catch (err: any) { 
+      setToast(err.message || "Verification failed"); 
+    }
   };
   const clearFilters = () => { setStatus("all"); setCategory("all"); setIsFavorite(undefined); setIsArchived(undefined); setStartDate(""); setEndDate(""); setOwner("all"); setSearch(""); setPage(1); };
   const hasActiveFilters = status !== "all" || category !== "all" || isFavorite !== undefined || isArchived !== undefined || search !== "" || startDate !== "" || endDate !== "" || owner !== "all";
@@ -306,7 +313,7 @@ export default function Documents() {
                         {
                           label: "Verify",
                           icon: <ShieldCheck size={16} />,
-                          onClick: () => navigate(`/verification/${doc._id}`)
+                          onClick: () => verify(doc._id)
                         },
                         {
                           label: doc.isArchived ? "Restore" : "Archive",
@@ -356,7 +363,7 @@ export default function Documents() {
                               {
                                 label: "Verify",
                                 icon: <ShieldCheck size={16} />,
-                                onClick: () => navigate(`/verification/${doc._id}`)
+                                onClick: () => verify(doc._id)
                               },
                               {
                                 label: "Share",
