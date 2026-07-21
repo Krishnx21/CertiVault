@@ -85,7 +85,7 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: GOOGLE_CALLBACK_URL
-        sync: false
+        value: https://certivault-ixzb.onrender.com/api/auth/google/callback
 
       # ── Bull Board (optional) ────────────────────────────────────────────
       - key: BULL_BOARD_USERNAME

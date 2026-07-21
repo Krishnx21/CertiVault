@@ -40,7 +40,7 @@ const envSchema = z.object({
   BULL_BOARD_PASSWORD: z.string().optional(), // UPDATED
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GOOGLE_CALLBACK_URL: z.string().optional(),
+  GOOGLE_CALLBACK_URL: z.string().url().optional(),
   MAX_UPLOAD_BYTES: z.string().transform(Number).pipe(z.number().positive()).default(10485760),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   RATE_LIMIT_WINDOW_MS: z.string().transform(Number).pipe(z.number().positive()).default(900000),
