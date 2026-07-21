@@ -112,7 +112,7 @@ export default function Documents() {
     doc.thumbnailUrl
       ? <img src={doc.thumbnailUrl} alt="" style={{ width: size, height: size, borderRadius: "var(--radius-md)", objectFit: "cover", flexShrink: 0 }}
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-      : <div style={{ width: size, height: size, background: "linear-gradient(135deg, var(--accent-blue), var(--accent-violet))", borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: size * 0.4, flexShrink: 0, fontFamily: "'Manrope', sans-serif" }}>
+      : <div style={{ width: size, height: size, background: "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))", borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: size * 0.4, flexShrink: 0, fontFamily: "'Manrope', sans-serif" }}>
           {doc.fileName.charAt(0).toUpperCase()}
         </div>
   );
@@ -284,7 +284,7 @@ export default function Documents() {
                       onClick={e => { e.stopPropagation(); toggleFavorite(doc._id, doc.isFavorite); }}
                       aria-label={doc.isFavorite ? "Remove from favorites" : "Add to favorites"}
                     >
-                      <Star size={16} color={doc.isFavorite ? "var(--accent-amber)" : "var(--text-muted)"} fill={doc.isFavorite ? "var(--accent-amber)" : "none"} />
+                      <Star size={16} color={doc.isFavorite ? "var(--accent-warning)" : "var(--text-muted)"} fill={doc.isFavorite ? "var(--accent-warning)" : "none"} />
                     </button>
                   </div>
                   <div>
@@ -356,7 +356,7 @@ export default function Documents() {
                         <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
                           <button className="icon-button" style={{ width: 32, height: 32 }} onClick={() => download(doc._id)} title="Download"><Download size={15} /></button>
                           <button className="icon-button" style={{ width: 32, height: 32 }} onClick={() => toggleFavorite(doc._id, doc.isFavorite)} title={doc.isFavorite ? "Unfavorite" : "Favorite"}>
-                            <Star size={15} color={doc.isFavorite ? "var(--accent-amber)" : undefined} fill={doc.isFavorite ? "var(--accent-amber)" : "none"} />
+                            <Star size={15} color={doc.isFavorite ? "var(--accent-warning)" : undefined} fill={doc.isFavorite ? "var(--accent-warning)" : "none"} />
                           </button>
                           <KebabMenu
                             items={[
