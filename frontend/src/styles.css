@@ -578,6 +578,11 @@ td:last-child,  th:last-child  { padding-right: 1.25rem; }
   transition: border-color var(--t-fast), box-shadow var(--t-fast);
   min-height: 42px;
 }
+
+/* Override for auth inputs with icons - higher specificity */
+.field-label .auth-input {
+  padding: 0.625rem 0.875rem 0.625rem 3rem;
+}
 .field-label textarea { min-height: 88px; resize: vertical; }
 .field-label input:focus,
 .field-label select:focus,
