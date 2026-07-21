@@ -45,9 +45,10 @@ function Avatar({ name, email }: { name?: string; email: string }) {
     <div
       style={{
         width: 36, height: 36, borderRadius: "50%",
-        background: "var(--accent-blue)", color: "#fff",
+        background: "var(--gradient-primary)", color: "#fff",
         display: "flex", alignItems: "center", justifyContent: "center",
         fontWeight: 700, fontSize: "0.8125rem", flexShrink: 0,
+        boxShadow: "0 2px 8px rgba(99, 102, 241, 0.3)",
       }}
       aria-hidden="true"
     >
@@ -210,12 +211,16 @@ export default function VaultMembers() {
           {/* Stats */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
             {[
-              { label: "Active members",  value: members.active.length,   color: "var(--accent-green)" },
-              { label: "Pending invites", value: members.pending.length,  color: "var(--accent-amber)" },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="card" style={{ padding: "1rem 1.25rem" }}>
-                <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>{label}</p>
-                <p style={{ fontSize: "1.75rem", fontWeight: 700, color }}>{value}</p>
+              { label: "Active members",  value: members.active.length,   color: "var(--accent-green)", gradient: "var(--gradient-green)" },
+              { label: "Pending invites", value: members.pending.length,  color: "var(--accent-amber)", gradient: "var(--gradient-amber)" },
+            ].map(({ label, value, color, gradient }) => (
+              <div key={label} className="card" style={{ padding: "1.25rem 1.5rem", position: "relative", overflow: "hidden" }}>
+                <div style={{ 
+                  position: "absolute", top: 0, left: 0, right: 0, height: "3px", 
+                  background: gradient, opacity: "0.8" 
+                }} />
+                <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)", marginBottom: "0.25rem", fontWeight: 500 }}>{label}</p>
+                <p style={{ fontSize: "1.75rem", fontWeight: 800, background: gradient, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", lineHeight: 1.15 }}>{value}</p>
               </div>
             ))}
           </div>
@@ -282,7 +287,11 @@ export default function VaultMembers() {
               {rows.map((m) => {
                 const user = getMemberUser(m);
                 return (
-                  <div key={m._id} className="card" style={{ display: "grid", gridTemplateColumns: "1fr 120px 140px 120px auto", gap: "0.75rem", alignItems: "center", padding: "0.875rem 1rem" }}>
+                  <div key={m._id} className="card" style={{ 
+                    display: "grid", gridTemplateColumns: "1fr 120px 140px 120px auto", 
+                    gap: "0.75rem", alignItems: "center", padding: "0.875rem 1rem",
+                    transition: "all 0.2s ease"
+                  }}>
                     {/* Avatar + name/email */}
                     <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", minWidth: 0 }}>
                       <Avatar name={user?.name} email={m.memberEmail} />
@@ -304,7 +313,7 @@ export default function VaultMembers() {
                     {/* Date */}
                     <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)", margin: 0 }}>
                       {activeTab === "active" && m.acceptedAt && fmt(m.acceptedAt)}
-                      {activeTab === "pending" && <span style={{ color: "var(--accent-amber)" }}>{expiryCountdown(m.inviteExpiresAt)}</span>}
+                      {activeTab === "pending" && <span style={{ color: "var(--accent-amber)", fontWeight: 500 }}>{expiryCountdown(m.inviteExpiresAt)}</span>}
                       {activeTab === "declined" && m.declinedAt && fmt(m.declinedAt)}
                     </p>
 
@@ -327,7 +336,7 @@ export default function VaultMembers() {
                       {(activeTab === "active" || activeTab === "pending") && (
                         confirmRemoveId === m._id ? (
                           <div style={{ display: "flex", gap: "0.375rem" }}>
-                            <button className="button" style={{ background: "var(--accent-red)", color: "#fff", padding: "0.25rem 0.625rem", fontSize: "0.8125rem", height: "auto", border: "none" }} onClick={() => handleRemove(m._id)}>
+                            <button className="button" style={{ background: "var(--gradient-red)", color: "#fff", padding: "0.25rem 0.625rem", fontSize: "0.8125rem", height: "auto", border: "none", fontWeight: 600 }} onClick={() => handleRemove(m._id)}>
                               Confirm
                             </button>
                             <button className="button ghost" style={{ padding: "0.25rem 0.625rem", fontSize: "0.8125rem", height: "auto" }} onClick={() => setConfirmRemoveId(null)}>
