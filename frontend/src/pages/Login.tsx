@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { LogIn, Mail, Lock, AlertCircle, ShieldCheck } from "lucide-react";
+import Input from "../components/Input.js";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -56,49 +57,40 @@ const Login: React.FC = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div className="field-label">
-            <span>Email address</span>
-            <div className="auth-input-wrapper">
-              <Mail size={16} aria-hidden="true" />
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="auth-input"
-                placeholder="you@example.com"
-              />
-            </div>
-          </div>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            label="Email address"
+            leftIcon={Mail}
+            autoComplete="email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="you@example.com"
+          />
 
-          <div className="field-label">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span>Password</span>
-              <Link
-                to="/forgot-password"
-                style={{ fontSize: "0.8125rem", color: "var(--accent-blue)" }}
-              >
-                Forgot password?
-              </Link>
-            </div>
-            <div className="auth-input-wrapper">
-              <Lock size={16} aria-hidden="true" />
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="auth-input"
-                placeholder="••••••••"
-              />
-            </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--text-primary)" }}>Password</span>
+            <Link
+              to="/forgot-password"
+              style={{ fontSize: "0.8125rem", color: "var(--accent-blue)" }}
+            >
+              Forgot password?
+            </Link>
           </div>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            leftIcon={Lock}
+            showPasswordToggle
+            autoComplete="current-password"
+            required
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="••••••••"
+          />
 
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <input

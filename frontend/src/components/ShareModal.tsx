@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { X, Copy, Link, Users, Clock, Lock, Check, AlertCircle } from "lucide-react";
+import { X, Copy, Link, Users, Clock, Lock, Check, AlertCircle, Mail, User } from "lucide-react";
 import { api } from "../api.js";
 import { SharedDocument, SharedMember, Permission } from "../types.js";
+import Input from "./Input.js";
 
 interface ShareModalProps {
   documentId: string;
@@ -155,15 +156,6 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
     }
   };
 
-  const getPermissionBadge = (perm: Permission) => {
-    const colors = {
-      viewer: "bg-blue-100 text-blue-700",
-      editor: "bg-green-100 text-green-700",
-      admin: "bg-purple-100 text-purple-700",
-    };
-    return colors[perm];
-  };
-
   return (
     <div className="modal-backdrop">
       <div className="modal modal-lg">
@@ -183,9 +175,9 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
 
         <div className="modal-content">
           {/* Tabs */}
-          <div className="flex gap-4 border-b border-[var(--border-color)] mb-6">
+          <div className="flex gap-6 border-b border-[var(--border-color)] mb-6">
             <button
-              className={`pb-3 px-1 font-medium transition-colors ${
+              className={`pb-3 px-1 font-medium text-sm transition-colors ${
                 activeTab === "link"
                   ? "text-[var(--accent-blue)] border-b-2 border-[var(--accent-blue)]"
                   : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -193,12 +185,12 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
               onClick={() => setActiveTab("link")}
             >
               <div className="flex items-center gap-2">
-                <Link size={18} />
+                <Link size={16} />
                 Share Link
               </div>
             </button>
             <button
-              className={`pb-3 px-1 font-medium transition-colors ${
+              className={`pb-3 px-1 font-medium text-sm transition-colors ${
                 activeTab === "members"
                   ? "text-[var(--accent-blue)] border-b-2 border-[var(--accent-blue)]"
                   : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -206,7 +198,7 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
               onClick={() => setActiveTab("members")}
             >
               <div className="flex items-center gap-2">
-                <Users size={18} />
+                <Users size={16} />
                 Members ({members.length})
               </div>
             </button>
@@ -214,15 +206,15 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
 
           {/* Error/Success Messages */}
           {error && (
-            <div className="upload-error flex items-center gap-2 text-red-600">
-              <AlertCircle size={18} />
-              {error}
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-4">
+              <AlertCircle size={16} />
+              <span className="text-sm">{error}</span>
             </div>
           )}
           {success && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
-              <Check size={18} />
-              {success}
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 mb-4">
+              <Check size={16} />
+              <span className="text-sm">{success}</span>
             </div>
           )}
 
@@ -231,43 +223,32 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
             <div className="form-fields">
               {!shareUrl ? (
                 <>
-                  <div className="field-label">
-                    <span>Password Protection (Optional)</span>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
-                      <input
-                        type="password"
-                        placeholder="Enter password (min 6 characters)"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
+                  <Input
+                    label="Password Protection (Optional)"
+                    leftIcon={Lock}
+                    type="password"
+                    placeholder="Enter password (min 6 characters)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    showPasswordToggle
+                  />
 
-                  <div className="field-label">
-                    <span>Expiration Date (Optional)</span>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
-                      <input
-                        type="datetime-local"
-                        value={expiresAt}
-                        onChange={(e) => setExpiresAt(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
+                  <Input
+                    label="Expiration Date (Optional)"
+                    leftIcon={Clock}
+                    type="datetime-local"
+                    value={expiresAt}
+                    onChange={(e) => setExpiresAt(e.target.value)}
+                  />
 
-                  <div className="field-label">
-                    <span>Max Access Count (Optional)</span>
-                    <input
-                      type="number"
-                      placeholder="Maximum number of accesses"
-                      value={maxAccessCount}
-                      onChange={(e) => setMaxAccessCount(e.target.value)}
-                      min="1"
-                    />
-                  </div>
+                  <Input
+                    label="Max Access Count (Optional)"
+                    type="number"
+                    placeholder="Maximum number of accesses"
+                    value={maxAccessCount}
+                    onChange={(e) => setMaxAccessCount(e.target.value)}
+                    min="1"
+                  />
 
                   <button
                     className="button bg-[var(--accent-blue)] text-white"
@@ -313,27 +294,28 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
 
               {/* Existing Shares */}
               {existingShares.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="font-medium text-[var(--text-primary)] mb-3">Existing Share Links</h3>
+                <div className="mt-8">
+                  <h3 className="font-semibold text-[var(--text-primary)] mb-3 text-sm">Existing Share Links</h3>
                   <div className="space-y-2">
                     {existingShares.map((share) => (
                       <div
                         key={share._id}
-                        className="p-3 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-between"
+                        className="p-3 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-between border border-[var(--border-color)]"
                       >
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm text-[var(--text-primary)] truncate">
+                        <div className="flex-1 min-w-0 mr-3">
+                          <div className="text-sm text-[var(--text-primary)] truncate font-mono">
                             {share.shareUrl}
                           </div>
-                          <div className="text-xs text-[var(--text-muted)] mt-1">
-                            {share.expiresAt && `Expires: ${new Date(share.expiresAt).toLocaleDateString()}`}
-                            {share.maxAccessCount && ` • Max access: ${share.maxAccessCount}`}
-                            {` • Accessed: ${share.currentAccessCount}`}
+                          <div className="text-xs text-[var(--text-muted)] mt-1 flex flex-wrap gap-x-2">
+                            {share.expiresAt && <span>Expires: {new Date(share.expiresAt).toLocaleDateString()}</span>}
+                            {share.maxAccessCount && <span>Max access: {share.maxAccessCount}</span>}
+                            <span>Accessed: {share.currentAccessCount}</span>
                           </div>
                         </div>
                         <button
-                          className="icon-button ml-2 text-red-500 hover:text-red-700"
+                          className="icon-button text-red-500 hover:text-red-700 hover:bg-red-50"
                           onClick={() => revokeShare(share._id)}
+                          title="Revoke share"
                         >
                           <X size={16} />
                         </button>
@@ -348,31 +330,30 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
           {/* Members Tab */}
           {activeTab === "members" && (
             <div className="form-fields">
-              <div className="field-label">
-                <span>Invite by Email</span>
-                <input
-                  type="email"
-                  placeholder="user@example.com"
-                  value={memberEmail}
-                  onChange={(e) => setMemberEmail(e.target.value)}
-                />
-              </div>
+              <Input
+                label="Invite by Email"
+                leftIcon={Mail}
+                type="email"
+                placeholder="user@example.com"
+                value={memberEmail}
+                onChange={(e) => setMemberEmail(e.target.value)}
+              />
+
+              <Input
+                label="Member Name (Optional)"
+                leftIcon={User}
+                type="text"
+                placeholder="John Doe"
+                value={memberName}
+                onChange={(e) => setMemberName(e.target.value)}
+              />
 
               <div className="field-label">
-                <span>Member Name (Optional)</span>
-                <input
-                  type="text"
-                  placeholder="John Doe"
-                  value={memberName}
-                  onChange={(e) => setMemberName(e.target.value)}
-                />
-              </div>
-
-              <div className="field-label">
-                <span>Permission</span>
+                <span className="text-sm font-medium text-[var(--text-primary)]">Permission</span>
                 <select
                   value={permission}
                   onChange={(e) => setPermission(e.target.value as Permission)}
+                  className="w-full px-3 py-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent-blue)] focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
                 >
                   <option value="viewer">Viewer - Can only view</option>
                   <option value="editor">Editor - Can view and edit</option>
@@ -389,60 +370,65 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
               </button>
 
               {/* Members List */}
-              <div className="mt-6">
-                <h3 className="font-medium text-[var(--text-primary)] mb-3">Members</h3>
+              <div className="mt-8">
+                <h3 className="font-semibold text-[var(--text-primary)] mb-3 text-sm">Members</h3>
                 {isLoadingMembers ? (
-                  <div className="text-center text-[var(--text-muted)] py-4">Loading members...</div>
+                  <div className="text-center text-[var(--text-muted)] py-6 text-sm">Loading members...</div>
                 ) : members.length === 0 ? (
-                  <div className="text-center text-[var(--text-muted)] py-4">No members yet</div>
+                  <div className="text-center text-[var(--text-muted)] py-6 text-sm">No members yet</div>
                 ) : (
                   <div className="space-y-2">
                     {members.map((member) => (
                       <div
                         key={member._id}
-                        className="p-3 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-between"
+                        className="p-3 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-between border border-[var(--border-color)]"
                       >
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 mr-3">
                           <div className="text-sm font-medium text-[var(--text-primary)]">
                             {member.memberName || member.memberEmail}
                           </div>
                           <div className="text-xs text-[var(--text-muted)] mt-1">
                             {member.memberEmail}
                           </div>
-                          <div className="mt-2">
+                          <div className="mt-2 flex gap-2">
                             <span
-                              className={`inline-block px-2 py-1 rounded text-xs font-medium ${getPermissionBadge(
-                                member.permission
-                              )}`}
+                              className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                                member.permission === "viewer"
+                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                                  : member.permission === "editor"
+                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                                  : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                              }`}
                             >
                               {member.permission}
                             </span>
                             <span
-                              className={`inline-block px-2 py-1 rounded text-xs font-medium ml-2 ${
+                              className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                                 member.inviteStatus === "accepted"
-                                  ? "bg-green-100 text-green-700"
+                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                                   : member.inviteStatus === "pending"
-                                  ? "bg-yellow-100 text-yellow-700"
-                                  : "bg-red-100 text-red-700"
+                                  ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
+                                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                               }`}
                             >
                               {member.inviteStatus}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-2">
+                        <div className="flex items-center gap-2">
                           <select
                             value={member.permission}
                             onChange={(e) => updatePermission(member._id, e.target.value as Permission)}
-                            className="text-sm py-1 px-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded"
+                            className="text-sm py-1.5 px-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded focus:outline-none focus:border-[var(--accent-blue)]"
                           >
                             <option value="viewer">Viewer</option>
                             <option value="editor">Editor</option>
                             <option value="admin">Admin</option>
                           </select>
                           <button
-                            className="icon-button text-red-500 hover:text-red-700"
+                            className="icon-button text-red-500 hover:text-red-700 hover:bg-red-50"
                             onClick={() => revokeMember(member._id)}
+                            title="Remove member"
                           >
                             <X size={16} />
                           </button>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Lock, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
+import Input from "../components/Input.js";
 
 const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
@@ -96,14 +97,20 @@ const ResetPassword: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div className="field-label">
-            <span>New password</span>
-            <div className="auth-input-wrapper">
-              <Lock size={16} aria-hidden="true" />
-              <input id="password" name="password" type="password" autoComplete="new-password" required
-                value={formData.password} onChange={handleChange}
-                className="auth-input" placeholder="••••••••" />
-            </div>
+          <div>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              label="New password"
+              leftIcon={Lock}
+              showPasswordToggle
+              autoComplete="new-password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+            />
             {formData.password && (
               <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", marginTop: "0.375rem" }}>
                 {pwReqs.map((r) => (
@@ -119,21 +126,20 @@ const ResetPassword: React.FC = () => {
             )}
           </div>
 
-          <div className="field-label">
-            <span>Confirm new password</span>
-            <div className="auth-input-wrapper">
-              <Lock size={16} aria-hidden="true" />
-              <input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" required
-                value={formData.confirmPassword} onChange={handleChange}
-                className="auth-input"
-                style={formData.confirmPassword && formData.password !== formData.confirmPassword
-                  ? { borderColor: "var(--accent-red)" } : {}}
-                placeholder="••••••••" />
-            </div>
-            {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-              <span className="form-error">Passwords do not match</span>
-            )}
-          </div>
+          <Input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            label="Confirm new password"
+            leftIcon={Lock}
+            showPasswordToggle
+            autoComplete="new-password"
+            required
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="••••••••"
+            error={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Passwords do not match" : undefined}
+          />
 
           <button type="submit" disabled={isLoading || !token} className="button primary"
             style={{ width: "100%", justifyContent: "center", marginTop: "0.25rem", minHeight: "44px" }}>

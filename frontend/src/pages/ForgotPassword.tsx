@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Mail, ArrowLeft, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
+import Input from "../components/Input.js";
 
 const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
@@ -72,15 +73,18 @@ const ForgotPassword: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div className="field-label">
-            <span>Email address</span>
-            <div className="auth-input-wrapper">
-              <Mail size={16} aria-hidden="true" />
-              <input id="email" name="email" type="email" autoComplete="email" required
-                value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                className="auth-input" placeholder="you@example.com" />
-            </div>
-          </div>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            label="Email address"
+            leftIcon={Mail}
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setError(""); }}
+            placeholder="you@example.com"
+          />
 
           <button type="submit" disabled={isLoading} className="button primary"
             style={{ width: "100%", justifyContent: "center", marginTop: "0.25rem", minHeight: "44px" }}>

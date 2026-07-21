@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Archive, ArchiveRestore, CheckCircle2, Files,
   Filter, Grid3x3, List, ShieldCheck, Upload, X, Star,
+  Download, Share, Trash2,
 } from "lucide-react";
 import { api } from "../api.js";
 import { Document, Summary } from "../types.js";
@@ -12,6 +13,7 @@ import { UploadModal } from "../components/UploadModal.js";
 import { DocumentPreviewModal } from "../components/DocumentPreviewModal.js";
 import ShareModal from "../components/ShareModal.js";
 import { DocumentCardSkeleton, TableSkeleton } from "../components/SkeletonLoader.js";
+import KebabMenu from "../components/KebabMenu.js";
 
 const formatBytes = (bytes?: number) => {
   if (!bytes) return "0 B";
@@ -266,32 +268,59 @@ export default function Documents() {
               {documents.map(doc => (
                 <div key={doc._id} className="document-card" onClick={() => { setPreviewDocument(doc); setPreviewOpen(true); }}
                   role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && (() => { setPreviewDocument(doc); setPreviewOpen(true); })()}
-                  aria-label={`Open ${doc.title}`}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
-                    <DocIcon doc={doc} size={44} />
+                  aria-label={`Open ${doc.title}`}
+                  style={{ padding: "1.25rem", gap: "1rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <DocIcon doc={doc} size={48} />
                     <button
-                      className="icon-button" style={{ width: 30, height: 30 }}
+                      className="icon-button" style={{ width: 32, height: 32 }}
                       onClick={e => { e.stopPropagation(); toggleFavorite(doc._id, doc.isFavorite); }}
                       aria-label={doc.isFavorite ? "Remove from favorites" : "Add to favorites"}
                     >
-                      <Star size={15} color={doc.isFavorite ? "var(--accent-amber)" : "var(--text-muted)"} fill={doc.isFavorite ? "var(--accent-amber)" : "none"} />
+                      <Star size={16} color={doc.isFavorite ? "var(--accent-amber)" : "var(--text-muted)"} fill={doc.isFavorite ? "var(--accent-amber)" : "none"} />
                     </button>
                   </div>
-                  <h3 className="truncate" style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.2rem" }}>{doc.title}</h3>
-                  <p className="truncate" style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "0.75rem" }}>{doc.fileName}</p>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.875rem" }}>
+                  <div>
+                    <h3 className="truncate" style={{ fontSize: "0.95rem", fontWeight: 600, marginBottom: "0.25rem", lineHeight: 1.3 }}>{doc.title}</h3>
+                    <p className="truncate" style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{doc.fileName}</p>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{formatBytes(doc.fileSize)}</span>
                     <span className={`badge ${doc.status === "verified" ? "green" : doc.status === "rejected" ? "red" : "amber"}`}>{doc.status}</span>
                   </div>
-                  <div style={{ display: "flex", gap: "0.375rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border-color)", flexWrap: "wrap" }}>
-                    <button className="button ghost" style={{ flex: 1, padding: "0.375rem 0.5rem", fontSize: "0.8rem", minWidth: 0 }} onClick={e => { e.stopPropagation(); download(doc._id); }}>Download</button>
-                    <button className="button ghost" style={{ flex: 1, padding: "0.375rem 0.5rem", fontSize: "0.8rem", minWidth: 0 }} onClick={e => { e.stopPropagation(); navigate(`/verification/${doc._id}`); }}>Verify</button>
-                    <button className="button ghost" style={{ flex: 1, padding: "0.375rem 0.5rem", fontSize: "0.8rem", minWidth: 0 }} onClick={e => { e.stopPropagation(); setShareDocument(doc); setShareOpen(true); }}>Share</button>
-                    {doc.isArchived
-                      ? <button className="button ghost" style={{ flex: 1, padding: "0.375rem 0.5rem", fontSize: "0.8rem", color: "var(--accent-green)", minWidth: 0 }} onClick={e => { e.stopPropagation(); restore(doc._id); }}><ArchiveRestore size={13} />Restore</button>
-                      : <button className="button ghost" style={{ flex: 1, padding: "0.375rem 0.5rem", fontSize: "0.8rem", color: "var(--accent-amber)", minWidth: 0 }} onClick={e => { e.stopPropagation(); archive(doc._id); }}><Archive size={13} />Archive</button>
-                    }
-                    <button className="button ghost" style={{ flex: 1, padding: "0.375rem 0.5rem", fontSize: "0.8rem", color: "var(--accent-red)", minWidth: 0 }} onClick={e => { e.stopPropagation(); remove(doc._id); }}><X size={13} />Delete</button>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.75rem", borderTop: "1px solid var(--border-color)" }}>
+                    <button 
+                      className="button ghost" 
+                      style={{ padding: "0.5rem 0.75rem", fontSize: "0.85rem" }}
+                      onClick={e => { e.stopPropagation(); download(doc._id); }}
+                    >
+                      <Download size={14} /> Download
+                    </button>
+                    <KebabMenu
+                      items={[
+                        {
+                          label: "Share",
+                          icon: <Share size={16} />,
+                          onClick: () => { setShareDocument(doc); setShareOpen(true); }
+                        },
+                        {
+                          label: "Verify",
+                          icon: <ShieldCheck size={16} />,
+                          onClick: () => navigate(`/verification/${doc._id}`)
+                        },
+                        {
+                          label: doc.isArchived ? "Restore" : "Archive",
+                          icon: doc.isArchived ? <ArchiveRestore size={16} /> : <Archive size={16} />,
+                          onClick: () => doc.isArchived ? restore(doc._id) : archive(doc._id)
+                        },
+                        {
+                          label: "Delete",
+                          icon: <Trash2 size={16} />,
+                          onClick: () => remove(doc._id),
+                          danger: true
+                        }
+                      ]}
+                    />
                   </div>
                 </div>
               ))}
@@ -317,17 +346,36 @@ export default function Documents() {
                       <td><span className={`badge ${doc.status === "verified" ? "green" : doc.status === "rejected" ? "red" : "amber"}`}>{doc.status}</span></td>
                       <td>{new Date(doc.createdAt).toLocaleDateString()}</td>
                       <td>
-                        <div style={{ display: "flex", gap: "0.25rem" }}>
-                          <button className="icon-button" style={{ width: 32, height: 32 }} onClick={() => download(doc._id)} title="Download"><Files size={15} /></button>
+                        <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
+                          <button className="icon-button" style={{ width: 32, height: 32 }} onClick={() => download(doc._id)} title="Download"><Download size={15} /></button>
                           <button className="icon-button" style={{ width: 32, height: 32 }} onClick={() => toggleFavorite(doc._id, doc.isFavorite)} title={doc.isFavorite ? "Unfavorite" : "Favorite"}>
                             <Star size={15} color={doc.isFavorite ? "var(--accent-amber)" : undefined} fill={doc.isFavorite ? "var(--accent-amber)" : "none"} />
                           </button>
-                          <button className="icon-button" style={{ width: 32, height: 32 }} onClick={() => navigate(`/verification/${doc._id}`)} title="Verification"><ShieldCheck size={15} /></button>
-                          {doc.isArchived
-                            ? <button className="icon-button" style={{ width: 32, height: 32, color: "var(--accent-green)" }} onClick={() => restore(doc._id)} title="Restore"><ArchiveRestore size={15} /></button>
-                            : <button className="icon-button" style={{ width: 32, height: 32, color: "var(--accent-amber)" }} onClick={() => archive(doc._id)} title="Archive"><Archive size={15} /></button>
-                          }
-                          <button className="icon-button" style={{ width: 32, height: 32, color: "var(--accent-red)" }} onClick={() => remove(doc._id)} title="Delete"><X size={15} /></button>
+                          <KebabMenu
+                            items={[
+                              {
+                                label: "Verify",
+                                icon: <ShieldCheck size={16} />,
+                                onClick: () => navigate(`/verification/${doc._id}`)
+                              },
+                              {
+                                label: "Share",
+                                icon: <Share size={16} />,
+                                onClick: () => { setShareDocument(doc); setShareOpen(true); }
+                              },
+                              {
+                                label: doc.isArchived ? "Restore" : "Archive",
+                                icon: doc.isArchived ? <ArchiveRestore size={16} /> : <Archive size={16} />,
+                                onClick: () => doc.isArchived ? restore(doc._id) : archive(doc._id)
+                              },
+                              {
+                                label: "Delete",
+                                icon: <Trash2 size={16} />,
+                                onClick: () => remove(doc._id),
+                                danger: true
+                              }
+                            ]}
+                          />
                         </div>
                       </td>
                     </tr>
