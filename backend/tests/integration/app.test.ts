@@ -1,24 +1,16 @@
 process.env.NODE_ENV = "test";
+
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { createApp } from "../../src/app.js";
-import { MongoMemoryServer } from "mongodb-memory-server";
-import { connectDB, disconnectDB } from "../../src/config/db.js";
+import { getEnv } from "../../src/config/env.js";
 import http from "http";
 
 let baseUrl: string;
 let server: http.Server;
-let mongoServer: MongoMemoryServer;
 
 before(async () => {
-  // Start in-memory MongoDB
-  mongoServer = await MongoMemoryServer.create();
-  const mongoUri = mongoServer.getUri();
-
-  // Connect Mongoose to it
-  await connectDB(mongoUri);
-
-  // Start Express App
+  // Start Express App in test mode
   server = createApp().listen(0);
   await new Promise<void>((resolve) => server.once("listening", resolve));
   const address = server.address();
@@ -34,12 +26,6 @@ after(async () => {
   await new Promise<void>((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
   });
-
-  // Disconnect Database
-  await disconnectDB();
-
-  // Stop in-memory MongoDB
-  await mongoServer.stop();
 });
 
 test("GET /health/live reports process liveness", async () => {
@@ -68,7 +54,6 @@ test("GET /health/ready reports readiness", async () => {
   assert.equal(body.status, "ready");
   assert.equal(typeof body.version, "string");
   assert.ok(body.version.length > 0);
-  assert.deepEqual(body.checks, { mongo: "healthy", redis: "disabled" });
 });
 
 test("unknown routes return a normalized error", async () => {

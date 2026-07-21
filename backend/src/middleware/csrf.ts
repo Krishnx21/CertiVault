@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getEnv } from "../config/env.js";
+import { getEnv, isDevelopment } from "../config/env.js";
 
 /**
  * CSRF Protection Middleware
@@ -26,12 +26,14 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
   const env = getEnv();
   const allowedOrigins = [
     env.FRONTEND_ORIGIN,
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174",
-    "http://127.0.0.1:5175",
+    ...(isDevelopment ? [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:5175",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:5174",
+      "http://127.0.0.1:5175",
+    ] : []),
   ].filter(Boolean);
 
   const requestOrigin = origin || (referer ? new URL(referer).origin : null);

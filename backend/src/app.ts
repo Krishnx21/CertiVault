@@ -62,9 +62,8 @@ export const createApp = (): Express => {
           imgSrc: ["'self'", "data:", "https:"],
           connectSrc: [
             "'self'",
-            "https://api.certi-vault.com",
-            "http://localhost:*",
-            "http://127.0.0.1:*",
+            env.FRONTEND_ORIGIN,
+            ...(isDevelopment ? ["http://localhost:*", "http://127.0.0.1:*"] : []),
           ],
           fontSrc: ["'self'"],
           objectSrc: ["'none'"],
@@ -86,13 +85,16 @@ export const createApp = (): Express => {
   const allowedOrigins = Array.from(
     new Set([
       env.FRONTEND_ORIGIN,
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "http://localhost:5175",
-      "http://127.0.0.1:5173",
-      "http://127.0.0.1:5174",
-      "http://127.0.0.1:5175",
-      ...(isDevelopment ? ["http://localhost:3000", "http://127.0.0.1:3000"] : []),
+      ...(isDevelopment ? [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:5175",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+      ] : []),
     ])
   ).filter(Boolean);
 

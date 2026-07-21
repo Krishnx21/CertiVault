@@ -53,17 +53,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/github-script@v9
+      - uses: actions/setup-node@v4
         with:
-          script: |
-            const fs = require("fs");
-            const cp = require("child_process");
-            const files = fs.readdirSync(".github/ISSUE_TEMPLATE")
-              .filter((file) => file.endsWith(".yml") || file.endsWith(".yaml"));
-            for (const file of files) {
-              cp.execFileSync("ruby", ["-e", `require 'yaml'; YAML.load_file('.github/ISSUE_TEMPLATE/${file}')`], {stdio: "inherit"});
-              core.info(`Valid issue template: ${file}`);
-            }
+          node-version: 20
+      - name: Validate issue templates with js-yaml
+        shell: bash
+        run: |
+          npm install -g js-yaml
+          for file in .github/ISSUE_TEMPLATE/*.yml .github/ISSUE_TEMPLATE/*.yaml; do
+            if [ -f "$file" ]; then
+              node -e "
+                const fs = require('fs');
+                const yaml = require('js-yaml');
+                const doc = yaml.load(fs.readFileSync('$file', 'utf8'));
+                console.log('Valid issue template: $file');
+              "
+            fi
+          done
 
   license:
     name: License checker

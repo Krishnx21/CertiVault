@@ -8,7 +8,7 @@ const envSchema = z.object({
     .enum(["development", "test", "production", "staging"])
     .default("development"),
   PORT: z.string().transform(Number).pipe(z.number().int().min(1).max(65535)).default(5000),
-  FRONTEND_ORIGIN: z.string().url().default("http://localhost:5173"),
+  FRONTEND_ORIGIN: z.string().url(),
   MONGODB_URI: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
@@ -64,7 +64,7 @@ const validateEnv = (): Env => {
     console.error("  MONGODB_URI - MongoDB connection string");
     console.error("  JWT_ACCESS_SECRET - JWT access token secret (min 32 chars)");
     console.error("  JWT_REFRESH_SECRET - JWT refresh token secret (min 32 chars)");
-    console.error("  FRONTEND_ORIGIN - Frontend URL (e.g., http://localhost:5173)");
+    console.error("  FRONTEND_ORIGIN - Frontend URL (e.g., https://certi-vault-alpha.vercel.app)");
     if (process.env.NODE_ENV === "test") {
       throw new Error("Environment validation failed:\n" + errors);
     }

@@ -23,7 +23,7 @@ export const generateQRCode = async (
   token: string,
   baseUrl?: string
 ): Promise<{ qrCodeUrl: string; verificationUrl: string }> => {
-  const verificationBaseUrl = baseUrl || env.FRONTEND_ORIGIN || "http://localhost:5173";
+  const verificationBaseUrl = baseUrl || env.FRONTEND_ORIGIN;
   const verificationUrl = `${verificationBaseUrl}/public/verify/${token}`;
 
   // Generate QR code as data URL
@@ -50,7 +50,7 @@ export const generateQRCodeBuffer = async (
   token: string,
   baseUrl?: string
 ): Promise<{ buffer: Buffer; verificationUrl: string }> => {
-  const verificationBaseUrl = baseUrl || env.FRONTEND_ORIGIN || "http://localhost:5173";
+  const verificationBaseUrl = baseUrl || env.FRONTEND_ORIGIN;
   const verificationUrl = `${verificationBaseUrl}/public/verify/${token}`;
 
   // Generate QR code as buffer

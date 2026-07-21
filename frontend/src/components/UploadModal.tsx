@@ -207,7 +207,7 @@ export function UploadModal({ onClose, onUploaded, vaultOwnerId }: UploadModalPr
         reject(new Error("Upload cancelled"));
       });
 
-      xhr.open("POST", `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/documents`);
+      xhr.open("POST", `${import.meta.env.VITE_API_URL}/api/documents`);
       xhr.withCredentials = true;
       xhr.setRequestHeader("Authorization", `Bearer ${localStorage.getItem("accessToken")}`);
       

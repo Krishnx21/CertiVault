@@ -1,6 +1,6 @@
 import { Document, Summary, Activity, Notification, SharedDocument, SharedMember, AccessLog, DownloadStats, Permission } from "./types.js";
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_URL as string;
 
 const getAuthHeader = (): Record<string, string> => {
   const token = localStorage.getItem("accessToken");

@@ -41,7 +41,7 @@ services:
 
       # ── CORS ──────────────────────────────────────────────────────────────
       - key: FRONTEND_ORIGIN
-        sync: false   # e.g. https://certivault-frontend.onrender.com
+        value: https://certi-vault-alpha.vercel.app
 
       # ── Redis ─────────────────────────────────────────────────────────────
       - key: REDIS_URL

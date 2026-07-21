@@ -5,7 +5,7 @@
  */
 
 import { Worker, Job } from "bullmq";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { createBullMQConnection } from "../config/redis.js";
 import { EMAIL_QUEUE_NAME } from "../queues/email.queue.js";
 import type { EmailJobData } from "../queues/email.queue.js";
@@ -14,12 +14,30 @@ import { createModuleLogger } from "../common/utils/logger.js";
 
 const log = createModuleLogger("email-worker");
 
-// ─── Resend client (lazy — only used when API key present) ───────────────────
+// ─── SMTP transporter (lazy — only used when SMTP credentials present) ─────────
 
-function getResendClient(): Resend | null {
+let _transporter: nodemailer.Transporter | null = null;
+
+function getTransporter(): nodemailer.Transporter | null {
   const env = getEnv();
-  if (!env.RESEND_API_KEY) return null;
-  return new Resend(env.RESEND_API_KEY);
+  
+  if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
+    return null;
+  }
+  
+  if (!_transporter) {
+    _transporter = nodemailer.createTransport({
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT ? parseInt(env.SMTP_PORT, 10) : 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS,
+      },
+    });
+  }
+  
+  return _transporter;
 }
 
 // ─── Shared email template wrapper ───────────────────────────────────────────
@@ -58,7 +76,7 @@ function htmlWrapper(title: string, body: string): string {
 // ─── Per-job-type senders ─────────────────────────────────────────────────────
 
 async function sendWelcomeEmail(
-  resend: Resend,
+  transporter: nodemailer.Transporter,
   job: Job<EmailJobData>
 ): Promise<void> {
   const data = job.data as { type: "welcome-email"; email: string; name: string };
@@ -79,8 +97,8 @@ async function sendWelcomeEmail(
     <p><a href="${env.FRONTEND_ORIGIN}/dashboard" class="btn">Go to Dashboard</a></p>
   `;
 
-  await resend.emails.send({
-    from: env.EMAIL_FROM ?? "CertiVault <noreply@certivault.com>",
+  await transporter.sendMail({
+    from: env.EMAIL_FROM ?? env.SMTP_USER,
     to: data.email,
     subject: "Welcome to CertiVault",
     html: htmlWrapper("Welcome to CertiVault", body),
@@ -88,7 +106,7 @@ async function sendWelcomeEmail(
 }
 
 async function sendEmailVerification(
-  resend: Resend,
+  transporter: nodemailer.Transporter,
   job: Job<EmailJobData>
 ): Promise<void> {
   const data = job.data as {
@@ -112,8 +130,8 @@ async function sendEmailVerification(
     <p class="note">This link expires in 24 hours. If you did not create an account, ignore this email.</p>
   `;
 
-  await resend.emails.send({
-    from: env.EMAIL_FROM ?? "CertiVault <noreply@certivault.com>",
+  await transporter.sendMail({
+    from: env.EMAIL_FROM ?? env.SMTP_USER,
     to: data.email,
     subject: "Verify Your Email — CertiVault",
     html: htmlWrapper("Verify Your Email", body),
@@ -121,7 +139,7 @@ async function sendEmailVerification(
 }
 
 async function sendPasswordReset(
-  resend: Resend,
+  transporter: nodemailer.Transporter,
   job: Job<EmailJobData>
 ): Promise<void> {
   const data = job.data as {
@@ -148,8 +166,8 @@ async function sendPasswordReset(
     </div>
   `;
 
-  await resend.emails.send({
-    from: env.EMAIL_FROM ?? "CertiVault <noreply@certivault.com>",
+  await transporter.sendMail({
+    from: env.EMAIL_FROM ?? env.SMTP_USER,
     to: data.email,
     subject: "Reset Your Password — CertiVault",
     html: htmlWrapper("Reset Your Password", body),
@@ -157,7 +175,7 @@ async function sendPasswordReset(
 }
 
 async function sendDocumentShared(
-  resend: Resend,
+  transporter: nodemailer.Transporter,
   job: Job<EmailJobData>
 ): Promise<void> {
   const data = job.data as {
@@ -173,6 +191,15 @@ async function sendDocumentShared(
 
   await job.updateProgress(50);
 
+  log.info("Sending document-shared email", {
+    to: data.email,
+    recipientName: data.recipientName,
+    ownerName: data.ownerName,
+    role: data.role,
+    inviteUrl: data.inviteUrl,
+    emailFrom: env.EMAIL_FROM,
+  });
+
   const body = `
     <h2>You've been invited to a Vault</h2>
     <p>Hi ${data.recipientName},</p>
@@ -186,16 +213,20 @@ async function sendDocumentShared(
     <p class="note">App URL: <a href="${env.FRONTEND_ORIGIN}">${env.FRONTEND_ORIGIN}</a></p>
   `;
 
-  await resend.emails.send({
-    from: env.EMAIL_FROM ?? "CertiVault <noreply@certivault.com>",
+  await transporter.sendMail({
+    from: env.EMAIL_FROM ?? env.SMTP_USER,
     to: data.email,
     subject: `${data.ownerName} invited you to their CertiVault`,
     html: htmlWrapper("Vault Invitation", body),
   });
+
+  log.info("Document-shared email sent successfully", {
+    to: data.email,
+  });
 }
 
 async function sendDocumentVerified(
-  resend: Resend,
+  transporter: nodemailer.Transporter,
   job: Job<EmailJobData>
 ): Promise<void> {
   const data = job.data as {
@@ -232,8 +263,8 @@ async function sendDocumentVerified(
     }
   `;
 
-  await resend.emails.send({
-    from: env.EMAIL_FROM ?? "CertiVault <noreply@certivault.com>",
+  await transporter.sendMail({
+    from: env.EMAIL_FROM ?? env.SMTP_USER,
     to: data.email,
     subject,
     html: htmlWrapper(subject, body),
@@ -241,7 +272,7 @@ async function sendDocumentVerified(
 }
 
 async function sendExpiryReminder(
-  resend: Resend,
+  transporter: nodemailer.Transporter,
   job: Job<EmailJobData>
 ): Promise<void> {
   const data = job.data as {
@@ -274,8 +305,8 @@ async function sendExpiryReminder(
     <p class="note">App URL: <a href="${env.FRONTEND_ORIGIN}">${env.FRONTEND_ORIGIN}</a></p>
   `;
 
-  await resend.emails.send({
-    from: env.EMAIL_FROM ?? "CertiVault <noreply@certivault.com>",
+  await transporter.sendMail({
+    from: env.EMAIL_FROM ?? env.SMTP_USER,
     to: data.email,
     subject: `Expiry Reminder: "${data.documentTitle}" expires on ${expiryDate}`,
     html: htmlWrapper("Document Expiry Reminder", body),
@@ -297,9 +328,9 @@ async function processEmailJob(job: Job<EmailJobData>): Promise<void> {
 
   await job.updateProgress(0);
 
-  // If Resend API key is missing, log and skip gracefully (dev / CI)
-  if (!env.RESEND_API_KEY) {
-    log.warn("RESEND_API_KEY not set — skipping email send (dev mode)", {
+  // If SMTP credentials are missing, log and skip gracefully (dev / CI)
+  if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
+    log.warn("SMTP credentials not set — skipping email send (dev mode)", {
       jobId: job.id,
       type: job.data.type,
     });
@@ -307,26 +338,26 @@ async function processEmailJob(job: Job<EmailJobData>): Promise<void> {
     return;
   }
 
-  const resend = getResendClient()!;
+  const transporter = getTransporter()!;
 
   switch (job.data.type) {
     case "welcome-email":
-      await sendWelcomeEmail(resend, job);
+      await sendWelcomeEmail(transporter, job);
       break;
     case "email-verification":
-      await sendEmailVerification(resend, job);
+      await sendEmailVerification(transporter, job);
       break;
     case "password-reset":
-      await sendPasswordReset(resend, job);
+      await sendPasswordReset(transporter, job);
       break;
     case "document-shared":
-      await sendDocumentShared(resend, job);
+      await sendDocumentShared(transporter, job);
       break;
     case "document-verified":
-      await sendDocumentVerified(resend, job);
+      await sendDocumentVerified(transporter, job);
       break;
     case "expiry-reminder":
-      await sendExpiryReminder(resend, job);
+      await sendExpiryReminder(transporter, job);
       break;
     default: {
       // Exhaustive check — TypeScript will error if a new type is added without a handler
