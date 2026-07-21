@@ -213,7 +213,7 @@ export default function VaultMembers() {
             {[
               { label: "Active members",  value: members.active.length,   color: "var(--accent-green)", gradient: "var(--gradient-green)" },
               { label: "Pending invites", value: members.pending.length,  color: "var(--accent-amber)", gradient: "var(--gradient-amber)" },
-            ].map(({ label, value, color, gradient }) => (
+            ].map(({ label, value, gradient }) => (
               <div key={label} className="card" style={{ padding: "1.25rem 1.5rem", position: "relative", overflow: "hidden" }}>
                 <div style={{ 
                   position: "absolute", top: 0, left: 0, right: 0, height: "3px", 
