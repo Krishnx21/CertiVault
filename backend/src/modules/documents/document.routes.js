@@ -20,6 +20,7 @@ export const documentRouter = Router();
 documentRouter.use(authenticate);
 
 documentRouter.get("/", listDocuments);
+documentRouter.get("/:id", getDocument);
 documentRouter.post("/", upload.single("file"), uploadDocument);
 documentRouter.get("/:id", getDocument);
 documentRouter.put("/:id", updateDocument);

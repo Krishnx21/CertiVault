@@ -118,3 +118,22 @@ test("returns HTTP 400 with normalized error when JSON is malformed", async () =
   assert.equal(body.requestId, "json-error-id");
   assert.equal(body.error.stack, undefined);
 });
+
+test("GET /api/documents/:id returns single document data", async () => {
+  const response = await fetch(`${baseUrl}/api/documents/demo-credential`);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.data.id, "demo-credential");
+  assert.equal(body.data.name, "Cloud Security Certificate.pdf");
+  assert.equal(body.data.status, "verified");
+});
+
+test("GET /api/documents/:id returns 404 when document is not found", async () => {
+  const response = await fetch(`${baseUrl}/api/documents/non-existent-doc-id`);
+
+  assert.equal(response.status, 404);
+  const body = await response.json();
+  assert.equal(body.error.code, "DOCUMENT_NOT_FOUND");
+  assert.equal(body.error.message, "Document was not found");
+});
