@@ -1,7 +1,4 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "env": {
-    "VITE_API_URL": "https://certivault-ixzb.onrender.com"
-  }
+  "outputDirectory": "dist"
 }

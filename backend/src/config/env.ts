@@ -47,7 +47,7 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.string().transform(Number).pipe(z.number().positive()).default(100),
   BCRYPT_ROUNDS: z.string().transform(Number).pipe(z.number().min(10).max(15)).default(12),
   SESSION_COOKIE_NAME: z.string().default("refreshToken"),
-  TRUST_PROXY: z.string().transform(v => v === "true").default(() => false),
+  TRUST_PROXY: z.string().transform(v => v === "true").default(() => true),
 });
 
 export type Env = z.infer<typeof envSchema>;

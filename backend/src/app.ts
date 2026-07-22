@@ -207,6 +207,10 @@ export const createApp = (): Express => {
   app.head("/", (_req, res) => {
     res.status(200).end();
   });
+  // Favicon handler to suppress 404 errors
+  app.get("/favicon.ico", (_req, res) => {
+    res.status(204).end();
+  });
   app.use("/health", healthRouter);
   app.use("/api", infoRouter);
 
