@@ -1,0 +1,194 @@
+# =============================================================================
+# CertiVault — Prometheus Alerting Rules
+# =============================================================================
+# Mount this file into the Prometheus container and reference it in
+# prometheus.yml under rule_files:
+#   rule_files:
+#     - /etc/prometheus/rules/certivault-rules.yml
+#
+# To mount, add to docker-compose.yml prometheus.volumes:
+#   - ./monitoring/prometheus-rules.yml:/etc/prometheus/rules/certivault-rules.yml:ro
+#
+# Alerts are visible in Prometheus UI → Alerts tab.
+# Wire up Alertmanager in prometheus.yml to route notifications.
+# =============================================================================
+
+groups:
+
+  # ── HTTP / API Health ───────────────────────────────────────────────────────
+  - name: certivault.http
+    interval: 30s
+    rules:
+
+      - alert: HighErrorRate
+        # Fires when 5xx error rate exceeds 5% over a 5-minute window
+        expr: >
+          sum(rate(certivault_http_requests_total{status_code=~"5.."}[5m]))
+          /
+          sum(rate(certivault_http_requests_total[5m]))
+          * 100 > 5
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "CertiVault error rate above 5%"
+          description: >
+            HTTP 5xx error rate is {{ printf "%.1f" $value }}% over the last 5 minutes.
+            Check application logs and recent deployments.
+
+      - alert: HighP95Latency
+        # Fires when p95 response time exceeds 2000ms for 5 minutes
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(certivault_http_request_duration_ms_bucket[5m])) by (le)
+          ) > 2000
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "CertiVault p95 latency above 2000ms"
+          description: >
+            The 95th-percentile response time is {{ printf "%.0f" $value }}ms.
+            Investigate slow routes with: rate(certivault_http_request_duration_ms_bucket[5m])
+
+      - alert: BackendDown
+        # Fires if Prometheus cannot scrape the backend target
+        expr: up{job="certivault-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "CertiVault backend is unreachable"
+          description: >
+            Prometheus cannot scrape GET /metrics from the backend.
+            The container may be down or the /metrics endpoint is broken.
+
+  # ── Queue Health ────────────────────────────────────────────────────────────
+  - name: certivault.queues
+    interval: 30s
+    rules:
+
+      - alert: QueueDepthHigh
+        # Fires when any queue has more than 100 waiting jobs
+        expr: certivault_queue_depth > 100
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "BullMQ queue depth is high"
+          description: >
+            Queue "{{ $labels.queue }}" has {{ printf "%.0f" $value }} waiting jobs.
+            The worker may be down or processing too slowly.
+
+      - alert: QueueJobsFailing
+        # Fires immediately when any job fails
+        expr: increase(certivault_queue_jobs_total{status="failed"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "BullMQ jobs are failing"
+          description: >
+            {{ printf "%.0f" $value }} job(s) failed in queue "{{ $labels.queue }}"
+            in the last 5 minutes. Check Bull Board at /admin/queues for details.
+
+      - alert: QueueJobDurationHigh
+        # Fires when p95 job processing time exceeds 30 seconds
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(certivault_queue_job_duration_ms_bucket[5m])) by (le, queue)
+          ) > 30000
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "BullMQ job processing is slow"
+          description: >
+            Queue "{{ $labels.queue }}" p95 job duration is
+            {{ printf "%.0f" $value }}ms (threshold: 30000ms).
+
+  # ── Security / Auth ─────────────────────────────────────────────────────────
+  - name: certivault.auth
+    interval: 60s
+    rules:
+
+      - alert: AccountLockoutSpike
+        # Fires when more than 5 accounts are locked in 5 minutes
+        expr: increase(certivault_auth_failures_total{reason="locked"}[5m]) > 5
+        for: 0m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Multiple account lockouts detected"
+          description: >
+            {{ printf "%.0f" $value }} account lockouts in the last 5 minutes.
+            This may indicate a brute-force attack. Review auth logs.
+
+      - alert: HighAuthFailureRate
+        # Fires when auth failures exceed 20/min sustained for 5 minutes
+        expr: sum(rate(certivault_auth_failures_total[1m])) * 60 > 20
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: >
+            Auth failures: {{ printf "%.0f" $value }}/min sustained for 5 minutes.
+            Possible credential stuffing or brute-force attack.
+
+  # ── Storage ──────────────────────────────────────────────────────────────────
+  - name: certivault.storage
+    interval: 300s
+    rules:
+
+      - alert: StorageUsageHigh
+        # Fires when total storage exceeds 10 GB
+        expr: certivault_storage_bytes_total > 10737418240
+        for: 0m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "CertiVault storage usage is high"
+          description: >
+            Total storage used: {{ humanize $value }}.
+            Review document lifecycle policies and S3 Glacier transitions.
+
+  # ── Node.js Runtime ─────────────────────────────────────────────────────────
+  - name: certivault.runtime
+    interval: 60s
+    rules:
+
+      - alert: HighMemoryUsage
+        # Fires when Node.js heap exceeds 400 MB
+        expr: certivault_nodejs_process_heap_bytes > 419430400
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "CertiVault backend heap memory high"
+          description: >
+            Node.js heap is {{ humanize $value }}. Possible memory leak.
+            Consider restarting the container and checking for unbounded caches.
+
+      - alert: HighEventLoopLag
+        # Fires when event loop lag exceeds 500ms
+        expr: certivault_nodejs_eventloop_lag_seconds > 0.5
+        for: 3m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Node.js event loop is lagging"
+          description: >
+            Event loop lag: {{ printf "%.0f" $value }}s.
+            This indicates the event loop is blocked by CPU-intensive work.

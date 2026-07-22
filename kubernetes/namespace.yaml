@@ -1,0 +1,10 @@
+# =============================================================================
+# CertiVault — Kubernetes Namespace
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: certivault
+  labels:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/managed-by: kubectl

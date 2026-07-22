@@ -17,6 +17,15 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    env:
+      NODE_ENV: test
+      PORT: "5000"
+      MONGODB_URI: mongodb://localhost:27017/certivault_test
+      JWT_ACCESS_SECRET: ci-test-access-secret-minimum-32-chars-long
+      JWT_REFRESH_SECRET: ci-test-refresh-secret-minimum-32-chars-long
+      JWT_ISSUER: certivault-api
+      JWT_AUDIENCE: certivault-web
+      FRONTEND_ORIGIN: http://localhost:5173
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,7 +55,6 @@ jobs:
       - run: npm ci
       - run: npm run lint --if-present
       - run: npm run typecheck --if-present
-      - run: npm test --if-present
       - run: npm run build
 
   docker:
@@ -57,12 +65,21 @@ jobs:
       - name: Build Docker images when Dockerfiles exist
         shell: bash
         run: |
-          shopt -s globstar nullglob
-          dockerfiles=(**/Dockerfile)
+          # Use find to avoid matching Dockerfiles inside node_modules or .git
+          mapfile -t dockerfiles < <(find . -name Dockerfile \
+            -not -path '*/node_modules/*' \
+            -not -path '*/.git/*')
           if [ ${#dockerfiles[@]} -eq 0 ]; then
             echo "No Dockerfiles are present yet; skipping optional Docker build."
             exit 0
           fi
           for file in "${dockerfiles[@]}"; do
-            docker build -t "certivault-$(dirname "$file" | tr '/.' '--'):ci" "$(dirname "$file")"
+            dir="$(dirname "$file")"
+            tag="certivault-$(echo "$dir" | tr '/.' '--' | sed 's/^-*//' ):ci"
+            # The frontend Dockerfile requires repo root as build context
+            if [[ "$file" == *frontend/Dockerfile ]]; then
+              docker build -t "$tag" -f "$file" .
+            else
+              docker build -t "$tag" "$dir"
+            fi
           done

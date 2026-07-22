@@ -1,0 +1,45 @@
+{{/*
+=============================================================================
+CertiVault — Services (backend + frontend)
+Both are ClusterIP — exposed externally only through the Ingress.
+=============================================================================
+*/}}
+
+# ── Backend Service ───────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "certivault.fullname" . }}-backend
+  namespace: {{ include "certivault.namespace" . }}
+  labels:
+    {{- include "certivault.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "certivault.componentSelectorLabels" (dict "root" . "component" "backend") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.service.backend.port }}
+      targetPort: {{ .Values.service.backend.port }}
+      protocol: TCP
+
+---
+# ── Frontend Service ──────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "certivault.fullname" . }}-frontend
+  namespace: {{ include "certivault.namespace" . }}
+  labels:
+    {{- include "certivault.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "certivault.componentSelectorLabels" (dict "root" . "component" "frontend") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.service.frontend.port }}
+      targetPort: {{ .Values.service.frontend.port }}
+      protocol: TCP

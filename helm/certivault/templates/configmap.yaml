@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "certivault.configMapName" . }}
+  namespace: {{ include "certivault.namespace" . }}
+  labels:
+    {{- include "certivault.labels" . | nindent 4 }}
+    app.kubernetes.io/component: config
+data:
+  {{- range $key, $value := .Values.config }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}

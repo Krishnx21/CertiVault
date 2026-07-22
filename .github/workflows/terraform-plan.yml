@@ -1,0 +1,211 @@
+# =============================================================================
+# CertiVault — Terraform Plan (on Pull Request)
+# =============================================================================
+# Runs `terraform plan` for every PR targeting main that touches terraform/.
+# Posts the plan output as a PR comment so reviewers can see exactly what
+# infrastructure will change before merging.
+#
+# Required repository secrets:
+#   AWS_ACCESS_KEY_ID       → IAM user key with Terraform permissions
+#   AWS_SECRET_ACCESS_KEY   → IAM user secret
+#
+# Backend config (S3 bucket + DynamoDB table) is defined in backend.tf —
+# no extra secrets needed.  The bucket/table must exist before first init:
+#   bucket         = "certivault-terraform-state"   (ap-south-1)
+#   dynamodb_table = "certivault-terraform-locks"   (ap-south-1)
+#
+# When AWS credentials are not configured the job exits gracefully with a
+# warning instead of failing with a confusing "no valid credential sources"
+# error from terraform.
+#
+# The workflow does NOT apply changes — that is done by terraform-apply.yml
+# which runs only after the PR is merged to main.
+# =============================================================================
+
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform-plan.yml"
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write   # post plan as PR comment
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    env:
+      TF_IN_AUTOMATION: "true"   # suppresses interactive prompts
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ap-south-1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Guard: skip if AWS credentials are not configured ──────────────────
+      - name: Check AWS credentials are configured
+        id: check-creds
+        shell: bash
+        run: |
+          if [[ -z "$AWS_ACCESS_KEY_ID" || -z "$AWS_SECRET_ACCESS_KEY" ]]; then
+            echo "⚠️  AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY secret is not set."
+            echo "   Add them in: Settings → Secrets and variables → Actions"
+            echo "   Skipping Terraform Plan."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Terraform
+        if: steps.check-creds.outputs.skip != 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.7"
+          terraform_wrapper: true   # wraps output for cleaner PR comments
+
+      # ── Initialise with remote S3 backend ───────────────────────────────────
+      # Backend config is fully defined in backend.tf — no -backend-config
+      # overrides needed.
+      - name: Terraform Init
+        id: init
+        if: steps.check-creds.outputs.skip != 'true'
+        run: terraform init -reconfigure
+        continue-on-error: true
+
+      - name: Skip if backend unavailable
+        if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome != 'success'
+        run: |
+          echo "### ⚠️ Terraform Init Failed" >> $GITHUB_STEP_SUMMARY
+          echo "S3 backend may not exist yet. Create bucket + DynamoDB table (see backend.tf) then re-run." >> $GITHUB_STEP_SUMMARY
+          exit 0
+
+      # ── Validate syntax and configuration ──────────────────────────────────
+      - name: Terraform Validate
+        id: validate
+        if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success'
+        run: terraform validate -no-color
+
+      # ── Format check (fail if code is not formatted) ────────────────────────
+      - name: Terraform Format Check
+        id: fmt
+        if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success'
+        run: terraform fmt -check -recursive -no-color
+        continue-on-error: true   # warn but don't block — format issues go in the comment
+
+      # ── Generate the plan ───────────────────────────────────────────────────
+      - name: Terraform Plan
+        id: plan
+        if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success'
+        run: |
+          set -o pipefail
+          terraform plan \
+            -no-color \
+            -input=false \
+            -out=tfplan.bin \
+            -var="environment=staging" \
+            2>&1 | tee plan.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+        continue-on-error: true   # capture output even on plan failure
+
+      # ── Save plan artifact for apply job (if merged) ────────────────────────
+      - name: Upload plan artifact
+        if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success' && steps.plan.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ github.sha }}
+          path: terraform/tfplan.bin
+          retention-days: 7
+
+      # ── Post plan as PR comment ─────────────────────────────────────────────
+      - name: Post plan to PR
+        uses: actions/github-script@v7
+        if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success' && github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('terraform/plan.txt', 'utf8');
+            const maxLength = 65000;  // GitHub comment limit ~65k chars
+            const truncated = plan.length > maxLength
+              ? plan.slice(0, maxLength) + '\n\n...truncated (see full logs)'
+              : plan;
+
+            const outcome = '${{ steps.plan.outcome }}';
+            const fmtOutcome = '${{ steps.fmt.outcome }}';
+
+            const body = `## Terraform Plan — \`${{ github.event.pull_request.head.ref }}\`
+
+            | Step | Status |
+            |---|---|
+            | \`terraform init\` | ${{ steps.init.outcome == 'success' && '✅' || '❌' }} |
+            | \`terraform validate\` | ${{ steps.validate.outcome == 'success' && '✅' || '❌' }} |
+            | \`terraform fmt\` | ${fmtOutcome === 'success' ? '✅' : '⚠️ needs formatting'} |
+            | \`terraform plan\` | ${outcome === 'success' ? '✅' : '❌'} |
+
+            <details>
+            <summary>Show plan output</summary>
+
+            \`\`\`hcl
+            ${truncated}
+            \`\`\`
+
+            </details>
+
+            *Pushed by @${{ github.actor }}, action: \`${{ github.event_name }}\`*`;
+
+            // Delete previous plan comments to keep the PR clean
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            for (const comment of comments) {
+              if (comment.user.login === 'github-actions[bot]' &&
+                  comment.body.includes('Terraform Plan')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
+            // Post fresh comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      # ── Fail the job if plan itself errored ─────────────────────────────────
+      - name: Check plan result
+        if: steps.check-creds.outputs.skip != 'true' && steps.init.outcome == 'success' && steps.plan.outputs.exit_code != '0'
+        run: |
+          echo "Terraform plan failed with exit code ${{ steps.plan.outputs.exit_code }}"
+          exit 1
+
+      # ── Skip notice ────────────────────────────────────────────────────────
+      - name: Notice — credentials not configured
+        if: steps.check-creds.outputs.skip == 'true'
+        run: |
+          echo "### ⚠️ Terraform Plan Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "AWS credentials are not configured in repository secrets." >> $GITHUB_STEP_SUMMARY
+          echo "Add \`AWS_ACCESS_KEY_ID\` and \`AWS_SECRET_ACCESS_KEY\` in:" >> $GITHUB_STEP_SUMMARY
+          echo "Settings → Secrets and variables → Actions" >> $GITHUB_STEP_SUMMARY

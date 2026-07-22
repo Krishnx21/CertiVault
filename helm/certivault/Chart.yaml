@@ -1,0 +1,16 @@
+apiVersion: v2
+name: certivault
+description: CertiVault — Smart Document Management & Verification Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - certivault
+  - document-management
+  - verification
+home: https://github.com/krishnx21/Smart-Document-Management-Verification-Platform
+sources:
+  - https://github.com/krishnx21/Smart-Document-Management-Verification-Platform
+maintainers:
+  - name: krishnx21
+    url: https://github.com/krishnx21

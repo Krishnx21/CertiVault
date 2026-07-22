@@ -1,0 +1,92 @@
+# =============================================================================
+# CertiVault Helm Chart — Production Overrides
+# =============================================================================
+# Usage:
+#   helm install certivault ./helm/certivault \
+#     --namespace certivault \
+#     --create-namespace \
+#     -f helm/certivault/values.prod.yaml
+#
+#   helm upgrade certivault ./helm/certivault \
+#     --namespace certivault \
+#     --set image.backend.tag=v1.2.0
+#
+# IMPORTANT: Replace every REPLACE_ME placeholder before deploying.
+# Secrets must be base64 encoded:  echo -n "value" | base64
+# =============================================================================
+
+# ── Image tags — pin to a specific release, never use latest in prod ──────
+image:
+  pullPolicy: IfNotPresent
+  backend:
+    tag: "1.0.0"          # ← set to actual release tag
+  frontend:
+    tag: "1.0.0"          # ← set to actual release tag
+
+# ── Ingress — set your real domain ────────────────────────────────────────
+ingress:
+  enabled: true
+  host: certivault.example.com   # ← REPLACE with real domain
+  tls:
+    enabled: true
+    secretName: certivault-tls
+    clusterIssuer: letsencrypt-prod
+
+# ── Scaling — start conservatively, let HPA handle the rest ───────────────
+replicaCount:
+  backend: 2
+  frontend: 2
+  workers: 1
+
+autoscaling:
+  enabled: true
+  backend:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  frontend:
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# ── Config overrides ──────────────────────────────────────────────────────
+config:
+  NODE_ENV: "production"
+  FRONTEND_ORIGIN: "https://certivault.example.com"   # ← REPLACE
+  FRONTEND_URL: "https://certivault.example.com"      # ← REPLACE
+  CLIENT_URL: "https://certivault.example.com"        # ← REPLACE
+  AWS_REGION: "ap-south-1"
+  AWS_S3_BUCKET: "certivault-documents"               # ← REPLACE if different
+  LOG_LEVEL: "warn"
+  TRUST_PROXY: "true"
+
+# ── Secrets — ALL must be replaced before deploy ──────────────────────────
+# Generate with:  echo -n "your-value" | base64
+secrets:
+  # MongoDB Atlas connection string (with credentials)
+  MONGO_URI: "REPLACE_ME_BASE64"
+
+  # JWT — use strong random strings, minimum 64 chars each
+  JWT_ACCESS_SECRET: "REPLACE_ME_BASE64"
+  JWT_REFRESH_SECRET: "REPLACE_ME_BASE64"
+
+  # Redis — full URL including password
+  REDIS_URL: "REPLACE_ME_BASE64"
+  REDIS_PASSWORD: "REPLACE_ME_BASE64"
+
+  # AWS IAM credentials (use IAM roles for EKS via IRSA in production)
+  AWS_ACCESS_KEY_ID: "REPLACE_ME_BASE64"
+  AWS_SECRET_ACCESS_KEY: "REPLACE_ME_BASE64"
+
+  # Gmail SMTP
+  SMTP_USER: "REPLACE_ME_BASE64"
+  SMTP_PASS: "REPLACE_ME_BASE64"
+
+  # Google OAuth
+  GOOGLE_CLIENT_ID: "REPLACE_ME_BASE64"
+  GOOGLE_CLIENT_SECRET: "REPLACE_ME_BASE64"
+
+  # Bull Board basic auth
+  BULL_BOARD_USERNAME: "REPLACE_ME_BASE64"
+  BULL_BOARD_PASSWORD: "REPLACE_ME_BASE64"

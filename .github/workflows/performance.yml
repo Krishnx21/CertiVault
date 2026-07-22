@@ -1,0 +1,265 @@
+# =============================================================================
+# CertiVault — k6 Load & Performance Tests
+# =============================================================================
+# Runs against the STAGING environment on every PR to main.
+#
+# Two test scenarios (defined in k6/load-test.js):
+#   1. Spike test  — 0 → 50 → 100 → 0 users over 5 minutes
+#   2. Soak test   — 10 users sustained for 10 minutes
+#
+# Pass criteria (enforced by k6 thresholds in load-test.js):
+#   P95 response time  < 2000ms
+#   Error rate         < 1%
+#   Throughput         > 50 req/s (spike peak)
+#
+# Required repository secrets:
+#   STAGING_URL         → base URL of the staging environment
+#                         e.g. https://staging.certivault.example.com
+#   STAGING_API_TOKEN   → a valid JWT for a pre-seeded test user
+#                         (so auth-protected routes can be tested)
+#
+# Results:
+#   - HTML report uploaded as a workflow artifact
+#   - Summary posted as a PR comment
+#   - Job fails if any k6 threshold is breached
+# =============================================================================
+
+name: Performance Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      # Only run when API code, test script, or workflow itself changes
+      - "backend/**"
+      - "k6/**"
+      - ".github/workflows/performance.yml"
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "Target URL for the load test"
+        required: false
+        default: ""
+      scenario:
+        description: "Scenario to run: spike | soak | all"
+        required: false
+        default: "all"
+
+concurrency:
+  group: performance-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write   # post results as PR comment
+
+jobs:
+  k6-load-test:
+    name: k6 Load Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Install k6 ──────────────────────────────────────────────────────────
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update -qq
+          sudo apt-get install -y k6
+
+      - name: Verify k6 installation
+        run: k6 version
+
+      # ── Resolve target URL ───────────────────────────────────────────────────
+      - name: Resolve target URL
+        id: url
+        run: |
+          if [ -n "${{ github.event.inputs.target_url }}" ]; then
+            URL="${{ github.event.inputs.target_url }}"
+          elif [ -n "${{ secrets.STAGING_URL }}" ]; then
+            URL="${{ secrets.STAGING_URL }}"
+          else
+            echo "WARNING: STAGING_URL secret not set. Using localhost:5000 as fallback."
+            echo "Tests will likely fail — set the STAGING_URL secret for meaningful results."
+            URL="http://localhost:5000"
+          fi
+          echo "url=${URL}" >> $GITHUB_OUTPUT
+          echo "Load test target: ${URL}"
+
+      # ── Resolve scenario ─────────────────────────────────────────────────────
+      - name: Resolve scenario
+        id: scenario
+        run: |
+          SCENARIO="${{ github.event.inputs.scenario || 'all' }}"
+          echo "scenario=${SCENARIO}" >> $GITHUB_OUTPUT
+
+      # ── Spike test ───────────────────────────────────────────────────────────
+      - name: Run spike test
+        id: spike
+        if: steps.scenario.outputs.scenario == 'spike' || steps.scenario.outputs.scenario == 'all'
+        run: |
+          set -o pipefail
+          k6 run \
+            --env BASE_URL=${{ steps.url.outputs.url }} \
+            --env API_TOKEN=${{ secrets.STAGING_API_TOKEN }} \
+            --env SCENARIO=spike \
+            --out json=spike-results.json \
+            k6/load-test.js \
+            2>&1 | tee spike-output.txt
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true   # capture output even on threshold breach
+
+      # ── Soak test ────────────────────────────────────────────────────────────
+      - name: Run soak test
+        id: soak
+        if: steps.scenario.outputs.scenario == 'soak' || steps.scenario.outputs.scenario == 'all'
+        run: |
+          set -o pipefail
+          k6 run \
+            --env BASE_URL=${{ steps.url.outputs.url }} \
+            --env API_TOKEN=${{ secrets.STAGING_API_TOKEN }} \
+            --env SCENARIO=soak \
+            --out json=soak-results.json \
+            k6/load-test.js \
+            2>&1 | tee soak-output.txt
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      # ── Generate HTML report ─────────────────────────────────────────────────
+      - name: Generate HTML performance report
+        if: always()
+        run: |
+          mkdir -p reports
+          cat > reports/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <title>CertiVault Performance Report</title>
+            <style>
+              body { font-family: -apple-system, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+              h1 { color: #1a1a2e; }
+              pre { background: #f4f4f4; padding: 16px; border-radius: 4px; overflow: auto; }
+              .pass { color: #22863a; font-weight: bold; }
+              .fail { color: #cb2431; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <h1>CertiVault Load Test Report</h1>
+            <p><strong>Commit:</strong> ${{ github.sha }}</p>
+            <p><strong>Target:</strong> ${{ steps.url.outputs.url }}</p>
+            <p><strong>Date:</strong> $(date -u)</p>
+
+            <h2>Spike Test</h2>
+            <pre>$(cat spike-output.txt 2>/dev/null || echo "Not run")</pre>
+
+            <h2>Soak Test</h2>
+            <pre>$(cat soak-output.txt 2>/dev/null || echo "Not run")</pre>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload performance report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-report-${{ github.sha }}
+          path: |
+            reports/
+            spike-results.json
+            soak-results.json
+            spike-output.txt
+            soak-output.txt
+          retention-days: 14
+
+      # ── Post results as PR comment ───────────────────────────────────────────
+      - name: Post results to PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            const spikeOutput = fs.existsSync('spike-output.txt')
+              ? fs.readFileSync('spike-output.txt', 'utf8').slice(-3000)
+              : 'Not run';
+            const soakOutput = fs.existsSync('soak-output.txt')
+              ? fs.readFileSync('soak-output.txt', 'utf8').slice(-3000)
+              : 'Not run';
+
+            const spikeStatus = '${{ steps.spike.outcome }}';
+            const soakStatus  = '${{ steps.soak.outcome }}';
+
+            const icon = (s) => s === 'success' ? '✅' : s === 'skipped' ? '⏭️' : '❌';
+
+            const body = `## k6 Performance Test Results
+
+            | Scenario | Result |
+            |---|---|
+            | Spike (0→100→0 users, 5 min) | ${icon(spikeStatus)} ${spikeStatus} |
+            | Soak (10 users, 10 min) | ${icon(soakStatus)} ${soakStatus} |
+
+            **Target:** \`${{ steps.url.outputs.url }}\`
+            **Thresholds:** P95 < 2000ms · Error rate < 1% · Throughput > 50 req/s
+
+            <details>
+            <summary>Spike test output</summary>
+
+            \`\`\`
+            ${spikeOutput}
+            \`\`\`
+            </details>
+
+            <details>
+            <summary>Soak test output</summary>
+
+            \`\`\`
+            ${soakOutput}
+            \`\`\`
+            </details>
+
+            Full report available in [Actions artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).`;
+
+            // Remove old performance comments
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            for (const c of comments) {
+              if (c.user.login === 'github-actions[bot]' &&
+                  c.body.includes('k6 Performance Test')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: c.id,
+                });
+              }
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      # ── Fail the job if any threshold was breached ───────────────────────────
+      - name: Enforce threshold pass
+        if: >
+          (steps.spike.outputs.exit_code != '' && steps.spike.outputs.exit_code != '0') ||
+          (steps.soak.outputs.exit_code  != '' && steps.soak.outputs.exit_code  != '0')
+        run: |
+          echo "One or more k6 thresholds were breached."
+          echo "Spike exit code: ${{ steps.spike.outputs.exit_code }}"
+          echo "Soak exit code:  ${{ steps.soak.outputs.exit_code }}"
+          exit 1

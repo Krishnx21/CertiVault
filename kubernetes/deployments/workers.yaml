@@ -1,0 +1,76 @@
+# =============================================================================
+# CertiVault — BullMQ Workers Deployment
+# Same image as backend — overrides CMD to run workers entry point.
+# Replicas: 1  (workers are stateful via Redis — scale carefully)
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: certivault-workers
+  namespace: certivault
+  labels:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/component: workers
+    app.kubernetes.io/part-of: certivault
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: certivault
+      app.kubernetes.io/component: workers
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: certivault
+        app.kubernetes.io/component: workers
+        app.kubernetes.io/part-of: certivault
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+
+      terminationGracePeriodSeconds: 60   # allow in-flight jobs to finish
+
+      containers:
+        - name: workers
+          image: ghcr.io/krishnx21/certivault-backend:latest
+          imagePullPolicy: Always
+          # Override the default CMD (node dist/server.js) to run the workers
+          command: ["node", "dist/workers/index.js"]
+
+          envFrom:
+            - configMapRef:
+                name: certivault-config
+            - secretRef:
+                name: certivault-secrets
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+
+          # Workers don't serve HTTP traffic — use a process-level liveness check
+          livenessProbe:
+            exec:
+              command: ["node", "-e", "process.exit(0)"]
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+
+      volumes:
+        - name: uploads
+          emptyDir: {}

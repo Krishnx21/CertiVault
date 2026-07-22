@@ -1,0 +1,78 @@
+# =============================================================================
+# CertiVault — Prometheus Scrape Configuration
+# =============================================================================
+# Prometheus scrapes GET /metrics from the backend every 15 seconds.
+# The backend service name in docker-compose is "backend" and exposes port 5000.
+# =============================================================================
+
+global:
+  scrape_interval:     15s   # How often to scrape targets
+  evaluation_interval: 15s   # How often to evaluate rules
+  scrape_timeout:      10s
+
+  # Labels added to every time series scraped from this Prometheus instance
+  external_labels:
+    monitor: certivault
+    environment: local
+
+# =============================================================================
+# Alert rules (Phase 4 — certivault rules)
+# =============================================================================
+rule_files:
+  - /etc/prometheus/rules/certivault-rules.yml
+
+# =============================================================================
+# Alertmanager configuration (optional — wire up in Phase 4)
+# =============================================================================
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ["alertmanager:9093"]
+
+# =============================================================================
+# Scrape configurations
+# =============================================================================
+scrape_configs:
+
+  # ── Prometheus self-monitoring ─────────────────────────────────────────────
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+    metrics_path: /metrics
+
+  # ── CertiVault Backend API ─────────────────────────────────────────────────
+  # prom-client exposes metrics at GET /metrics (added in Phase 4).
+  # In docker-compose the backend container is reachable at backend:5000.
+  - job_name: certivault-backend
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["backend:5000"]
+        labels:
+          service: certivault-backend
+          component: api
+
+  # ── CertiVault Workers ────────────────────────────────────────────────────
+  # Workers expose metrics on port 5001 (added in Phase 4 when prom-client
+  # is wired up in the worker process). Until then, this job will simply
+  # report as down — that is fine, no data loss occurs.
+  - job_name: certivault-workers
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["workers:5001"]
+        labels:
+          service: certivault-workers
+          component: worker
+
+  # ── MongoDB Exporter (optional — uncomment if mongodb-exporter is added) ──
+  # - job_name: mongodb
+  #   static_configs:
+  #     - targets: ["mongodb-exporter:9216"]
+
+  # ── Redis Exporter (optional — uncomment if redis-exporter is added) ──────
+  # - job_name: redis
+  #   static_configs:
+  #     - targets: ["redis-exporter:9121"]

@@ -1,0 +1,81 @@
+# =============================================================================
+# CertiVault — Frontend Deployment  (Nginx + React SPA)
+# Image: ghcr.io/krishnx21/certivault-frontend:latest
+# Replicas: 2  |  RollingUpdate
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: certivault-frontend
+  namespace: certivault
+  labels:
+    app.kubernetes.io/name: certivault
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: certivault
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: certivault
+      app.kubernetes.io/component: frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: certivault
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: certivault
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101          # nginx user id in nginx:alpine
+        runAsGroup: 101
+
+      terminationGracePeriodSeconds: 15
+
+      containers:
+        - name: frontend
+          image: ghcr.io/krishnx21/certivault-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/component: frontend

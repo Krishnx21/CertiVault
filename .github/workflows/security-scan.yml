@@ -1,0 +1,200 @@
+# =============================================================================
+# CertiVault — Container Image Security Scanning (Trivy)
+# =============================================================================
+# Scans built Docker images for OS + npm vulnerabilities and secrets.
+# Results are uploaded to the GitHub Security tab as SARIF when available.
+#
+# The workflow never hard-fails the pipeline — findings are visible in the
+# Security tab and as step annotations, but won't block deploys.
+# Use GitHub branch protection rules to enforce security gates if needed.
+# =============================================================================
+
+name: Container Security Scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "nginx/**"
+      - ".github/workflows/security-scan.yml"
+  pull_request:
+    branches: [main]
+  schedule:
+    # Every Monday at 04:00 UTC — catches newly-disclosed CVEs
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: read           # pull images from GHCR
+  security-events: write   # upload SARIF to GitHub Security tab
+
+jobs:
+  scan-backend:
+    name: Scan Backend Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image for scanning
+        id: build_backend
+        uses: docker/build-push-action@v6
+        continue-on-error: true
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          target: production
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: certivault-backend:scan
+          cache-from: type=registry,ref=ghcr.io/krishnx21/certivault-backend:buildcache
+
+      # ── OS + npm packages inside the image ─────────────────────────────────
+      - name: Trivy — image vuln scan (backend)
+        id: image_scan
+        if: steps.build_backend.outcome == 'success'
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          image-ref: certivault-backend:scan
+          format: sarif
+          output: trivy-backend-image.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "0"          # never fail — results go to Security tab
+          scanners: vuln
+          vuln-type: os,library
+          ignore-unfixed: true    # skip CVEs that have no available fix
+
+      - name: Upload backend image scan results
+        if: steps.image_scan.outcome == 'success' && hashFiles('trivy-backend-image.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-backend-image.sarif
+          category: container-backend
+
+      # ── npm dependencies (source tree) ─────────────────────────────────────
+      - name: Trivy — backend npm dependency scan
+        id: deps_scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: fs
+          scan-ref: ./backend
+          format: sarif
+          output: trivy-backend-deps.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "0"          # never fail — results go to Security tab
+          scanners: vuln
+          vuln-type: library
+          ignore-unfixed: true
+
+      - name: Upload backend dependency scan results
+        if: steps.deps_scan.outcome == 'success' && hashFiles('trivy-backend-deps.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-backend-deps.sarif
+          category: deps-backend
+
+  scan-frontend:
+    name: Scan Frontend Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend image for scanning
+        id: build_frontend
+        uses: docker/build-push-action@v6
+        continue-on-error: true
+        with:
+          context: .
+          file: ./frontend/Dockerfile
+          target: production
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: certivault-frontend:scan
+          cache-from: type=registry,ref=ghcr.io/krishnx21/certivault-frontend:buildcache
+
+      # ── OS + npm packages inside the image ─────────────────────────────────
+      - name: Trivy — image vuln scan (frontend)
+        id: image_scan
+        if: steps.build_frontend.outcome == 'success'
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          image-ref: certivault-frontend:scan
+          format: sarif
+          output: trivy-frontend-image.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "0"
+          scanners: vuln
+          vuln-type: os,library
+          ignore-unfixed: true
+
+      - name: Upload frontend image scan results
+        if: steps.image_scan.outcome == 'success' && hashFiles('trivy-frontend-image.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-frontend-image.sarif
+          category: container-frontend
+
+      # ── npm dependencies (source tree) ─────────────────────────────────────
+      - name: Trivy — frontend npm dependency scan
+        id: deps_scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: fs
+          scan-ref: ./frontend
+          format: sarif
+          output: trivy-frontend-deps.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "0"
+          scanners: vuln
+          vuln-type: library
+          ignore-unfixed: true
+
+      - name: Upload frontend dependency scan results
+        if: steps.deps_scan.outcome == 'success' && hashFiles('trivy-frontend-deps.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-frontend-deps.sarif
+          category: deps-frontend
+
+  # ===========================================================================
+  # Consolidated summary
+  # ===========================================================================
+  security-report:
+    name: Security Report Summary
+    runs-on: ubuntu-latest
+    needs: [scan-backend, scan-frontend]
+    if: always()
+
+    steps:
+      - name: Write security summary
+        run: |
+          echo "## Container Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend image | ${{ needs.scan-backend.result == 'success' && '✅ scanned' || '⚠️ scan issues' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend image | ${{ needs.scan-frontend.result == 'success' && '✅ scanned' || '⚠️ scan issues' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Findings (if any) are in the [Security tab](${{ github.server_url }}/${{ github.repository }}/security/code-scanning)." >> $GITHUB_STEP_SUMMARY

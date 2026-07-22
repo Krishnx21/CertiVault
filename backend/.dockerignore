@@ -1,0 +1,41 @@
+# ── Build output ────────────────────────────────────────────────────────────
+dist/
+
+# ── Dependencies (re-installed inside container) ─────────────────────────────
+node_modules/
+
+# ── Environment files (injected at runtime, never baked into image) ──────────
+.env
+.env.*
+!.env.example
+
+# ── Uploaded files (mounted as a volume at runtime) ──────────────────────────
+uploads/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Git ──────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ── Test / coverage ──────────────────────────────────────────────────────────
+tests/
+coverage/
+jest.config.*
+vitest.config.*
+*.test.ts
+*.spec.ts
+
+# ── Editor / OS ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── CI / docs ─────────────────────────────────────────────────────────────────
+.github/
+docs/
+*.md

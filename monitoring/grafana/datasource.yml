@@ -1,0 +1,25 @@
+# =============================================================================
+# CertiVault — Grafana Datasource Provisioning
+# =============================================================================
+# Grafana reads this file on startup and automatically creates the Prometheus
+# datasource.  No manual "Add datasource" step needed.
+#
+# File is mounted read-only into:
+#   /etc/grafana/provisioning/datasources/datasource.yml
+# =============================================================================
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: certivault-prometheus   # stable UID referenced by dashboard panels
+    access: proxy                # Grafana backend proxies requests to Prometheus
+    url: http://prometheus:9090  # docker-compose service name
+    isDefault: true
+    editable: false              # prevent accidental edits through UI
+    jsonData:
+      httpMethod: POST           # POST is more efficient for complex queries
+      timeInterval: "15s"        # matches Prometheus scrape_interval
+      queryTimeout: "60s"
+      exemplarTraceIdDestinations: []
