@@ -7,7 +7,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production", "staging"])
     .default("development"),
-  PORT: z.string().transform(Number).pipe(z.number().int().min(1).max(65535)).default(5000),
+  PORT: z.string().transform(Number).pipe(z.number().int().min(1).max(65535)).default(() => "5000"),
   FRONTEND_ORIGIN: z.string().url(),
   MONGODB_URI: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(32),
@@ -41,13 +41,13 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CALLBACK_URL: z.string().url().optional(),
-  MAX_UPLOAD_BYTES: z.string().transform(Number).pipe(z.number().positive()).default(10485760),
+  MAX_UPLOAD_BYTES: z.string().transform(Number).pipe(z.number().positive()).default(() => "10485760"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
-  RATE_LIMIT_WINDOW_MS: z.string().transform(Number).pipe(z.number().positive()).default(900000),
-  RATE_LIMIT_MAX: z.string().transform(Number).pipe(z.number().positive()).default(100),
-  BCRYPT_ROUNDS: z.string().transform(Number).pipe(z.number().min(10).max(15)).default(12),
+  RATE_LIMIT_WINDOW_MS: z.string().transform(Number).pipe(z.number().positive()).default(() => "900000"),
+  RATE_LIMIT_MAX: z.string().transform(Number).pipe(z.number().positive()).default(() => "100"),
+  BCRYPT_ROUNDS: z.string().transform(Number).pipe(z.number().min(10).max(15)).default(() => "12"),
   SESSION_COOKIE_NAME: z.string().default("refreshToken"),
-  TRUST_PROXY: z.string().transform(v => v === "true").default(() => true),
+  TRUST_PROXY: z.string().transform(v => v === "true").default(() => "true"),
 });
 
 export type Env = z.infer<typeof envSchema>;
