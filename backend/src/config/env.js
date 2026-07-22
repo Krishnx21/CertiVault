@@ -16,10 +16,27 @@ const parsePort = (value) => {
   return port;
 };
 
+const parseFrontendOrigin = (value) => {
+  if (!value || typeof value !== "string" || value.trim() === "") {
+    return "http://localhost:5173";
+  }
+
+  const origins = value
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  if (origins.length === 0) {
+    return "http://localhost:5173";
+  }
+
+  return origins.length === 1 ? origins[0] : origins;
+};
+
 export const getEnv = () => ({
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: parsePort(process.env.API_PORT),
-  frontendOrigin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173",
+  frontendOrigin: parseFrontendOrigin(process.env.FRONTEND_ORIGIN),
   mongoUri:
     process.env.MONGODB_URI ??
     (() => {

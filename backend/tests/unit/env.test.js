@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { getEnv } from "../../src/config/env.js";
 
@@ -119,6 +119,24 @@ test("env: FRONTEND_ORIGIN reflects the value set in the environment", () => {
   try {
     process.env.FRONTEND_ORIGIN = "https://app.certivault.io";
     assert.equal(getEnv().frontendOrigin, "https://app.certivault.io");
+  } finally {
+    if (originalEnv !== undefined) {
+      process.env.FRONTEND_ORIGIN = originalEnv;
+    } else {
+      delete process.env.FRONTEND_ORIGIN;
+    }
+  }
+});
+
+test("env: FRONTEND_ORIGIN parses comma-separated multiple origins into an array", () => {
+  const originalEnv = process.env.FRONTEND_ORIGIN;
+  try {
+    process.env.FRONTEND_ORIGIN = "http://localhost:5173, http://localhost:3000, https://app.certivault.io";
+    assert.deepEqual(getEnv().frontendOrigin, [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://app.certivault.io",
+    ]);
   } finally {
     if (originalEnv !== undefined) {
       process.env.FRONTEND_ORIGIN = originalEnv;
