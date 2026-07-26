@@ -261,6 +261,7 @@ export function Topbar({ setMobileNav }: TopbarProps) {
               </button>
               <button
                 role="menuitem"
+                onClick={() => { setShowProfileMenu(false); navigate("/help"); }}
                 className="profile-menu-item"
               >
                 <HelpCircle size={16} aria-hidden="true" /><span>Help &amp; docs</span>

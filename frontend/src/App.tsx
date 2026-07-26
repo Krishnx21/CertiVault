@@ -16,6 +16,7 @@ import SharedVaults from "./pages/SharedVaults.js";          // UPDATED
 import VaultMembers from "./pages/VaultMembers.js";           // UPDATED
 import SharedVaultDocuments from "./pages/SharedVaultDocuments.js"; // UPDATED
 import Settings from "./pages/Settings.js";
+import HelpCenter from "./pages/HelpCenter.js";
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -124,6 +125,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <ProtectedRoute>
+                <HelpCenter />
               </ProtectedRoute>
             }
           />
