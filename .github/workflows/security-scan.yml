@@ -49,7 +49,7 @@ jobs:
 
       - name: Build backend image for scanning
         id: build_backend
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         continue-on-error: true
         with:
           context: ./backend
@@ -120,7 +120,7 @@ jobs:
 
       - name: Build frontend image for scanning
         id: build_frontend
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         continue-on-error: true
         with:
           context: .
