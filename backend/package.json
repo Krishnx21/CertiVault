@@ -56,20 +56,20 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.2",
     "@types/hpp": "^0.2.5",
-    "@types/ioredis": "^4.28.10",
+    "@types/ioredis": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/multer": "^2.2.0",
-    "@types/node": "^22.15.3",
+    "@types/node": "^26.1.1",
     "@types/nodemailer": "^8.0.1",
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/qrcode": "^1.5.6",
-    "@typescript-eslint/eslint-plugin": "^8.32.0",
+    "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.32.0",
-    "eslint": "^9.26.0",
-    "mongodb-memory-server": "^10.4.2",
-    "prettier": "^3.9.4",
+    "eslint": "^10.8.0",
+    "mongodb-memory-server": "^11.2.0",
+    "prettier": "^3.9.6",
     "tsx": "^4.19.2",
-    "typescript": "^5.8.3"
+    "typescript": "^7.0.2"
   }
 }
