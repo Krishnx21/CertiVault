@@ -62,7 +62,7 @@ jobs:
 
       # Buildx enables multi-platform builds (amd64 + arm64)
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           driver-opts: network=host
 
@@ -148,7 +148,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           driver-opts: network=host
 
