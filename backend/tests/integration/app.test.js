@@ -118,3 +118,23 @@ test("returns HTTP 400 with normalized error when JSON is malformed", async () =
   assert.equal(body.requestId, "json-error-id");
   assert.equal(body.error.stack, undefined);
 });
+
+test("GET /api/documents/:id returns 401 when no auth token provided", async () => {
+  const response = await fetch(`${baseUrl}/api/documents/64b1f1f1f1f1f1f1f1f1f1f1`);
+  const body = await response.json();
+
+  assert.equal(response.status, 401);
+  assert.equal(body.error.code, "UNAUTHORIZED");
+  assert.match(response.headers.get("x-request-id"), /^[0-9a-f-]{36}$/);
+  assert.match(response.headers.get("x-response-time"), /^\d+(\.\d+)?ms$/);
+});
+
+test("GET /api/documents returns 401 when no auth token provided", async () => {
+  const response = await fetch(`${baseUrl}/api/documents`);
+  const body = await response.json();
+
+  assert.equal(response.status, 401);
+  assert.equal(body.error.code, "UNAUTHORIZED");
+  assert.match(response.headers.get("x-request-id"), /^[0-9a-f-]{36}$/);
+  assert.match(response.headers.get("x-response-time"), /^\d+(\.\d+)?ms$/);
+});
