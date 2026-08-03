@@ -36,8 +36,8 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
-  BULL_BOARD_USERNAME: z.string().optional(), // UPDATED
-  BULL_BOARD_PASSWORD: z.string().optional(), // UPDATED
+  BULL_BOARD_USERNAME: z.string().optional(), // Bull Board is disabled unless BOTH credentials are explicitly set
+  BULL_BOARD_PASSWORD: z.string().optional(), // Bull Board is disabled unless BOTH credentials are explicitly set
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CALLBACK_URL: z.string().optional(),

@@ -264,6 +264,8 @@ SMTP_PASS=your_app_password
 EMAIL_FROM=CertiVault <noreply@certivault.com>
 
 # Bull Board
+# Queue admin UI at /admin/queues. DISABLED unless both vars are set.
+# Never run with default credentials.
 BULL_BOARD_USERNAME=admin
 BULL_BOARD_PASSWORD=securepassword
 ```

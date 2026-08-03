@@ -231,13 +231,14 @@ export const createApp = (): Express => {
   app.use("/api/vault", vaultRouter); // UPDATED
 
   // ============================================
-  // BULL BOARD — Queue Admin UI (UPDATED)
-  // Protected by HTTP Basic Auth
+  // BULL BOARD — Queue Admin UI
+  // Protected by HTTP Basic Auth (disabled unless BULL_BOARD_USERNAME and BULL_BOARD_PASSWORD are both set)
   // Access: http://localhost:5000/admin/queues
   // ============================================
-  const { router: bullBoardRouter, authMiddleware: bullBoardAuth } =
-    createBullBoardRouter();
-  app.use("/admin/queues", bullBoardAuth, bullBoardRouter);
+  const bullBoard = createBullBoardRouter();
+  if (bullBoard) {
+    app.use("/admin/queues", bullBoard.authMiddleware, bullBoard.router);
+  }
 
   // Serve local files for development with proper headers
   app.use("/api/files", (req, res, next) => {

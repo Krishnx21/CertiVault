@@ -12,19 +12,15 @@ import { ExpressAdapter } from "@bull-board/express";
 import type { RequestHandler, Request, Response, NextFunction } from "express";
 import { getEmailQueue } from "../queues/email.queue.js";
 import { getNotificationQueue } from "../queues/notification.queue.js";
-import { getEnv } from "./env.js";
 import { createModuleLogger } from "../common/utils/logger.js";
 
 const log = createModuleLogger("bullboard");
 
 // ─── Basic-auth middleware ────────────────────────────────────────────────────
+// Credentials must be supplied explicitly — there is no fallback default.
 
-function basicAuth(): RequestHandler {
+function basicAuth(username: string, password: string): RequestHandler {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const env = getEnv();
-    const username = env.BULL_BOARD_USERNAME ?? "admin";
-    const password = env.BULL_BOARD_PASSWORD ?? "changeme";
-
     const authHeader = req.headers.authorization ?? "";
 
     if (!authHeader.startsWith("Basic ")) {
@@ -56,7 +52,23 @@ function basicAuth(): RequestHandler {
 export function createBullBoardRouter(): {
   router: ExpressAdapter["getRouter"] extends () => infer R ? R : never;
   authMiddleware: RequestHandler;
-} {
+} | null {
+  // Read credentials directly from process.env (not the cached env snapshot)
+  // so they are always current and never fall back to insecure defaults.
+  const username = process.env.BULL_BOARD_USERNAME;
+  const password = process.env.BULL_BOARD_PASSWORD;
+
+  // The admin UI is disabled unless credentials are explicitly configured.
+  // Falling back to hardcoded defaults (admin/changeme) is a security risk.
+  if (!username || !password) {
+    log.warn(
+      "Bull Board: DISABLED because BULL_BOARD_USERNAME and/or BULL_BOARD_PASSWORD " +
+        "are not set. Set both environment variables to enable the queue admin UI " +
+        "at /admin/queues."
+    );
+    return null;
+  }
+
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath("/admin/queues");
 
@@ -78,6 +90,6 @@ export function createBullBoardRouter(): {
 
   return {
     router: serverAdapter.getRouter(),
-    authMiddleware: basicAuth(),
+    authMiddleware: basicAuth(username, password),
   };
 }
