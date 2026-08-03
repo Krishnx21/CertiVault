@@ -182,7 +182,7 @@ jobs:
 
       # ── Post results as PR comment ───────────────────────────────────────────
       - name: Post results to PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         if: github.event_name == 'pull_request'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
