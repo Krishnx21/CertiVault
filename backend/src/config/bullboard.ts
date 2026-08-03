@@ -23,8 +23,18 @@ function basicAuth(): RequestHandler {
   return (req: Request, res: Response, next: NextFunction): void => {
     const env = getEnv();
     const username = env.BULL_BOARD_USERNAME ?? "admin";
-    const password = env.BULL_BOARD_PASSWORD ?? "changeme";
+    const password = env.BULL_BOARD_PASSWORD;
 
+    if (!password) {
+      if (env.NODE_ENV === "production" || env.NODE_ENV === "staging") {
+        log.error("Bull Board: Access disabled. BULL_BOARD_PASSWORD is not set in environment.");
+        res.status(503).json({ error: "Bull Board is disabled due to missing configuration." });
+        return;
+      }
+      log.warn("Bull Board: Using default credentials ('admin' / 'changeme'). Set BULL_BOARD_PASSWORD in environment.");
+    }
+
+    const effectivePassword = password ?? "changeme";
     const authHeader = req.headers.authorization ?? "";
 
     if (!authHeader.startsWith("Basic ")) {
@@ -37,7 +47,7 @@ function basicAuth(): RequestHandler {
     const decoded = Buffer.from(base64, "base64").toString("utf8");
     const [user, pass] = decoded.split(":");
 
-    if (user !== username || pass !== password) {
+    if (user !== username || pass !== effectivePassword) {
       log.warn("Bull Board: failed auth attempt", {
         ip: req.ip,
         user: user ?? "(none)",
