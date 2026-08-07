@@ -127,3 +127,31 @@ test("env: FRONTEND_ORIGIN reflects the value set in the environment", () => {
     }
   }
 });
+
+test("env: NODE_ENV empty string is preserved, not defaulted", () => {
+  const originalEnv = process.env.NODE_ENV;
+  try {
+    process.env.NODE_ENV = "";
+    assert.equal(getEnv().nodeEnv, "");
+  } finally {
+    if (originalEnv !== undefined) {
+      process.env.NODE_ENV = originalEnv;
+    } else {
+      delete process.env.NODE_ENV;
+    }
+  }
+});
+
+test("env: FRONTEND_ORIGIN empty string is preserved, not defaulted", () => {
+  const originalEnv = process.env.FRONTEND_ORIGIN;
+  try {
+    process.env.FRONTEND_ORIGIN = "";
+    assert.equal(getEnv().frontendOrigin, "");
+  } finally {
+    if (originalEnv !== undefined) {
+      process.env.FRONTEND_ORIGIN = originalEnv;
+    } else {
+      delete process.env.FRONTEND_ORIGIN;
+    }
+  }
+});
