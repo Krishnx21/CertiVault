@@ -33,6 +33,8 @@ test("env: accept valid ports", async () => {
   } finally {
     if (originalEnv !== undefined) {
       process.env.PORT = originalEnv;
+    } else {
+      delete process.env.PORT;
     }
   }
 });
@@ -46,7 +48,9 @@ test("env: reject invalid ports", async () => {
     for (const port of invalidPorts) {
       process.env.PORT = port;
       await assert.rejects(async () => {
-        await import(`../../src/config/env.js?t=${t++}`);
+        const { getEnv } = await import(`../../src/config/env.js?t=${t++}`);
+        // validation happens when getEnv is executed
+        getEnv();
       });
     }
   } finally {
@@ -61,6 +65,7 @@ test("env: FRONTEND_ORIGIN defaults to localhost when unset", async () => {
   const original = process.env.FRONTEND_ORIGIN;
   delete process.env.FRONTEND_ORIGIN;
   try {
+    delete process.env.PORT;
     const { getEnv } = await import(`../../src/config/env.js?t=10`);
     const env = getEnv();
     assert.equal(env.FRONTEND_ORIGIN, "http://localhost:5173");
@@ -73,6 +78,7 @@ test("env: parses single FRONTEND_ORIGIN", async () => {
   const original = process.env.FRONTEND_ORIGIN;
   process.env.FRONTEND_ORIGIN = "http://example.com";
   try {
+    delete process.env.PORT;
     const { getEnv } = await import(`../../src/config/env.js?t=11`);
     const env = getEnv();
     assert.equal(env.FRONTEND_ORIGIN, "http://example.com");
@@ -86,6 +92,7 @@ test("env: parses multiple comma-separated FRONTEND_ORIGIN values", async () => 
   const original = process.env.FRONTEND_ORIGIN;
   process.env.FRONTEND_ORIGIN = "http://a.com, http://b.com";
   try {
+    delete process.env.PORT;
     const { getEnv } = await import(`../../src/config/env.js?t=12`);
     const env = getEnv();
     assert.deepEqual(env.FRONTEND_ORIGIN, ["http://a.com", "http://b.com"]);
@@ -99,6 +106,7 @@ test("env: supports wildcard FRONTEND_ORIGIN '*'", async () => {
   const original = process.env.FRONTEND_ORIGIN;
   process.env.FRONTEND_ORIGIN = "*";
   try {
+    delete process.env.PORT;
     const { getEnv } = await import(`../../src/config/env.js?t=13`);
     const env = getEnv();
     assert.equal(env.FRONTEND_ORIGIN, "*");
