@@ -62,7 +62,7 @@ export const createApp = (): Express => {
           imgSrc: ["'self'", "data:", "https:"],
           connectSrc: [
             "'self'",
-            env.FRONTEND_ORIGIN,
+            ...(Array.isArray(env.FRONTEND_ORIGIN) ? env.FRONTEND_ORIGIN : [env.FRONTEND_ORIGIN]),
             ...(isDevelopment ? ["http://localhost:*", "http://127.0.0.1:*"] : []),
           ],
           fontSrc: ["'self'"],
@@ -82,9 +82,15 @@ export const createApp = (): Express => {
   // ============================================
   // CORS CONFIGURATION
   // ============================================
+  const frontendOrigins = Array.isArray(env.FRONTEND_ORIGIN)
+    ? env.FRONTEND_ORIGIN
+    : [env.FRONTEND_ORIGIN].filter(Boolean);
+
+  const allowAllOrigins = frontendOrigins.includes("*");
+
   const allowedOrigins = Array.from(
     new Set([
-      env.FRONTEND_ORIGIN,
+      ...frontendOrigins,
       ...(isDevelopment ? [
         "http://localhost:5173",
         "http://localhost:5174",
@@ -98,22 +104,33 @@ export const createApp = (): Express => {
     ])
   ).filter(Boolean);
 
-  const corsOptions: cors.CorsOptions = {
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, Postman, curl)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
+  const corsOptions: cors.CorsOptions = allowAllOrigins
+    ? {
+        // reflect origin and allow all — for wildcard we disable credentials to avoid violation of the spec
+        origin: true,
+        credentials: false,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
+        exposedHeaders: ["X-Request-ID", "X-Response-Time"],
+        optionsSuccessStatus: 200,
+        maxAge: 86400, // 24 hours
       }
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
-    exposedHeaders: ["X-Request-ID", "X-Response-Time"],
-    optionsSuccessStatus: 200,
-    maxAge: 86400, // 24 hours
-  };
+    : {
+        origin: (origin, callback) => {
+          // Allow requests with no origin (mobile apps, Postman, curl)
+          if (!origin) return callback(null, true);
+          if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+          }
+          return callback(new Error("Not allowed by CORS"));
+        },
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
+        exposedHeaders: ["X-Request-ID", "X-Response-Time"],
+        optionsSuccessStatus: 200,
+        maxAge: 86400, // 24 hours
+      };
 
   app.use(cors(corsOptions));
 
