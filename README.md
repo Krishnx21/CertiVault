@@ -485,7 +485,7 @@ AWS resources provisioned:
 
 ## Contributing
 
-CertiVault is open source under ECSoC 2026. Contributions are welcome.
+CertiVault is open source under ECSoC 2026.
 
 Good first issues:
 
