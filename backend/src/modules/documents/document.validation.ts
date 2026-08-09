@@ -85,8 +85,15 @@ export const sortDocumentsSchema = z.object({
 
 // Get documents schema (with pagination)
 export const getDocumentsSchema = z.object({
-  page: z.string().optional().transform((val) => (val ? parseInt(val) : 1)),
-  limit: z.string().optional().transform((val) => (val ? parseInt(val) : 20)),
+  cursor: z.string().optional(),
+  page: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
+  limit: z.string().optional().transform((val) => {
+    if (!val) return 20;
+    const parsed = parseInt(val, 10);
+    if (isNaN(parsed) || parsed < 1) return 20;
+    if (parsed > 100) return 100;
+    return parsed;
+  }),
   search: z.string().optional(),
   status: z.enum(["all", "pending", "verified", "rejected"]).optional(),
   category: z.enum(["all", "certificate", "contract", "identity", "invoice", "report", "other"]).optional(),
