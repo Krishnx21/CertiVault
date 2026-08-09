@@ -119,10 +119,11 @@ export const listDocuments = async (
       if (queryToParse.status === "all") delete queryToParse.status;
       delete queryToParse.vaultOwnerId;
 
-      const { page, limit, search, status, category, isFavorite, isArchived, sortBy, startDate, endDate } =
+      const { cursor, page, limit, search, status, category, isFavorite, isArchived, sortBy, startDate, endDate } =
         getDocumentsSchema.parse(queryToParse);
 
       const result = await getDocuments({
+        cursor,
         page,
         limit,
         search,
@@ -144,10 +145,11 @@ export const listDocuments = async (
     const queryToParse = { ...req.query };
     if (queryToParse.status === "all") delete queryToParse.status;
 
-    const { page, limit, search, status, category, isFavorite, isArchived, sortBy, startDate, endDate, owner } =
+    const { cursor, page, limit, search, status, category, isFavorite, isArchived, sortBy, startDate, endDate, owner } =
       getDocumentsSchema.parse(queryToParse);
 
     const result = await getDocuments({
+      cursor,
       page,
       limit,
       search,

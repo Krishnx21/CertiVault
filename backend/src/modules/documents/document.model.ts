@@ -205,8 +205,10 @@ documentSchema.index({ tags: 1 });
 documentSchema.index({ createdAt: -1 });
 documentSchema.index({ title: "text", description: "text", tags: "text", ownerName: "text", fileName: "text" });
 
-// Compound index for search
+// Compound index for search and cursor pagination
 documentSchema.index({ owner: 1, isArchived: 1, status: 1, createdAt: -1 });
+documentSchema.index({ owner: 1, isArchived: 1, _id: -1 });
+documentSchema.index({ owner: 1, isArchived: 1, status: 1, _id: -1 });
 
 export const DocumentModel = mongoose.model<IDocument>("Document", documentSchema);
 

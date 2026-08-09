@@ -3,6 +3,7 @@
  * Business logic for document operations
  */
 
+import mongoose from "mongoose";
 import { DocumentModel, IDocument } from "./document.model.js";
 import {
   uploadToS3,
@@ -34,8 +35,9 @@ interface UploadDocumentInput {
 }
 
 interface GetDocumentsInput {
-  page: number;
+  page?: number;
   limit: number;
+  cursor?: string;
   search?: string;
   status?: string;
   category?: string;
@@ -145,6 +147,7 @@ export const getDocuments = async (input: GetDocumentsInput) => {
   const {
     page,
     limit,
+    cursor,
     search,
     status,
     category,
@@ -157,7 +160,11 @@ export const getDocuments = async (input: GetDocumentsInput) => {
     endDate,
   } = input;
 
-  const skip = (page - 1) * limit;
+  if (cursor !== undefined) {
+    if (!cursor || !mongoose.Types.ObjectId.isValid(cursor)) {
+      throw new ApiError(400, "INVALID_CURSOR", "Invalid cursor parameter");
+    }
+  }
 
   // Build query
   const query: any = {
@@ -198,36 +205,78 @@ export const getDocuments = async (input: GetDocumentsInput) => {
     }
   }
 
-  // Build sort
-  let sort: any = { createdAt: -1 };
+  // Build sort and direction
+  let sort: any = { createdAt: -1, _id: -1 };
+  let isAscending = false;
+
   switch (sortBy) {
     case "oldest":
-      sort = { createdAt: 1 };
+      sort = { createdAt: 1, _id: 1 };
+      isAscending = true;
       break;
     case "title_asc":
-      sort = { title: 1 };
+      sort = { title: 1, _id: 1 };
+      isAscending = true;
       break;
     case "title_desc":
-      sort = { title: -1 };
+      sort = { title: -1, _id: -1 };
       break;
     case "size_asc":
-      sort = { fileSize: 1 };
+      sort = { fileSize: 1, _id: 1 };
+      isAscending = true;
       break;
     case "size_desc":
-      sort = { fileSize: -1 };
+      sort = { fileSize: -1, _id: -1 };
       break;
     case "status":
-      sort = { status: 1 };
+      sort = { status: 1, _id: 1 };
+      isAscending = true;
+      break;
+    default:
+      sort = { createdAt: -1, _id: -1 };
       break;
   }
 
+  // Preferred cursor pagination flow (when cursor is present or page is omitted)
+  if (cursor || page === undefined) {
+    if (cursor) {
+      const cursorObj = new mongoose.Types.ObjectId(cursor);
+      query._id = isAscending ? { $gt: cursorObj } : { $lt: cursorObj };
+    }
+
+    // Query limit + 1 documents to determine next page presence without count query
+    const documents = await DocumentModel.find(query).sort(sort).limit(limit + 1).lean();
+
+    let nextCursor: string | null = null;
+    if (documents.length > limit) {
+      const lastDoc = documents[limit - 1] as any;
+      nextCursor = lastDoc._id ? lastDoc._id.toString() : null;
+      documents.splice(limit);
+    }
+
+    return {
+      documents: documents as unknown as IDocument[],
+      nextCursor,
+      limit,
+    };
+  }
+
+  // Legacy offset-based pagination flow (when page parameter is explicitly provided without cursor)
+  const skip = (page - 1) * limit;
   const [documents, total] = await Promise.all([
     DocumentModel.find(query).sort(sort).skip(skip).limit(limit).lean(),
     DocumentModel.countDocuments(query),
   ]);
 
+  let nextCursor: string | null = null;
+  if (documents.length > 0 && page * limit < total) {
+    const lastDoc = documents[documents.length - 1] as any;
+    nextCursor = lastDoc._id ? lastDoc._id.toString() : null;
+  }
+
   return {
     documents: documents as unknown as IDocument[],
+    nextCursor,
     total,
     page,
     limit,
