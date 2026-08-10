@@ -126,7 +126,7 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Trivy backend results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: steps.trivy_backend.outcome == 'success' && hashFiles('trivy-backend.sarif') != ''
         with:
           sarif_file: trivy-backend.sarif
@@ -205,7 +205,7 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Trivy frontend results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: steps.trivy_frontend.outcome == 'success' && hashFiles('trivy-frontend.sarif') != ''
         with:
           sarif_file: trivy-frontend.sarif

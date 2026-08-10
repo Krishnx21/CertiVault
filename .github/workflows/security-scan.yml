@@ -79,7 +79,7 @@ jobs:
 
       - name: Upload backend image scan results
         if: steps.image_scan.outcome == 'success' && hashFiles('trivy-backend-image.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-backend-image.sarif
           category: container-backend
@@ -102,7 +102,7 @@ jobs:
 
       - name: Upload backend dependency scan results
         if: steps.deps_scan.outcome == 'success' && hashFiles('trivy-backend-deps.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-backend-deps.sarif
           category: deps-backend
@@ -150,7 +150,7 @@ jobs:
 
       - name: Upload frontend image scan results
         if: steps.image_scan.outcome == 'success' && hashFiles('trivy-frontend-image.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-frontend-image.sarif
           category: container-frontend
@@ -173,7 +173,7 @@ jobs:
 
       - name: Upload frontend dependency scan results
         if: steps.deps_scan.outcome == 'success' && hashFiles('trivy-frontend-deps.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-frontend-deps.sarif
           category: deps-frontend
