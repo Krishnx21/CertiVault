@@ -165,7 +165,7 @@ const SharedDocumentView: React.FC = () => {
             canvas.style.boxShadow = "0 2px 12px rgba(0,0,0,0.35)";
             canvas.style.display = "block";
             container.appendChild(canvas);
-            await page.render({ canvasContext: ctx, viewport }).promise;
+            await page.render({ canvas, canvasContext: ctx, viewport }).promise;
           }
         } else if (mime.startsWith("image/")) {
           const url = URL.createObjectURL(blob);
