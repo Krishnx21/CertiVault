@@ -134,8 +134,8 @@ export default function SharedVaultDocuments() {
               <p style={{ color: "var(--text-muted)", fontSize: "0.9375rem" }}>
                 {total} document{total !== 1 ? "s" : ""}
                 {isEditor
-                  ? " · You can upload documents to this vault"
-                  : " · View and download only"}
+                  ? " · You can view, download and upload documents"
+                  : " · View only"}
               </p>
             </div>
 
@@ -158,9 +158,10 @@ export default function SharedVaultDocuments() {
           )}
 
           {/* ── Document table ── */}
-          {/* Pass no-op handlers for delete/archive — the table renders the
-              buttons but they do nothing. The owner's own Documents page is
-              the only place those operations should succeed. */}
+          {/* Vault members never mutate the owner's documents, so verify /
+              favorite / archive / delete are disabled for everyone here. The
+              only role difference is download: editors may download, viewers
+              are strictly view-only (they can still open the inline preview). */}
           <DocumentTable
             documents={documents}
             search={search}
@@ -179,6 +180,14 @@ export default function SharedVaultDocuments() {
             sortBy={sortBy}
             setSortBy={setSortBy}
             onViewVerification={(id) => navigate(`/verification/${id}`)}
+            capabilities={{
+              canFavorite: false,
+              canVerify: false,
+              canArchive: false,
+              canDelete: false,
+              canViewVerification: true,
+              canDownload: isEditor,
+            }}
           />
         </div>
       </main>

@@ -32,6 +32,7 @@ import settingsRouter from "./modules/users/settings.routes.js";
 import notificationRouter from "./modules/notifications/notification.routes.js";
 import searchRouter from "./modules/search/search.routes.js";
 import { vaultRouter } from "./modules/vault/vault.routes.js"; // UPDATED
+import { shareRouter } from "./modules/shares/share.routes.js";
 import { createBullBoardRouter } from "./config/bullboard.js"; // UPDATED
 
 const env = getEnv();
@@ -235,6 +236,7 @@ export const createApp = (): Express => {
   app.use("/api", notificationRouter);
   app.use("/api", searchRouter);
   app.use("/api/vault", vaultRouter); // UPDATED
+  app.use("/api/shares", shareRouter);
 
   // ============================================
   // BULL BOARD — Queue Admin UI (UPDATED)

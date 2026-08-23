@@ -3,6 +3,21 @@ import { Files, Search, ShieldCheck, Trash2, Star, Archive, RefreshCw, Eye } fro
 import { Document } from "../types.js";
 import { DocumentPreviewModal } from "./DocumentPreviewModal.js";
 
+/**
+ * Which row actions are available. Omitted flags default to `true`, so the
+ * owner's own Documents page (which passes nothing) keeps every action. Shared
+ * vaults pass a restricted set — e.g. viewers get view-only, editors add
+ * download — so the table never renders a button the user isn't allowed to use.
+ */
+export interface DocumentTableCapabilities {
+  canFavorite?: boolean;
+  canVerify?: boolean;
+  canArchive?: boolean;
+  canDelete?: boolean;
+  canDownload?: boolean;
+  canViewVerification?: boolean;
+}
+
 interface DocumentTableProps {
   documents: Document[];
   search: string;
@@ -21,6 +36,7 @@ interface DocumentTableProps {
   sortBy: string;
   setSortBy: (sortBy: string) => void;
   onViewVerification: (id: string) => void;
+  capabilities?: DocumentTableCapabilities;
 }
 
 const formatBytes = (bytes?: number) => {
@@ -58,8 +74,18 @@ export function DocumentTable({
   sortBy,
   setSortBy,
   onViewVerification,
+  capabilities,
 }: DocumentTableProps) {
   const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
+
+  // Resolve capabilities — anything not explicitly disabled stays enabled.
+  const canFavorite = capabilities?.canFavorite ?? true;
+  const canVerify = capabilities?.canVerify ?? true;
+  const canArchive = capabilities?.canArchive ?? true;
+  const canDelete = capabilities?.canDelete ?? true;
+  const canDownload = capabilities?.canDownload ?? true;
+  const canViewVerification = capabilities?.canViewVerification ?? true;
+
   return (
     <section className="documents-panel">
       <div className="panel-head">
@@ -156,37 +182,43 @@ export function DocumentTable({
                     >
                       <Eye size={17} />
                     </button>
-                    <button
-                      onClick={() => onViewVerification(doc._id)}
-                      title="View verification"
-                    >
-                      <ShieldCheck size={17} />
-                    </button>
-                    <button
-                      onClick={() => onToggleFavorite(doc._id, doc.isFavorite)}
-                      title={doc.isFavorite ? "Remove from favorites" : "Add to favorites"}
-                      className={doc.isFavorite ? "active" : ""}
-                    >
-                      <Star size={17} fill={doc.isFavorite ? "currentColor" : "none"} />
-                    </button>
-                    {doc.status === "pending" && (
+                    {canViewVerification && (
+                      <button
+                        onClick={() => onViewVerification(doc._id)}
+                        title="View verification"
+                      >
+                        <ShieldCheck size={17} />
+                      </button>
+                    )}
+                    {canFavorite && (
+                      <button
+                        onClick={() => onToggleFavorite(doc._id, doc.isFavorite)}
+                        title={doc.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                        className={doc.isFavorite ? "active" : ""}
+                      >
+                        <Star size={17} fill={doc.isFavorite ? "currentColor" : "none"} />
+                      </button>
+                    )}
+                    {canVerify && doc.status === "pending" && (
                       <button onClick={() => onVerify(doc._id)} title="Verify">
                         <ShieldCheck size={17} />
                       </button>
                     )}
-                    {!doc.isArchived && (
+                    {canArchive && !doc.isArchived && (
                       <button onClick={() => onArchive(doc._id)} title="Archive">
                         <Archive size={17} />
                       </button>
                     )}
-                    {doc.isArchived && (
+                    {canArchive && doc.isArchived && (
                       <button onClick={() => onRestore(doc._id)} title="Restore">
                         <RefreshCw size={17} />
                       </button>
                     )}
-                    <button onClick={() => onDelete(doc._id)} title="Delete">
-                      <Trash2 size={17} />
-                    </button>
+                    {canDelete && (
+                      <button onClick={() => onDelete(doc._id)} title="Delete">
+                        <Trash2 size={17} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -227,6 +259,9 @@ export function DocumentTable({
         <DocumentPreviewModal
           document={previewDocument}
           onClose={() => setPreviewDocument(null)}
+          onToggleFavorite={canFavorite ? onToggleFavorite : undefined}
+          canDownload={canDownload}
+          canFavorite={canFavorite}
         />
       )}
     </section>

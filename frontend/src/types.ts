@@ -172,12 +172,40 @@ export interface SharedDocument {
   ownerEmail: string;
   shareToken: string;
   shareUrl: string;
+  recipientEmail?: string;
+  hasPassword?: boolean;
   expiresAt?: string;
   maxAccessCount?: number;
   currentAccessCount: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Public metadata for the share landing page (no auth). Returned by
+ * GET /api/shares/public/:token — never includes file bytes or the password.
+ */
+export interface PublicShareInfo {
+  documentTitle: string;
+  documentFileName: string;
+  mimeType: string;
+  ownerName: string;
+  requiresPassword: boolean;
+  expiresAt?: string;
+}
+
+/**
+ * Result of unlocking a share with the correct password. The viewToken is a
+ * short-lived, single-document scoped token used to fetch the file bytes.
+ */
+export interface ShareAccessResult {
+  viewToken: string;
+  document: {
+    title: string;
+    fileName: string;
+    mimeType: string;
+  };
 }
 
 export interface SharedMember {

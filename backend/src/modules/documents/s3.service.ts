@@ -144,6 +144,45 @@ export const getPresignedDownloadUrl = async (
 };
 
 /**
+ * Read raw file bytes from storage (S3 → Local) for inline, view-only serving.
+ *
+ * Unlike getPresignedDownloadUrl (which forces `attachment` and hands the client
+ * a direct URL), this streams the bytes back through the backend so the caller
+ * can serve them with `Content-Disposition: inline` and never expose a
+ * downloadable URL. It also does NOT touch the document's downloadCount.
+ */
+export const getObjectBuffer = async (
+  key: string,
+  provider?: StorageProvider
+): Promise<Buffer> => {
+  // Prefer S3 when the object lives there (or when creds exist and provider is unknown).
+  const tryS3 =
+    (provider === StorageProvider.S3 || provider === undefined) &&
+    s3Client &&
+    hasS3Credentials;
+
+  if (tryS3) {
+    try {
+      const command = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key });
+      const response = await s3Client!.send(command);
+      if (response.Body) {
+        const bytes = await response.Body.transformToByteArray();
+        return Buffer.from(bytes);
+      }
+    } catch (error) {
+      console.error("S3 getObject failed, trying local:", error);
+    }
+  }
+
+  // Fallback to local storage
+  const localPath = path.join(LOCAL_STORAGE_DIR, key);
+  if (!existsSync(localPath)) {
+    throw new Error(`File not found in local storage: ${key}`);
+  }
+  return fs.readFile(localPath);
+};
+
+/**
  * Delete file from S3 → Local Storage
  */
 export const deleteFromS3 = async (

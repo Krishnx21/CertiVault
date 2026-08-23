@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { X, Copy, Link, Users, Clock, Lock, Check, AlertCircle, Mail, User } from "lucide-react";
+import { X, Copy, Check, Lock, Clock, AlertCircle, Mail, MessageSquare, Share2 } from "lucide-react";
 import { api } from "../api.js";
-import { SharedDocument, SharedMember, Permission } from "../types.js";
+import { SharedDocument } from "../types.js";
 import Input from "./Input.js";
 
 interface ShareModalProps {
@@ -10,75 +10,71 @@ interface ShareModalProps {
   onClose: () => void;
 }
 
-type Tab = "link" | "members";
-
 export default function ShareModal({ documentId, documentTitle, onClose }: ShareModalProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("link");
   const [shareUrl, setShareUrl] = useState("");
   const [password, setPassword] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [maxAccessCount, setMaxAccessCount] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [message, setMessage] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // Member invitation state
-  const [memberEmail, setMemberEmail] = useState("");
-  const [memberName, setMemberName] = useState("");
-  const [permission, setPermission] = useState<Permission>("viewer");
-  const [isInviting, setIsInviting] = useState(false);
-
-  // Members list
-  const [members, setMembers] = useState<SharedMember[]>([]);
-  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
-
-  // Existing shares
+  // Existing links for this document (for the list + revoke).
   const [existingShares, setExistingShares] = useState<SharedDocument[]>([]);
 
   useEffect(() => {
-    loadMembers();
     loadExistingShares();
   }, [documentId]);
-
-  const loadMembers = async () => {
-    setIsLoadingMembers(true);
-    try {
-      const response = await api.getDocumentMembers(documentId);
-      setMembers(response.data);
-    } catch (err: any) {
-      console.error("Failed to load members:", err);
-    } finally {
-      setIsLoadingMembers(false);
-    }
-  };
 
   const loadExistingShares = async () => {
     try {
       const response = await api.getUserShares();
       setExistingShares(response.data.shares.filter((s) => s.documentId === documentId));
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to load shares:", err);
     }
   };
 
   const createShareLink = async () => {
+    if (password && password.length < 6) {
+      return setError("Password must be at least 6 characters");
+    }
+    if (recipientEmail && !recipientEmail.includes("@")) {
+      return setError("Enter a valid recipient email address");
+    }
+
     setIsCreating(true);
     setError("");
     setSuccess("");
 
     try {
-      const data: any = { documentId };
-      if (password) data.password = password;
-      if (expiresAt) data.expiresAt = expiresAt;
-      if (maxAccessCount) data.maxAccessCount = parseInt(maxAccessCount);
+      const payload: {
+        documentId: string;
+        password?: string;
+        expiresAt?: string;
+        maxAccessCount?: number;
+        recipientEmail?: string;
+        message?: string;
+      } = { documentId };
+      if (password) payload.password = password;
+      if (expiresAt) payload.expiresAt = expiresAt;
+      if (maxAccessCount) payload.maxAccessCount = parseInt(maxAccessCount, 10);
+      if (recipientEmail) payload.recipientEmail = recipientEmail.trim();
+      if (message) payload.message = message.trim();
 
-      const response = await api.createShare(data);
+      const response = await api.createShare(payload);
       setShareUrl(response.data.shareUrl);
-      setSuccess("Share link created successfully!");
+      setSuccess(
+        recipientEmail
+          ? `Share link created and emailed to ${recipientEmail.trim()}.`
+          : "Share link created successfully!"
+      );
       loadExistingShares();
-    } catch (err: any) {
-      setError(err.message || "Failed to create share link");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create share link");
     } finally {
       setIsCreating(false);
     }
@@ -89,57 +85,8 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       setError("Failed to copy to clipboard");
-    }
-  };
-
-  const inviteMember = async () => {
-    if (!memberEmail) return setError("Email is required");
-    if (!memberEmail.includes("@")) return setError("Invalid email address");
-
-    setIsInviting(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const data: any = {
-        documentId,
-        memberEmail,
-        permission,
-      };
-      if (memberName) data.memberName = memberName;
-
-      await api.inviteMember(data);
-      setSuccess("Invitation sent successfully!");
-      setMemberEmail("");
-      setMemberName("");
-      setPermission("viewer");
-      loadMembers();
-    } catch (err: any) {
-      setError(err.message || "Failed to send invitation");
-    } finally {
-      setIsInviting(false);
-    }
-  };
-
-  const revokeMember = async (memberId: string) => {
-    try {
-      await api.revokeMember(memberId);
-      setSuccess("Member access revoked");
-      loadMembers();
-    } catch (err: any) {
-      setError(err.message || "Failed to revoke member");
-    }
-  };
-
-  const updatePermission = async (memberId: string, newPermission: Permission) => {
-    try {
-      await api.updateMemberPermission(memberId, newPermission);
-      setSuccess("Permission updated");
-      loadMembers();
-    } catch (err: any) {
-      setError(err.message || "Failed to update permission");
     }
   };
 
@@ -148,12 +95,16 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
       await api.revokeShare(shareIdToRevoke);
       setSuccess("Share link revoked");
       loadExistingShares();
-      if (shareUrl) {
-        setShareUrl("");
-      }
-    } catch (err: any) {
-      setError(err.message || "Failed to revoke share");
+      if (shareUrl) setShareUrl("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to revoke share");
     }
+  };
+
+  const resetForm = () => {
+    setShareUrl("");
+    setSuccess("");
+    setError("");
   };
 
   return (
@@ -165,7 +116,7 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
 
         <div className="modal-heading">
           <div className="modal-mark">
-            <Users size={24} />
+            <Share2 size={24} />
           </div>
           <div>
             <h2>Share Document</h2>
@@ -174,36 +125,6 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
         </div>
 
         <div className="modal-content">
-          {/* Tabs */}
-          <div className="flex gap-6 border-b border-[var(--border-color)] mb-6">
-            <button
-              className={`pb-3 px-1 font-medium text-sm transition-colors ${
-                activeTab === "link"
-                  ? "text-[var(--accent-blue)] border-b-2 border-[var(--accent-blue)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
-              onClick={() => setActiveTab("link")}
-            >
-              <div className="flex items-center gap-2">
-                <Link size={16} />
-                Share Link
-              </div>
-            </button>
-            <button
-              className={`pb-3 px-1 font-medium text-sm transition-colors ${
-                activeTab === "members"
-                  ? "text-[var(--accent-blue)] border-b-2 border-[var(--accent-blue)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
-              onClick={() => setActiveTab("members")}
-            >
-              <div className="flex items-center gap-2">
-                <Users size={16} />
-                Members ({members.length})
-              </div>
-            </button>
-          </div>
-
           {/* Error/Success Messages */}
           {error && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-4">
@@ -218,228 +139,148 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
             </div>
           )}
 
-          {/* Share Link Tab */}
-          {activeTab === "link" && (
-            <div className="form-fields">
-              {!shareUrl ? (
-                <>
-                  <Input
-                    label="Password Protection (Optional)"
-                    leftIcon={Lock}
-                    type="password"
-                    placeholder="Enter password (min 6 characters)"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    showPasswordToggle
-                  />
+          <div className="form-fields">
+            {!shareUrl ? (
+              <>
+                <p className="text-sm text-[var(--text-secondary)] -mt-1 mb-1">
+                  Anyone with this link can view <strong>only this document</strong>. It's
+                  view-only — the recipient can't download or edit it.
+                </p>
 
-                  <Input
-                    label="Expiration Date (Optional)"
-                    leftIcon={Clock}
-                    type="datetime-local"
-                    value={expiresAt}
-                    onChange={(e) => setExpiresAt(e.target.value)}
-                  />
+                <Input
+                  label="Password Protection (Optional)"
+                  leftIcon={Lock}
+                  type="password"
+                  placeholder="Enter password (min 6 characters)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  showPasswordToggle
+                />
 
-                  <Input
-                    label="Max Access Count (Optional)"
-                    type="number"
-                    placeholder="Maximum number of accesses"
-                    value={maxAccessCount}
-                    onChange={(e) => setMaxAccessCount(e.target.value)}
-                    min="1"
-                  />
+                <Input
+                  label="Expiration Date (Optional)"
+                  leftIcon={Clock}
+                  type="datetime-local"
+                  value={expiresAt}
+                  onChange={(e) => setExpiresAt(e.target.value)}
+                />
 
-                  <button
-                    className="button bg-[var(--accent-blue)] text-white"
-                    onClick={createShareLink}
-                    disabled={isCreating}
-                  >
-                    {isCreating ? "Creating..." : "Create Share Link"}
-                  </button>
-                </>
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-4 bg-[var(--bg-tertiary)] rounded-lg">
-                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                      Share Link
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={shareUrl}
-                        readOnly
-                        className="flex-1 bg-[var(--bg-secondary)]"
-                      />
-                      <button
-                        className="button px-4"
-                        onClick={copyToClipboard}
-                        disabled={copied}
-                      >
-                        {copied ? <Check size={18} /> : <Copy size={18} />}
-                      </button>
-                    </div>
-                  </div>
+                <Input
+                  label="Max Access Count (Optional)"
+                  type="number"
+                  placeholder="Maximum number of views"
+                  value={maxAccessCount}
+                  onChange={(e) => setMaxAccessCount(e.target.value)}
+                  min="1"
+                />
 
-                  <button
-                    className="button bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-                    onClick={() => {
-                      setShareUrl("");
-                    }}
-                  >
-                    Create New Link
-                  </button>
-                </div>
-              )}
+                <Input
+                  label="Email the Link to (Optional)"
+                  leftIcon={Mail}
+                  type="email"
+                  placeholder="recipient@example.com"
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                />
 
-              {/* Existing Shares */}
-              {existingShares.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="font-semibold text-[var(--text-primary)] mb-3 text-sm">Existing Share Links</h3>
-                  <div className="space-y-2">
-                    {existingShares.map((share) => (
-                      <div
-                        key={share._id}
-                        className="p-3 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-between border border-[var(--border-color)]"
-                      >
-                        <div className="flex-1 min-w-0 mr-3">
-                          <div className="text-sm text-[var(--text-primary)] truncate font-mono">
-                            {share.shareUrl}
-                          </div>
-                          <div className="text-xs text-[var(--text-muted)] mt-1 flex flex-wrap gap-x-2">
-                            {share.expiresAt && <span>Expires: {new Date(share.expiresAt).toLocaleDateString()}</span>}
-                            {share.maxAccessCount && <span>Max access: {share.maxAccessCount}</span>}
-                            <span>Accessed: {share.currentAccessCount}</span>
-                          </div>
-                        </div>
-                        <button
-                          className="icon-button text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => revokeShare(share._id)}
-                          title="Revoke share"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                <Input
+                  label="Message (Optional)"
+                  leftIcon={MessageSquare}
+                  type="text"
+                  placeholder="A short note to include in the email"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  maxLength={500}
+                />
 
-          {/* Members Tab */}
-          {activeTab === "members" && (
-            <div className="form-fields">
-              <Input
-                label="Invite by Email"
-                leftIcon={Mail}
-                type="email"
-                placeholder="user@example.com"
-                value={memberEmail}
-                onChange={(e) => setMemberEmail(e.target.value)}
-              />
-
-              <Input
-                label="Member Name (Optional)"
-                leftIcon={User}
-                type="text"
-                placeholder="John Doe"
-                value={memberName}
-                onChange={(e) => setMemberName(e.target.value)}
-              />
-
-              <div className="field-label">
-                <span className="text-sm font-medium text-[var(--text-primary)]">Permission</span>
-                <select
-                  value={permission}
-                  onChange={(e) => setPermission(e.target.value as Permission)}
-                  className="w-full px-3 py-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent-blue)] focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
-                >
-                  <option value="viewer">Viewer - Can only view</option>
-                  <option value="editor">Editor - Can view and edit</option>
-                  <option value="admin">Admin - Full access</option>
-                </select>
-              </div>
-
-              <button
-                className="button bg-[var(--accent-blue)] text-white"
-                onClick={inviteMember}
-                disabled={isInviting}
-              >
-                {isInviting ? "Sending..." : "Send Invitation"}
-              </button>
-
-              {/* Members List */}
-              <div className="mt-8">
-                <h3 className="font-semibold text-[var(--text-primary)] mb-3 text-sm">Members</h3>
-                {isLoadingMembers ? (
-                  <div className="text-center text-[var(--text-muted)] py-6 text-sm">Loading members...</div>
-                ) : members.length === 0 ? (
-                  <div className="text-center text-[var(--text-muted)] py-6 text-sm">No members yet</div>
-                ) : (
-                  <div className="space-y-2">
-                    {members.map((member) => (
-                      <div
-                        key={member._id}
-                        className="p-3 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-between border border-[var(--border-color)]"
-                      >
-                        <div className="flex-1 min-w-0 mr-3">
-                          <div className="text-sm font-medium text-[var(--text-primary)]">
-                            {member.memberName || member.memberEmail}
-                          </div>
-                          <div className="text-xs text-[var(--text-muted)] mt-1">
-                            {member.memberEmail}
-                          </div>
-                          <div className="mt-2 flex gap-2">
-                            <span
-                              className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                                member.permission === "viewer"
-                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                                  : member.permission === "editor"
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                                  : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-                              }`}
-                            >
-                              {member.permission}
-                            </span>
-                            <span
-                              className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                                member.inviteStatus === "accepted"
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                                  : member.inviteStatus === "pending"
-                                  ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
-                                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                              }`}
-                            >
-                              {member.inviteStatus}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={member.permission}
-                            onChange={(e) => updatePermission(member._id, e.target.value as Permission)}
-                            className="text-sm py-1.5 px-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded focus:outline-none focus:border-[var(--accent-blue)]"
-                          >
-                            <option value="viewer">Viewer</option>
-                            <option value="editor">Editor</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                          <button
-                            className="icon-button text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => revokeMember(member._id)}
-                            title="Remove member"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                {password && (
+                  <div className="flex items-start gap-2 p-3 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-lg text-[var(--text-secondary)]">
+                    <Lock size={16} className="mt-0.5 flex-shrink-0" />
+                    <span className="text-xs leading-relaxed">
+                      Share the password with the recipient <strong>separately</strong> — not in
+                      the same email or channel as the link.
+                    </span>
                   </div>
                 )}
+
+                <button
+                  className="button bg-[var(--accent-blue)] text-white"
+                  onClick={createShareLink}
+                  disabled={isCreating}
+                >
+                  {isCreating ? "Creating..." : "Create Share Link"}
+                </button>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-[var(--bg-tertiary)] rounded-lg">
+                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                    Share Link
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={shareUrl}
+                      readOnly
+                      className="flex-1 bg-[var(--bg-secondary)]"
+                    />
+                    <button className="button px-4" onClick={copyToClipboard} disabled={copied}>
+                      {copied ? <Check size={18} /> : <Copy size={18} />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] mt-2 leading-relaxed">
+                    View-only: the recipient can open this one document but can't download or edit
+                    it.
+                    {password && " Remember to send them the password separately."}
+                  </p>
+                </div>
+
+                <button
+                  className="button bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                  onClick={resetForm}
+                >
+                  Create New Link
+                </button>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Existing Shares */}
+            {existingShares.length > 0 && (
+              <div className="mt-8">
+                <h3 className="font-semibold text-[var(--text-primary)] mb-3 text-sm">
+                  Existing Share Links
+                </h3>
+                <div className="space-y-2">
+                  {existingShares.map((share) => (
+                    <div
+                      key={share._id}
+                      className="p-3 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-between border border-[var(--border-color)]"
+                    >
+                      <div className="flex-1 min-w-0 mr-3">
+                        <div className="text-sm text-[var(--text-primary)] truncate font-mono">
+                          {share.shareUrl}
+                        </div>
+                        <div className="text-xs text-[var(--text-muted)] mt-1 flex flex-wrap gap-x-2">
+                          {share.expiresAt && (
+                            <span>Expires: {new Date(share.expiresAt).toLocaleDateString()}</span>
+                          )}
+                          {share.maxAccessCount && <span>Max views: {share.maxAccessCount}</span>}
+                          <span>Viewed: {share.currentAccessCount}</span>
+                        </div>
+                      </div>
+                      <button
+                        className="icon-button text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => revokeShare(share._id)}
+                        title="Revoke share"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

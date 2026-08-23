@@ -69,13 +69,30 @@ export interface ExpiryReminderJobData {
   dashboardUrl: string;
 }
 
+export interface DocumentShareLinkJobData {
+  type: "document-share-link";
+  /** Recipient email */
+  email: string;
+  /** Sharer's display name */
+  ownerName: string;
+  /** Title of the shared document */
+  documentTitle: string;
+  /** Public view-only link (recipient enters the password on the page) */
+  shareUrl: string;
+  /** Whether the link is password-protected (affects the email copy) */
+  hasPassword: boolean;
+  /** Optional personal note from the owner shown in the email */
+  message?: string;
+}
+
 export type EmailJobData =
   | WelcomeEmailJobData
   | EmailVerificationJobData
   | PasswordResetJobData
   | DocumentSharedJobData
   | DocumentVerifiedJobData
-  | ExpiryReminderJobData;
+  | ExpiryReminderJobData
+  | DocumentShareLinkJobData;
 
 // ─── Queue instance (lazy singleton) ─────────────────────────────────────────
 // Deferring construction until first use means a missing/unreachable Redis at
@@ -189,4 +206,13 @@ export async function queueExpiryReminder(
   if (!q) { log.warn("queueExpiryReminder: skipped (queue disabled)"); return; }
   await q.add("expiry-reminder", { type: "expiry-reminder", ...data });
   log.info("Queued expiry-reminder", { email: data.email });
+}
+
+export async function queueDocumentShareLink(
+  data: Omit<DocumentShareLinkJobData, "type">
+): Promise<void> {
+  const q = getEmailQueue();
+  if (!q) { log.warn("queueDocumentShareLink: skipped (queue disabled)"); return; }
+  await q.add("document-share-link", { type: "document-share-link", ...data });
+  log.info("Queued document-share-link", { email: data.email });
 }

@@ -65,7 +65,7 @@ config:
 # Generate with:  echo -n "your-value" | base64
 secrets:
   # MongoDB Atlas connection string (with credentials)
-  MONGO_URI: "REPLACE_ME_BASE64"
+  MONGODB_URI: "REPLACE_ME_BASE64"
 
   # JWT — use strong random strings, minimum 64 chars each
   JWT_ACCESS_SECRET: "REPLACE_ME_BASE64"

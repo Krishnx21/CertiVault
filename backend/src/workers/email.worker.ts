@@ -225,6 +225,59 @@ async function sendDocumentShared(
   });
 }
 
+async function sendDocumentShareLink(
+  transporter: nodemailer.Transporter,
+  job: Job<EmailJobData>
+): Promise<void> {
+  const data = job.data as {
+    type: "document-share-link";
+    email: string;
+    ownerName: string;
+    documentTitle: string;
+    shareUrl: string;
+    hasPassword: boolean;
+    message?: string;
+  };
+  const env = getEnv();
+
+  await job.updateProgress(50);
+
+  const passwordLine = data.hasPassword
+    ? `<p>This document is <strong>password-protected</strong>. ${data.ownerName} will share the password with you separately — enter it on the page to view.</p>`
+    : `<p>Open the link below to view the document.</p>`;
+
+  const messageLine = data.message
+    ? `<p style="background:#f3f4f6;border-left:4px solid #1e40af;border-radius:4px;padding:12px;font-style:italic;">${data.message}</p>`
+    : "";
+
+  const body = `
+    <h2>${data.ownerName} shared a document with you</h2>
+    <p>Hi there,</p>
+    <p><strong>${data.ownerName}</strong> has shared a document with you on CertiVault:</p>
+    <p><strong>"${data.documentTitle}"</strong></p>
+    ${messageLine}
+    ${passwordLine}
+    <p><a href="${data.shareUrl}" class="btn">View Document</a></p>
+    <p>Or paste this link in your browser:</p>
+    <p class="link">${data.shareUrl}</p>
+    <div class="warning">
+      <strong>View only:</strong> This document cannot be downloaded or edited.
+      For everyone's security, please do not forward this link.
+    </div>
+    <p class="note">If you did not expect this, you can safely ignore this email.</p>
+    <p class="note">App URL: <a href="${env.FRONTEND_ORIGIN}">${env.FRONTEND_ORIGIN}</a></p>
+  `;
+
+  await transporter.sendMail({
+    from: env.EMAIL_FROM ?? env.SMTP_USER,
+    to: data.email,
+    subject: `${data.ownerName} shared "${data.documentTitle}" with you`,
+    html: htmlWrapper("Document Shared", body),
+  });
+
+  log.info("Document-share-link email sent", { to: data.email });
+}
+
 async function sendDocumentVerified(
   transporter: nodemailer.Transporter,
   job: Job<EmailJobData>
@@ -352,6 +405,9 @@ async function processEmailJob(job: Job<EmailJobData>): Promise<void> {
       break;
     case "document-shared":
       await sendDocumentShared(transporter, job);
+      break;
+    case "document-share-link":
+      await sendDocumentShareLink(transporter, job);
       break;
     case "document-verified":
       await sendDocumentVerified(transporter, job);

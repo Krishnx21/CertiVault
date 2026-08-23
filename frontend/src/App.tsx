@@ -7,6 +7,7 @@ import ResetPassword from "./pages/ResetPassword.js";
 import VerifyEmail from "./pages/VerifyEmail.js";
 import { VerificationPage } from "./pages/Verification.js";
 import { PublicVerifyPage } from "./pages/PublicVerify.js";
+import SharedDocumentView from "./pages/SharedDocumentView.js";
 import OAuthCallback from "./pages/OAuthCallback.js";
 import Dashboard from "./pages/Dashboard.js";
 import Documents from "./pages/Documents.js";
@@ -128,6 +129,7 @@ export default function App() {
             }
           />
           <Route path="/public/verify/:token" element={<PublicVerifyPage />} />
+          <Route path="/shared/:token" element={<SharedDocumentView />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>

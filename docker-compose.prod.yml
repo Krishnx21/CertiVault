@@ -96,7 +96,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      MONGO_URI: mongodb://mongodb:27017/certivault
+      MONGODB_URI: mongodb://mongodb:27017/certivault
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
     volumes:
@@ -140,7 +140,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      MONGO_URI: mongodb://mongodb:27017/certivault
+      MONGODB_URI: mongodb://mongodb:27017/certivault
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
     depends_on:

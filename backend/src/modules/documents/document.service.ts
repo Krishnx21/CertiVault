@@ -8,6 +8,7 @@ import {
   uploadToS3,
   deleteFromS3,
   getPresignedDownloadUrl,
+  getObjectBuffer,
   generateChecksum,
   generateHash,
   validateFileType,
@@ -592,6 +593,17 @@ export const getDocumentForDownload = async (
       throw new ApiError(404, "DOCUMENT_NOT_FOUND", "Document not found or access denied");
     }
 
+    // View-only enforcement: viewers may open a document inline (see
+    // getDocumentForView) but must never download it. Only editors — and the
+    // owner, handled above — are allowed to pull the raw file down.
+    if (vaultAccess.role !== "editor") {
+      throw new ApiError(
+        403,
+        "DOWNLOAD_FORBIDDEN",
+        "You have view-only access to this vault and cannot download this document"
+      );
+    }
+
     document = docById;
   }
 
@@ -626,6 +638,60 @@ export const getDocumentDownloadUrl = async (
 ): Promise<string> => {
   const { url } = await getDocumentForDownload(id, requesterId);
   return url;
+};
+
+/**
+ * Get raw file bytes for INLINE, view-only rendering.
+ *
+ * Accessible by the document owner OR ANY active vault member (viewer or
+ * editor) — unlike getDocumentForDownload, which forbids viewers. This streams
+ * the bytes back through the backend so the caller can serve them with
+ * `Content-Disposition: inline`, never exposes a downloadable URL, and does NOT
+ * touch the document's downloadCount. This is how a viewer "sees but can't save".
+ */
+export const getDocumentForView = async (
+  id: string,
+  requesterId: string
+): Promise<{ buffer: Buffer; mimeType: string; fileName: string }> => {
+  // Try owner first
+  let document = await DocumentModel.findOne({ _id: id, owner: requesterId }).lean();
+
+  // If not owner, allow any active vault member (viewer OR editor) to view.
+  if (!document) {
+    const { VaultMember } = await import("../vault/vaultMember.model.js");
+
+    const docById = await DocumentModel.findById(id).lean();
+    if (!docById) {
+      throw new ApiError(404, "DOCUMENT_NOT_FOUND", "Document not found or access denied");
+    }
+
+    const vaultAccess = await VaultMember.findOne({
+      vaultOwnerId: docById.owner,
+      memberUserId: requesterId,
+      status: "active",
+    });
+
+    if (!vaultAccess) {
+      throw new ApiError(404, "DOCUMENT_NOT_FOUND", "Document not found or access denied");
+    }
+
+    document = docById;
+  }
+
+  const buffer = await getObjectBuffer(
+    document.storageKey,
+    document.storageProvider as StorageProvider
+  );
+
+  // Touch last-accessed only — viewing is not a download, so downloadCount is
+  // deliberately left untouched.
+  await DocumentModel.findByIdAndUpdate(id, { lastAccessedAt: new Date() });
+
+  return {
+    buffer,
+    mimeType: (document as any).mimeType || "application/octet-stream",
+    fileName: (document as any).fileName || `document-${id}`,
+  };
 };
 
 /**

@@ -3,8 +3,8 @@
  * Shows document details and preview
  */
 
-import { useState } from "react";
-import { X, FileText, ShieldCheck, Download, Star } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, FileText, ShieldCheck, Download, Star, Eye } from "lucide-react";
 import { Document } from "../types.js";
 import { api } from "../api.js";
 
@@ -12,6 +12,10 @@ interface DocumentPreviewModalProps {
   document: Document;
   onClose: () => void;
   onToggleFavorite?: (id: string, isFavorite: boolean) => void;
+  /** When false, the Download button is hidden (e.g. vault viewers). Default true. */
+  canDownload?: boolean;
+  /** When false, the favorite button is hidden (e.g. someone else's vault). Default true. */
+  canFavorite?: boolean;
 }
 
 const formatBytes = (bytes?: number) => {
@@ -29,9 +33,59 @@ const formatDate = (date: string) => {
   });
 };
 
-export function DocumentPreviewModal({ document, onClose, onToggleFavorite }: DocumentPreviewModalProps) {
+export function DocumentPreviewModal({
+  document,
+  onClose,
+  onToggleFavorite,
+  canDownload = true,
+  canFavorite = true,
+}: DocumentPreviewModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Inline, view-only preview of the actual file (works even for viewers who
+  // cannot download). The blob object URL is revoked on unmount / doc change.
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewMime, setPreviewMime] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(true);
+  const [previewError, setPreviewError] = useState("");
+
+  useEffect(() => {
+    let revoked = false;
+    let objectUrl = "";
+    setPreviewLoading(true);
+    setPreviewError("");
+    setPreviewUrl("");
+
+    api
+      .viewDocument(document._id)
+      .then(({ url, mimeType }) => {
+        if (revoked) {
+          window.URL.revokeObjectURL(url);
+          return;
+        }
+        objectUrl = url;
+        setPreviewUrl(url);
+        setPreviewMime(mimeType);
+      })
+      .catch((err: any) => {
+        if (!revoked) setPreviewError(err.message || "Preview unavailable");
+      })
+      .finally(() => {
+        if (!revoked) setPreviewLoading(false);
+      });
+
+    return () => {
+      revoked = true;
+      if (objectUrl) window.URL.revokeObjectURL(objectUrl);
+    };
+  }, [document._id]);
+
+  const ext = (document.metadata?.extension || "").toLowerCase();
+  const isImage =
+    previewMime.startsWith("image/") ||
+    ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"].includes(ext);
+  const isPdf = previewMime.includes("pdf") || ext === "pdf";
 
   const handleDownload = async () => {
     setLoading(true);
@@ -79,11 +133,39 @@ export function DocumentPreviewModal({ document, onClose, onToggleFavorite }: Do
           </div>
           <div>
             <h2>{document.title}</h2>
-            <p>Document details and preview</p>
+            <p>{canDownload ? "Document details and preview" : "View-only preview"}</p>
           </div>
         </div>
 
         <div className="document-preview-content">
+          {/* Inline file preview */}
+          <div className="doc-preview-frame">
+            {previewLoading && (
+              <div className="doc-preview-state">
+                <span className="spinner" />
+                <span>Loading preview…</span>
+              </div>
+            )}
+            {!previewLoading && previewError && (
+              <div className="doc-preview-state">
+                <FileText size={30} />
+                <span>{previewError}</span>
+              </div>
+            )}
+            {!previewLoading && !previewError && previewUrl && isImage && (
+              <img src={previewUrl} alt={document.title} className="doc-preview-media" />
+            )}
+            {!previewLoading && !previewError && previewUrl && isPdf && (
+              <iframe title={document.title} src={previewUrl} className="doc-preview-iframe" />
+            )}
+            {!previewLoading && !previewError && previewUrl && !isImage && !isPdf && (
+              <div className="doc-preview-state">
+                <Eye size={30} />
+                <span>Inline preview isn&apos;t available for this file type.</span>
+              </div>
+            )}
+          </div>
+
           {/* Document Info */}
           <div className="document-info-grid">
             <div className="info-item">
@@ -174,10 +256,12 @@ export function DocumentPreviewModal({ document, onClose, onToggleFavorite }: Do
                   <p>{document.metadata.pageCount}</p>
                 </div>
               )}
-              <div>
-                <span>Download Count</span>
-                <p>{document.downloadCount}</p>
-              </div>
+              {canDownload && (
+                <div>
+                  <span>Download Count</span>
+                  <p>{document.downloadCount}</p>
+                </div>
+              )}
               {document.lastAccessedAt && (
                 <div>
                   <span>Last Accessed</span>
@@ -202,14 +286,24 @@ export function DocumentPreviewModal({ document, onClose, onToggleFavorite }: Do
         </div>
 
         <div className="modal-actions">
-          <button className="button ghost" onClick={handleToggleFavorite}>
-            <Star size={16} fill={document.isFavorite ? "currentColor" : "none"} />
-            {document.isFavorite ? "Remove from favorites" : "Add to favorites"}
-          </button>
-          <button className="button ghost" onClick={handleDownload} disabled={loading}>
-            <Download size={16} />
-            {loading ? "Loading..." : "Download"}
-          </button>
+          {!canDownload && (
+            <span className="view-only-note">
+              <Eye size={15} aria-hidden="true" />
+              View-only access — downloading is disabled
+            </span>
+          )}
+          {canFavorite && (
+            <button className="button ghost" onClick={handleToggleFavorite}>
+              <Star size={16} fill={document.isFavorite ? "currentColor" : "none"} />
+              {document.isFavorite ? "Remove from favorites" : "Add to favorites"}
+            </button>
+          )}
+          {canDownload && (
+            <button className="button ghost" onClick={handleDownload} disabled={loading}>
+              <Download size={16} />
+              {loading ? "Loading..." : "Download"}
+            </button>
+          )}
           <button className="button primary" onClick={onClose}>
             Close
           </button>

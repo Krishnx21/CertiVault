@@ -1,4 +1,4 @@
-import { Document, Summary, Activity, Notification, SharedDocument, SharedMember, AccessLog, DownloadStats, Permission } from "./types.js";
+import { Document, Summary, Activity, Notification, SharedDocument, SharedMember, AccessLog, DownloadStats, Permission, PublicShareInfo, ShareAccessResult } from "./types.js";
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || (import.meta.env.MODE === 'development' ? 'http://localhost:5000' : 'https://certivault-ixzb.onrender.com');
 
@@ -235,6 +235,29 @@ export const api = {
     window.URL.revokeObjectURL(blobUrl);
   },
 
+  viewDocument: async (id: string): Promise<{ url: string; mimeType: string }> => {
+    // Inline, VIEW-ONLY fetch. The backend streams bytes with
+    // `Content-Disposition: inline` (never attachment) and does not touch the
+    // download count, so this works for viewers who cannot download. Returns an
+    // object URL for <img>/<iframe>; the caller must revoke it when done.
+    const token = localStorage.getItem("accessToken");
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const response = await fetch(`${API_BASE_URL}/api/documents/${id}/view`, {
+      credentials: "include",
+      headers,
+    });
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
+      throw new Error(body.error?.message || "Failed to load document");
+    }
+
+    const mimeType = response.headers.get("Content-Type") || "application/octet-stream";
+    const blob = await response.blob();
+    return { url: window.URL.createObjectURL(blob), mimeType };
+  },
+
   getDocumentSummary: (): Promise<{ data: Summary }> =>
     request<{ data: Summary }>("/api/documents/summary"),
 
@@ -385,6 +408,8 @@ export const api = {
     password?: string;
     expiresAt?: string;
     maxAccessCount?: number;
+    recipientEmail?: string;
+    message?: string;
   }): Promise<{ data: SharedDocument }> =>
     request<{ data: SharedDocument }>("/api/shares", {
       method: "POST",
@@ -392,15 +417,29 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  getShareByToken: (token: string): Promise<{ data: SharedDocument }> =>
-    request<{ data: SharedDocument }>(`/api/shares/public/${token}`),
+  getShareByToken: (token: string): Promise<{ data: PublicShareInfo }> =>
+    request<{ data: PublicShareInfo }>(`/api/shares/public/${token}`),
 
-  accessShare: (token: string, password?: string): Promise<{ data: any }> =>
-    request<{ data: any }>(`/api/shares/public/${token}/access`, {
+  accessShare: (token: string, password?: string): Promise<{ data: ShareAccessResult }> =>
+    request<{ data: ShareAccessResult }>(`/api/shares/public/${token}/access`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
     }),
+
+  // Fetch the shared file bytes for inline rendering. Sends ONLY the scoped view
+  // token (the recipient is logged out — no accessToken) and never triggers a
+  // download; the caller renders the returned Blob in-page.
+  getSharedFileBlob: async (token: string, viewToken: string): Promise<Blob> => {
+    const response = await fetch(`${API_BASE_URL}/api/shares/public/${token}/file`, {
+      headers: { Authorization: `Bearer ${viewToken}` },
+    });
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
+      throw new Error(body.error?.message || "Failed to load document");
+    }
+    return response.blob();
+  },
 
   revokeShare: (shareId: string): Promise<{ success: boolean; message: string }> =>
     request<{ success: boolean; message: string }>(`/api/shares/${shareId}`, { method: "DELETE" }),

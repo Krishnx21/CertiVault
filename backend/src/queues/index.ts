@@ -13,6 +13,7 @@ export {
   queueDocumentShared,
   queueDocumentVerified,
   queueExpiryReminder,
+  queueDocumentShareLink,
 } from "./email.queue.js";
 
 export type {
@@ -23,6 +24,7 @@ export type {
   DocumentSharedJobData,
   DocumentVerifiedJobData,
   ExpiryReminderJobData,
+  DocumentShareLinkJobData,
 } from "./email.queue.js";
 
 export {

@@ -17,6 +17,7 @@ import {
   getRecentDocumentsController,
   getFavoriteDocumentsController,
   getDownloadUrl,
+  viewDocument,
   getSummary,
   getActivityTimelineController,
   getNotificationsController,
@@ -52,3 +53,4 @@ documentRouter.post("/:id/favorite", favoriteDocumentController);
 documentRouter.delete("/:id/favorite", unfavoriteDocumentController);
 documentRouter.post("/:id/verify", verifyDocument);
 documentRouter.get("/:id/download", getDownloadUrl);
+documentRouter.get("/:id/view", viewDocument);

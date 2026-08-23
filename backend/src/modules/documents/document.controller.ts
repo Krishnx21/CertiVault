@@ -16,6 +16,7 @@ import {
   getRecentDocuments,
   getFavoriteDocuments,
   getDocumentForDownload,
+  getDocumentForView,
   getDocumentDownloadUrl,
   getDocumentSummary,
   getActivityTimeline,
@@ -519,6 +520,45 @@ export const getDownloadUrl = async (
 
     // For S3 presigned URLs — return the URL for the frontend to redirect to
     res.json({ data: { url } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/documents/:id/view — stream bytes INLINE for view-only render.
+ *
+ * Accessible by the owner or ANY active vault member (viewer or editor). Unlike
+ * the download route, it emits `Content-Disposition: inline`, never hands the
+ * client a presigned/downloadable URL, and does not increment downloadCount — so
+ * a viewer can SEE the document but cannot save it.
+ */
+export const viewDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      return next(new ApiError(401, "UNAUTHORIZED", "User not authenticated"));
+    }
+
+    const { id } = req.params;
+    const { buffer, mimeType, fileName } = await getDocumentForView(
+      Array.isArray(id) ? id[0] : id,
+      userId
+    );
+
+    res.setHeader("Content-Type", mimeType);
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(fileName)}"`
+    );
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.setHeader("Pragma", "no-cache");
+    res.send(buffer);
   } catch (error) {
     next(error);
   }

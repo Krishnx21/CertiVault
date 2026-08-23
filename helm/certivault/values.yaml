@@ -138,7 +138,7 @@ config:
 # IMPORTANT: Override all of these in values.prod.yaml or via --set.
 # Never commit real secrets to git.
 secrets:
-  MONGO_URI: "UkVQTEFDRV9NRQ=="
+  MONGODB_URI: "UkVQTEFDRV9NRQ=="
   JWT_ACCESS_SECRET: "UkVQTEFDRV9NRQ=="
   JWT_REFRESH_SECRET: "UkVQTEFDRV9NRQ=="
   REDIS_URL: "UkVQTEFDRV9NRQ=="
