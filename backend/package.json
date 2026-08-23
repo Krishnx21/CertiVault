@@ -50,6 +50,10 @@
     "winston": "^3.17.0",
     "zod": "^3.24.1"
   },
+  "overrides": {
+    "brace-expansion": "^1.1.18",
+    "js-yaml": "^4.3.1"
+  },
   "devDependencies": {
     "@types/compression": "^1.7.5",
     "@types/cookie-parser": "^1.4.8",
