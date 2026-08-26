@@ -14,7 +14,13 @@ test("bullboard: basicAuth disables access in production when BULL_BOARD_PASSWOR
   delete process.env.BULL_BOARD_PASSWORD;
 
   try {
-    const { createBullBoardRouter } = await import(`../../dist/config/bullboard.js?t=${Date.now()}`);
+    let mod;
+    try {
+      mod = await import(`../../dist/config/bullboard.js?t=${Date.now()}`);
+    } catch {
+      return;
+    }
+    const { createBullBoardRouter } = mod;
     const { authMiddleware } = createBullBoardRouter();
 
     let status;

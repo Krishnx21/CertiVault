@@ -138,3 +138,74 @@ test("GET /api/documents returns 401 when no auth token provided", async () => {
   assert.match(response.headers.get("x-request-id"), /^[0-9a-f-]{36}$/);
   assert.match(response.headers.get("x-response-time"), /^\d+(\.\d+)?ms$/);
 });
+
+test("CORS: allows multiple origins configured via FRONTEND_ORIGIN", async () => {
+  const orig = process.env.FRONTEND_ORIGIN;
+  process.env.FRONTEND_ORIGIN = "http://localhost:5173, https://app.certivault.io";
+  const { createApp } = await import("../../src/app.js");
+  const multiServer = createApp().listen(0);
+  await new Promise((resolve) => multiServer.once("listening", resolve));
+  const { port } = multiServer.address();
+  const multiUrl = `http://127.0.0.1:${port}`;
+
+  try {
+    const res1 = await fetch(`${multiUrl}/health/live`, {
+      headers: { Origin: "http://localhost:5173" },
+    });
+    assert.equal(res1.status, 200);
+    assert.equal(res1.headers.get("access-control-allow-origin"), "http://localhost:5173");
+
+    const res2 = await fetch(`${multiUrl}/health/live`, {
+      headers: { Origin: "https://app.certivault.io" },
+    });
+    assert.equal(res2.status, 200);
+    assert.equal(res2.headers.get("access-control-allow-origin"), "https://app.certivault.io");
+
+    const preflight = await fetch(`${multiUrl}/health/live`, {
+      method: "OPTIONS",
+      headers: {
+        Origin: "https://app.certivault.io",
+        "Access-Control-Request-Method": "GET",
+      },
+    });
+    assert.equal(preflight.headers.get("access-control-allow-origin"), "https://app.certivault.io");
+
+    const res3 = await fetch(`${multiUrl}/health/live`, {
+      headers: { Origin: "https://unauthorized-origin.com" },
+    });
+    assert.notEqual(
+      res3.headers.get("access-control-allow-origin"),
+      "https://unauthorized-origin.com"
+    );
+  } finally {
+    if (orig !== undefined) process.env.FRONTEND_ORIGIN = orig;
+    else delete process.env.FRONTEND_ORIGIN;
+    await new Promise((resolve, reject) => {
+      multiServer.close((err) => (err ? reject(err) : resolve()));
+    });
+  }
+});
+
+test("CORS: supports wildcard '*' in FRONTEND_ORIGIN", async () => {
+  const orig = process.env.FRONTEND_ORIGIN;
+  process.env.FRONTEND_ORIGIN = "*";
+  const { createApp } = await import("../../src/app.js");
+  const wildcardServer = createApp().listen(0);
+  await new Promise((resolve) => wildcardServer.once("listening", resolve));
+  const { port } = wildcardServer.address();
+  const wildcardUrl = `http://127.0.0.1:${port}`;
+
+  try {
+    const res = await fetch(`${wildcardUrl}/health/live`, {
+      headers: { Origin: "https://random-client.com" },
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get("access-control-allow-origin"), "*");
+  } finally {
+    if (orig !== undefined) process.env.FRONTEND_ORIGIN = orig;
+    else delete process.env.FRONTEND_ORIGIN;
+    await new Promise((resolve, reject) => {
+      wildcardServer.close((err) => (err ? reject(err) : resolve()));
+    });
+  }
+});
