@@ -1,12 +1,14 @@
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { ApiError } from "../../utils/ApiError.js";
 import * as defaultStorage from "../../services/storage.service.js";
 import { Document } from "./document.model.js";
 import { eventBus } from "../../utils/eventBus.js";
+import { queueDocumentProcessing, _setQueueStorage } from "../../queues/document.queue.js";
 
 let storage = defaultStorage;
 export const _setStorage = (s) => {
   storage = s;
+  _setQueueStorage(s);
 };
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -28,6 +30,7 @@ const toResponse = (doc) => ({
   checksum: doc.checksum,
   owner: doc.owner,
   status: doc.status,
+  processing_status: doc.processing_status || "completed",
   tags: doc.tags,
   createdAt: doc.createdAt,
   verifiedAt: doc.verifiedAt,
@@ -67,7 +70,7 @@ export const getDocument = async (req, res, next) => {
     const doc = await Document.findById(req.params.id).lean();
     if (!doc) return next(new ApiError(404, "DOCUMENT_NOT_FOUND", "Document was not found"));
 
-    const downloadUrl = await storage.getPresignedUrl(doc.s3Key);
+    const downloadUrl = doc.s3Key ? await storage.getPresignedUrl(doc.s3Key) : null;
     res.json({ data: { ...toResponse(doc), downloadUrl } });
   } catch (err) {
     next(err);
@@ -82,24 +85,19 @@ export const uploadDocument = async (req, res, next) => {
       return next(new ApiError(415, "UNSUPPORTED_FILE_TYPE", "File type is not allowed"));
     }
 
-    const checksum = createHash("sha256").update(req.file.buffer).digest("hex");
     const s3Key = `documents/${randomUUID()}-${req.file.originalname.replace(/\s+/g, "_")}`;
-
-    const { bucket } = await storage.uploadToS3({
-      key: s3Key,
-      buffer: req.file.buffer,
-      mimeType: req.file.mimetype,
-    });
 
     const doc = await Document.create({
       name: req.file.originalname,
       type: req.body.type || "Other",
       mimeType: req.file.mimetype,
       size: req.file.size,
-      checksum,
+      checksum: null,
       owner: req.user.id,
+      status: "pending",
+      processing_status: "queued",
       s3Key,
-      s3Bucket: bucket,
+      s3Bucket: null,
       tags: req.body.tags
         ? String(req.body.tags)
             .split(",")
@@ -109,7 +107,14 @@ export const uploadDocument = async (req, res, next) => {
 
     eventBus.emit("documentCreated", doc);
 
-    res.status(201).json({ data: toResponse(doc) });
+    await queueDocumentProcessing({
+      documentId: doc._id.toString(),
+      fileBuffer: req.file.buffer,
+      mimeType: req.file.mimetype,
+      s3Key,
+    });
+
+    res.status(202).json({ data: toResponse(doc) });
   } catch (err) {
     next(err);
   }
@@ -150,9 +155,9 @@ export const verifyDocument = async (req, res, next) => {
       { new: true }
     ).lean();
     if (!doc) return next(new ApiError(404, "DOCUMENT_NOT_FOUND", "Document was not found"));
-    
+
     eventBus.emit("documentUpdated", doc);
-    
+
     res.json({ data: toResponse(doc) });
   } catch (err) {
     next(err);
@@ -170,9 +175,9 @@ export const deleteDocument = async (req, res, next) => {
 
     await Document.findByIdAndDelete(req.params.id);
     await storage.deleteFromS3(doc.s3Key);
-    
+
     eventBus.emit("documentDeleted", req.params.id);
-    
+
     res.status(204).send();
   } catch (err) {
     next(err);

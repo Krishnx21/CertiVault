@@ -16,6 +16,7 @@ import { getEnv } from "../config/env.js";
 import { createModuleLogger } from "../common/utils/logger.js";
 import { startEmailWorker } from "./email.worker.js";
 import { startNotificationWorker } from "./notification.worker.js";
+import { startDocumentWorker } from "./document.worker.js";
 
 const log = createModuleLogger("workers");
 
@@ -52,7 +53,8 @@ async function start(): Promise<void> {
   const workers: Worker[] = [
     startEmailWorker(),
     startNotificationWorker(),
-  ];
+    startDocumentWorker(),
+  ].filter(Boolean) as Worker[]; // filter out nulls if Redis isn't configured
 
   log.info(`Workers: ${workers.length} workers running`);
 

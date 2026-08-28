@@ -10,15 +10,20 @@ const documentSchema = new mongoose.Schema(
     },
     mimeType: { type: String, required: true },
     size: { type: Number, required: true },
-    checksum: { type: String, required: true },
+    checksum: { type: String, default: null },
     owner: { type: String, required: true },
     status: {
       type: String,
       enum: ["pending", "verified", "rejected", "expired"],
       default: "pending",
     },
-    s3Key: { type: String, required: true },
-    s3Bucket: { type: String, required: true },
+    processing_status: {
+      type: String,
+      enum: ["queued", "processing", "completed", "failed"],
+      default: "queued",
+    },
+    s3Key: { type: String, default: null },
+    s3Bucket: { type: String, default: null },
     verifiedAt: { type: Date, default: null },
     tags: [{ type: String, trim: true }],
   },
@@ -27,6 +32,7 @@ const documentSchema = new mongoose.Schema(
 
 documentSchema.index({ name: "text", type: "text", owner: "text" });
 documentSchema.index({ status: 1 });
+documentSchema.index({ processing_status: 1 });
 documentSchema.index({ createdAt: -1 });
 
 export const Document = mongoose.model("Document", documentSchema);
