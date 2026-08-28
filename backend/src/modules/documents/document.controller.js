@@ -150,9 +150,9 @@ export const verifyDocument = async (req, res, next) => {
       { new: true }
     ).lean();
     if (!doc) return next(new ApiError(404, "DOCUMENT_NOT_FOUND", "Document was not found"));
-    
+
     eventBus.emit("documentUpdated", doc);
-    
+
     res.json({ data: toResponse(doc) });
   } catch (err) {
     next(err);
@@ -170,9 +170,9 @@ export const deleteDocument = async (req, res, next) => {
 
     await Document.findByIdAndDelete(req.params.id);
     await storage.deleteFromS3(doc.s3Key);
-    
+
     eventBus.emit("documentDeleted", req.params.id);
-    
+
     res.status(204).send();
   } catch (err) {
     next(err);

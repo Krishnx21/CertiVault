@@ -40,7 +40,7 @@ jobs:
         with:
           script: |
             const branch = context.payload.pull_request.head.ref;
-            const allowed = /^(feature|feat|fix|docs|test|chore|refactor|backend|frontend|devops|security|dependabot)\/[a-z0-9][a-z0-9-]*$/;
+            const allowed = /^(performance|perf|feature|feat|fix|docs|test|chore|refactor|backend|frontend|devops|security|dependabot)\/[a-z0-9][a-z0-9-]*$/;
             if (branch.startsWith("dependabot/")) return;
             if (!allowed.test(branch)) {
               core.setFailed(`Branch "${branch}" must look like feature/short-name, fix/short-name, docs/short-name, backend/short-name, etc.`);
