@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { LogIn, Mail, Lock, AlertCircle, ShieldCheck } from "lucide-react";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -21,7 +22,8 @@ const Login: React.FC = () => {
     setIsLoading(true);
     try {
       await login(formData.email, formData.password);
-      navigate("/dashboard");
+      const from = (location.state as any)?.from || "/dashboard";
+      navigate(from);
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
     } finally {
@@ -153,7 +155,7 @@ const Login: React.FC = () => {
         {/* Footer link */}
         <p style={{ textAlign: "center", fontSize: "0.875rem", color: "var(--text-secondary)", marginTop: "1.5rem" }}>
           Don't have an account?{" "}
-          <Link to="/register" style={{ color: "var(--accent-blue)", fontWeight: 500 }}>
+          <Link to="/register" state={location.state} style={{ color: "var(--accent-blue)", fontWeight: 500 }}>
             Sign up
           </Link>
         </p>

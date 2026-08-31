@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { UserPlus, Mail, Lock, User, AlertCircle, CheckCircle2, ShieldCheck } from "lucide-react";
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { register } = useAuth();
   const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [error, setError] = useState("");
@@ -41,7 +42,8 @@ const Register: React.FC = () => {
     setIsLoading(true);
     try {
       await register(formData.email, formData.password, formData.name);
-      navigate("/dashboard");
+      const from = (location.state as any)?.from || "/dashboard";
+      navigate(from);
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {
@@ -137,7 +139,7 @@ const Register: React.FC = () => {
 
         <p style={{ textAlign: "center", fontSize: "0.875rem", color: "var(--text-secondary)", marginTop: "1.5rem" }}>
           Already have an account?{" "}
-          <Link to="/login" style={{ color: "var(--accent-blue)", fontWeight: 500 }}>Sign in</Link>
+          <Link to="/login" state={location.state} style={{ color: "var(--accent-blue)", fontWeight: 500 }}>Sign in</Link>
         </p>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Copy, Link, Users, Clock, Lock, Check, AlertCircle } from "lucide-react";
 import { api } from "../api.js";
-import { SharedDocument, SharedMember, Permission } from "../types.js";
+import { SharedDocument, VaultMember } from "../types.js";
 
 interface ShareModalProps {
   documentId: string;
@@ -24,12 +24,15 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
 
   // Member invitation state
   const [memberEmail, setMemberEmail] = useState("");
-  const [memberName, setMemberName] = useState("");
-  const [permission, setPermission] = useState<Permission>("viewer");
+  const [permission, setPermission] = useState<"viewer" | "editor">("viewer");
   const [isInviting, setIsInviting] = useState(false);
 
-  // Members list
-  const [members, setMembers] = useState<SharedMember[]>([]);
+  // Vault members list
+  const [vaultMembers, setVaultMembers] = useState<{ active: VaultMember[]; pending: VaultMember[]; declined: VaultMember[] }>({
+    active: [],
+    pending: [],
+    declined: [],
+  });
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
   // Existing shares
@@ -43,8 +46,8 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
   const loadMembers = async () => {
     setIsLoadingMembers(true);
     try {
-      const response = await api.getDocumentMembers(documentId);
-      setMembers(response.data);
+      const response = await api.listVaultMembers();
+      setVaultMembers(response.data);
     } catch (err: any) {
       console.error("Failed to load members:", err);
     } finally {
@@ -102,18 +105,12 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
     setSuccess("");
 
     try {
-      const data: any = {
-        documentId,
-        memberEmail,
-        permission,
-      };
-      if (memberName) data.memberName = memberName;
-
-      await api.inviteMember(data);
-      setSuccess("Invitation sent successfully!");
+      await api.inviteVaultMember({
+        memberEmail: memberEmail.trim().toLowerCase(),
+        role: permission,
+      });
+      setSuccess("Vault invitation sent successfully!");
       setMemberEmail("");
-      setMemberName("");
-      setPermission("viewer");
       loadMembers();
     } catch (err: any) {
       setError(err.message || "Failed to send invitation");
@@ -124,7 +121,7 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
 
   const revokeMember = async (memberId: string) => {
     try {
-      await api.revokeMember(memberId);
+      await api.removeVaultMember(memberId);
       setSuccess("Member access revoked");
       loadMembers();
     } catch (err: any) {
@@ -132,9 +129,9 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
     }
   };
 
-  const updatePermission = async (memberId: string, newPermission: Permission) => {
+  const updatePermission = async (memberId: string, newPermission: "viewer" | "editor") => {
     try {
-      await api.updateMemberPermission(memberId, newPermission);
+      await api.changeVaultMemberRole(memberId, newPermission);
       setSuccess("Permission updated");
       loadMembers();
     } catch (err: any) {
@@ -155,13 +152,12 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
     }
   };
 
-  const getPermissionBadge = (perm: Permission) => {
+  const getPermissionBadge = (role: "viewer" | "editor") => {
     const colors = {
       viewer: "bg-blue-100 text-blue-700",
       editor: "bg-green-100 text-green-700",
-      admin: "bg-purple-100 text-purple-700",
     };
-    return colors[perm];
+    return colors[role];
   };
 
   return (
@@ -207,7 +203,7 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
             >
               <div className="flex items-center gap-2">
                 <Users size={18} />
-                Members ({members.length})
+                Members ({(vaultMembers.active.length + vaultMembers.pending.length)})
               </div>
             </button>
           </div>
@@ -359,24 +355,13 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
               </div>
 
               <div className="field-label">
-                <span>Member Name (Optional)</span>
-                <input
-                  type="text"
-                  placeholder="John Doe"
-                  value={memberName}
-                  onChange={(e) => setMemberName(e.target.value)}
-                />
-              </div>
-
-              <div className="field-label">
                 <span>Permission</span>
                 <select
                   value={permission}
-                  onChange={(e) => setPermission(e.target.value as Permission)}
+                  onChange={(e) => setPermission(e.target.value as "viewer" | "editor")}
                 >
                   <option value="viewer">Viewer - Can only view</option>
                   <option value="editor">Editor - Can view and edit</option>
-                  <option value="admin">Admin - Full access</option>
                 </select>
               </div>
 
@@ -393,62 +378,64 @@ export default function ShareModal({ documentId, documentTitle, onClose }: Share
                 <h3 className="font-medium text-[var(--text-primary)] mb-3">Members</h3>
                 {isLoadingMembers ? (
                   <div className="text-center text-[var(--text-muted)] py-4">Loading members...</div>
-                ) : members.length === 0 ? (
+                ) : (vaultMembers.active.length === 0 && vaultMembers.pending.length === 0) ? (
                   <div className="text-center text-[var(--text-muted)] py-4">No members yet</div>
                 ) : (
                   <div className="space-y-2">
-                    {members.map((member) => (
-                      <div
-                        key={member._id}
-                        className="p-3 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-between"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-[var(--text-primary)]">
-                            {member.memberName || member.memberEmail}
+                    {[...vaultMembers.active, ...vaultMembers.pending].map((member) => {
+                      const user = member.memberUserId && typeof member.memberUserId === "object" ? member.memberUserId as any : null;
+                      return (
+                        <div
+                          key={member._id}
+                          className="p-3 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-between"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-[var(--text-primary)]">
+                              {user?.name || member.memberEmail}
+                            </div>
+                            <div className="text-xs text-[var(--text-muted)] mt-1">
+                              {member.memberEmail}
+                            </div>
+                            <div className="mt-2">
+                              <span
+                                className={`inline-block px-2 py-1 rounded text-xs font-medium ${getPermissionBadge(
+                                  member.role
+                                )}`}
+                              >
+                                {member.role}
+                              </span>
+                              <span
+                                className={`inline-block px-2 py-1 rounded text-xs font-medium ml-2 ${
+                                  member.status === "active"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-yellow-100 text-yellow-700"
+                                }`}
+                              >
+                                {member.status}
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-xs text-[var(--text-muted)] mt-1">
-                            {member.memberEmail}
-                          </div>
-                          <div className="mt-2">
-                            <span
-                              className={`inline-block px-2 py-1 rounded text-xs font-medium ${getPermissionBadge(
-                                member.permission
-                              )}`}
+                          <div className="flex items-center gap-2 ml-2">
+                            {member.status === "active" && (
+                              <select
+                                value={member.role}
+                                onChange={(e) => updatePermission(member._id, e.target.value as "viewer" | "editor")}
+                                className="text-sm py-1 px-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded"
+                              >
+                                <option value="viewer">Viewer</option>
+                                <option value="editor">Editor</option>
+                              </select>
+                            )}
+                            <button
+                              className="icon-button text-red-500 hover:text-red-700"
+                              onClick={() => revokeMember(member._id)}
                             >
-                              {member.permission}
-                            </span>
-                            <span
-                              className={`inline-block px-2 py-1 rounded text-xs font-medium ml-2 ${
-                                member.inviteStatus === "accepted"
-                                  ? "bg-green-100 text-green-700"
-                                  : member.inviteStatus === "pending"
-                                  ? "bg-yellow-100 text-yellow-700"
-                                  : "bg-red-100 text-red-700"
-                              }`}
-                            >
-                              {member.inviteStatus}
-                            </span>
+                              <X size={16} />
+                            </button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-2">
-                          <select
-                            value={member.permission}
-                            onChange={(e) => updatePermission(member._id, e.target.value as Permission)}
-                            className="text-sm py-1 px-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded"
-                          >
-                            <option value="viewer">Viewer</option>
-                            <option value="editor">Editor</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                          <button
-                            className="icon-button text-red-500 hover:text-red-700"
-                            onClick={() => revokeMember(member._id)}
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
