@@ -23,9 +23,19 @@ import {
   getNotificationsController,
 } from "./document.controller.js";
 
+import path from "path";
+import fs from "fs";
+
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  storage: multer.diskStorage({
+    destination: uploadDir,
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 export const documentRouter = Router();

@@ -74,8 +74,15 @@ export const uploadDocument = async (
       effectiveOwnerEmail = owner?.email ?? "";
     }
 
+    const fs = await import("fs");
+    const fileBuffer = req.file.buffer || (req.file.path ? fs.readFileSync(req.file.path) : null);
+    
+    if (!fileBuffer) {
+      return next(new ApiError(400, "FILE_REQUIRED", "No file provided"));
+    }
+
     const document = await uploadDocumentService({
-      file: req.file.buffer,
+      file: fileBuffer,
       originalName: req.file.originalname,
       mimeType: req.file.mimetype,
       fileSize: req.file.size,
@@ -88,8 +95,17 @@ export const uploadDocument = async (
       ownerEmail: effectiveOwnerEmail,
     });
 
+    if (req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
     res.status(201).json({ data: document });
   } catch (error) {
+    if (req.file && req.file.path) {
+      const fs = await import("fs");
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+    }
     next(error);
   }
 };
