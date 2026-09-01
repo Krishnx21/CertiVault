@@ -26,4 +26,29 @@ export const documentStore = {
     const result = await DocumentModel.deleteOne({ id });
     return (result.deletedCount ?? 0) > 0;
   },
+  getSummary: async () => {
+    const [result] = await DocumentModel.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          verified: {
+            $sum: { $cond: [{ $eq: ["$status", "verified"] }, 1, 0] },
+          },
+          pending: {
+            $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
+          },
+          storageBytes: { $sum: "$size" },
+        },
+      },
+    ]);
+    return (
+      result || {
+        total: 0,
+        verified: 0,
+        pending: 0,
+        storageBytes: 0,
+      }
+    );
+  },
 };

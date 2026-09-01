@@ -4,13 +4,11 @@ import { documentStore } from "../documents/document.store.js";
 export const dashboardRouter = Router();
 
 dashboardRouter.get("/summary", async (_req: Request, res: Response) => {
-  const documents = await documentStore.all();
+  const summary = await documentStore.getSummary();
+  if ('_id' in summary) {
+    delete summary._id;
+  }
   res.json({
-    data: {
-      total: documents.length,
-      verified: documents.filter(({ status }) => status === "verified").length,
-      pending: documents.filter(({ status }) => status === "pending").length,
-      storageBytes: documents.reduce((total, document) => total + (document.fileSize || 0), 0),
-    },
+    data: summary,
   });
 });
