@@ -52,8 +52,10 @@ export const updateDocumentSchema = z.object({
   description: z.string().max(2000, "Description cannot exceed 2000 characters").optional(),
   category: z.enum(["certificate", "contract", "identity", "invoice", "report", "other"]).optional(),
   tags: z.array(z.string().max(50)).max(10, "Maximum 10 tags allowed").optional(),
-  status: z.enum(["all", "pending", "verified", "rejected"]).optional(),
+  status: z.enum(["pending", "verified", "rejected"]).optional(),
 });
+
+export type UpdateDocumentDto = z.infer<typeof updateDocumentSchema>;
 
 // Search documents schema
 export const searchDocumentsSchema = z.object({

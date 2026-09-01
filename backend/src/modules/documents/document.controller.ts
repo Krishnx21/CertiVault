@@ -30,6 +30,7 @@ import {
   getDocumentsSchema,
   verifyDocumentSchema,
   archiveDocumentSchema,
+  UpdateDocumentDto,
 } from "./document.validation.js";
 
 /**
@@ -208,13 +209,7 @@ export const patchDocument = async (
     }
 
     const { id } = req.params;
-    const updates = updateDocumentSchema.parse(req.body) as Partial<{
-      title?: string;
-      description?: string;
-      category?: string;
-      tags?: string[];
-      status?: "pending" | "verified" | "rejected";
-    }>;
+    const updates: UpdateDocumentDto = updateDocumentSchema.parse(req.body);
 
     const document = await updateDocument(Array.isArray(id) ? id[0] : id, updates, userId);
 
