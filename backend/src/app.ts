@@ -63,8 +63,8 @@ export const createApp = (): Express => {
           connectSrc: [
             "'self'",
             "https://api.certi-vault.com",
-            "http://localhost:*",
-            "http://127.0.0.1:*",
+            ...(Array.isArray(env.FRONTEND_ORIGIN) ? env.FRONTEND_ORIGIN : [env.FRONTEND_ORIGIN]),
+            ...(isDevelopment ? ["http://localhost:*", "http://127.0.0.1:*"] : []),
           ],
           fontSrc: ["'self'"],
           objectSrc: ["'none'"],
@@ -83,9 +83,15 @@ export const createApp = (): Express => {
   // ============================================
   // CORS CONFIGURATION
   // ============================================
+  const frontendOrigins = Array.isArray(env.FRONTEND_ORIGIN)
+    ? env.FRONTEND_ORIGIN
+    : [env.FRONTEND_ORIGIN].filter(Boolean);
+
+  const allowAllOrigins = frontendOrigins.includes("*");
+
   const allowedOrigins = Array.from(
     new Set([
-      env.FRONTEND_ORIGIN,
+      ...frontendOrigins,
       "http://localhost:5173",
       "http://localhost:5174",
       "http://localhost:5175",
@@ -96,22 +102,33 @@ export const createApp = (): Express => {
     ])
   ).filter(Boolean);
 
-  const corsOptions: cors.CorsOptions = {
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, Postman, curl)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
+  const corsOptions: cors.CorsOptions = allowAllOrigins
+    ? {
+        // reflect origin and allow all — for wildcard we disable credentials to avoid violation of the spec
+        origin: true,
+        credentials: false,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
+        exposedHeaders: ["X-Request-ID", "X-Response-Time"],
+        optionsSuccessStatus: 200,
+        maxAge: 86400, // 24 hours
       }
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
-    exposedHeaders: ["X-Request-ID", "X-Response-Time"],
-    optionsSuccessStatus: 200,
-    maxAge: 86400, // 24 hours
-  };
+    : {
+        origin: (origin, callback) => {
+          // Allow requests with no origin (mobile apps, Postman, curl)
+          if (!origin) return callback(null, true);
+          if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+          }
+          return callback(new Error("Not allowed by CORS"));
+        },
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
+        exposedHeaders: ["X-Request-ID", "X-Response-Time"],
+        optionsSuccessStatus: 200,
+        maxAge: 86400, // 24 hours
+      };
 
   app.use(cors(corsOptions));
 
@@ -207,8 +224,7 @@ export const createApp = (): Express => {
   // Protected by HTTP Basic Auth
   // Access: http://localhost:5000/admin/queues
   // ============================================
-  const { router: bullBoardRouter, authMiddleware: bullBoardAuth } =
-    createBullBoardRouter();
+  const { router: bullBoardRouter, authMiddleware: bullBoardAuth } = createBullBoardRouter();
   app.use("/admin/queues", bullBoardAuth, bullBoardRouter);
 
   // Serve local files for development with proper headers
@@ -219,23 +235,23 @@ export const createApp = (): Express => {
         const filePath = path.join(process.cwd(), "uploads", "documents", req.path);
         const ext = path.extname(filePath).toLowerCase();
         const mimeTypes: Record<string, string> = {
-          '.pdf': 'application/pdf',
-          '.doc': 'application/msword',
-          '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          '.xls': 'application/vnd.ms-excel',
-          '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          '.png': 'image/png',
-          '.jpg': 'image/jpeg',
-          '.jpeg': 'image/jpeg',
-          '.zip': 'application/zip',
+          ".pdf": "application/pdf",
+          ".doc": "application/msword",
+          ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          ".xls": "application/vnd.ms-excel",
+          ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          ".png": "image/png",
+          ".jpg": "image/jpeg",
+          ".jpeg": "image/jpeg",
+          ".zip": "application/zip",
         };
         if (mimeTypes[ext]) {
-          res.setHeader('Content-Type', mimeTypes[ext]);
+          res.setHeader("Content-Type", mimeTypes[ext]);
         }
         // Set Content-Disposition for download
         const filenameParam = req.query.filename as string;
         const filename = filenameParam || path.basename(filePath);
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
       }
       next(err);
     });

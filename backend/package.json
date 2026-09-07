@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "build": "node -e \"const fs=require('fs'); fs.cpSync('src', 'dist', {recursive: true});\"",
     "test": "node --test",
     "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\" \"*.json\"",
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"*.json\"",
